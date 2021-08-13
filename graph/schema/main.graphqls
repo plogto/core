@@ -1,0 +1,17 @@
+scalar Time
+
+type Test {
+  content: String
+}
+
+input TestInput {
+  content: String
+}
+
+type Query {
+  test(input: TestInput!): Test
+}
+
+type Mutation {
+  test(input: TestInput!): Test
+}
