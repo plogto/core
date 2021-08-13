@@ -1,0 +1,28 @@
+input LoginInput {
+  username: String!
+  password: String!
+}
+
+input RegisterInput {
+  fullname: String
+  email: String!
+  password: String!
+}
+
+type AuthToken {
+  token: String!
+  expiredAt: Time!
+}
+
+type AuthResponse {
+  authToken: AuthToken!
+  user: User!
+}
+
+extend type Query {
+  login(input: LoginInput!): AuthResponse!
+}
+
+extend type Mutation {
+  register(input: RegisterInput!): AuthResponse!
+}

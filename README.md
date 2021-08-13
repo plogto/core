@@ -1,0 +1,1 @@
+# note-core
