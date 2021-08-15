@@ -54,6 +54,7 @@ func main() {
 	s := service.New(service.Service{
 		User:     user,
 		Password: database.Password{DB: DB},
+		Post:     database.Post{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
