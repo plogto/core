@@ -17,6 +17,15 @@ func (p *Post) GetPostByField(field, value string) (*model.Post, error) {
 	return &post, err
 }
 
+func (p *Post) GetPostsByUserId(userId string) ([]*model.Post, error) {
+	var posts []*model.Post
+	query := p.DB.Model(&posts).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+
+	err := query.Select()
+
+	return posts, err
+}
+
 func (p *Post) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }

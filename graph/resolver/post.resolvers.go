@@ -15,7 +15,11 @@ func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput
 }
 
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.ID)
+	return r.Service.GetUserByID(ctx, obj.UserID)
+}
+
+func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string) ([]*model.Post, error) {
+	return r.Service.GetUserPostsByUsername(ctx, username)
 }
 
 // Post returns generated.PostResolver implementation.
