@@ -4,4 +4,6 @@ DROP TABLE IF EXISTS "user";
 
 DROP TABLE IF EXISTS "password";
 
+DROP TABLE IF EXISTS "post";
+
 DROP TYPE IF EXISTS "user_roles";
