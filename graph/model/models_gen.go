@@ -34,3 +34,8 @@ type Test struct {
 type TestInput struct {
 	Content *string `json:"content"`
 }
+
+type AddPostInput struct {
+	Content string `json:"content"`
+	Status  *int   `json:"status"`
+}

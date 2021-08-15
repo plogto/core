@@ -43,8 +43,8 @@ autobind: []
 models:
   User:
     model: github.com/favecode/note-core/graph/model.User
-  Conversation:
-    model: github.com/favecode/note-core/graph/model.Conversation
+  Post:
+    model: github.com/favecode/note-core/graph/model.Post
     fields:
       user:
         resolver: true
