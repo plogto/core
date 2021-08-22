@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/favecode/note-core/config"
 	"github.com/favecode/note-core/graph/model"
 	"github.com/favecode/note-core/middleware"
 )
@@ -39,7 +40,20 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 		return nil, errors.New("user not found")
 	}
 
-	posts, _ := s.Post.GetPostsByUserIdAndPagination(user.ID, input)
+	var limit int = config.POSTS_PAGE_LIMIT
+	var page int = 1
+
+	if input != nil {
+		if input.Limit != nil {
+			limit = *input.Limit
+		}
+
+		if input.Page != nil && *input.Page > 0 {
+			page = *input.Page
+		}
+	}
+
+	posts, _ := s.Post.GetPostsByUserIdAndPagination(user.ID, limit, page)
 
 	return posts, nil
 }
