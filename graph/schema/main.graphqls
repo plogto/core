@@ -1,5 +1,13 @@
 scalar Time
 
+type Pagination {
+  totalDocs: Int!
+  totalPages: Int!
+  limit: Int!
+  page: Int!
+  nextPage: Int
+}
+
 type Test {
   content: String
 }

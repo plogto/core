@@ -26,7 +26,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	return post, nil
 }
 
-func (s *Service) GetUserPostsByUsername(ctx context.Context, username string) ([]*model.Post, error) {
+func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -36,10 +36,10 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string) (
 	user, err := s.User.GetUserByUsername(username)
 
 	if err != nil {
-		return nil, errors.New("user not found!")
+		return nil, errors.New("user not found")
 	}
 
-	posts, _ := s.Post.GetPostsByUserId(user.ID)
+	posts, _ := s.Post.GetPostsByUserIdAndPagination(user.ID, input)
 
 	return posts, nil
 }
