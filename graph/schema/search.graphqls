@@ -1,0 +1,7 @@
+type Search {
+  users: Users
+}
+
+extend type Query {
+  search(expression: String!): Search!
+}

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/favecode/note-core/graph/model"
+	"github.com/favecode/note-core/util"
 	"github.com/go-pg/pg"
 )
 
@@ -33,6 +34,25 @@ func (u *User) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	var user model.User
 	err := u.DB.Model(&user).Where("username = ?", value).WhereOr("email = ?", value).Where("deleted_at is ?", nil).First()
 	return &user, err
+}
+
+func (u *User) GetUserByUsernameOrFullnameAndPagination(value string, limit int, page int) (*model.Users, error) {
+	var users []*model.User
+	var offset = (page - 1) * limit
+
+	query := u.DB.Model(&users).Where("username LIKE ?", value).WhereOr("fullname LIKE ?", value).Where("deleted_at is ?", nil)
+	query.Offset(offset).Limit(limit)
+
+	totalDocs, err := query.SelectAndCount()
+
+	return &model.Users{
+		Pagination: util.GetPatination(&util.GetPaginationParams{
+			Limit:     limit,
+			Page:      page,
+			TotalDocs: totalDocs,
+		}),
+		Users: users,
+	}, err
 }
 
 func (u *User) CreateUser(tx *pg.Tx, user *model.User) (*model.User, error) {
