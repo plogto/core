@@ -18,8 +18,8 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
-func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string) ([]*model.Post, error) {
-	return r.Service.GetUserPostsByUsername(ctx, username)
+func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error) {
+	return r.Service.GetUserPostsByUsername(ctx, username, input)
 }
 
 // Post returns generated.PostResolver implementation.

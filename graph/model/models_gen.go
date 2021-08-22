@@ -16,9 +16,27 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
+type GetUserPostsByUsernameInput struct {
+	Page  *int `json:"page"`
+	Limit *int `json:"limit"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
+}
+
+type Pagination struct {
+	TotalDocs  int  `json:"totalDocs"`
+	TotalPages int  `json:"totalPages"`
+	Limit      int  `json:"limit"`
+	Page       int  `json:"page"`
+	NextPage   *int `json:"nextPage"`
+}
+
+type Posts struct {
+	Posts      []*Post     `json:"posts"`
+	Pagination *Pagination `json:"pagination"`
 }
 
 type RegisterInput struct {
