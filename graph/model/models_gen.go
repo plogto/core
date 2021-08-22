@@ -45,12 +45,21 @@ type RegisterInput struct {
 	Password string  `json:"password"`
 }
 
+type Search struct {
+	Users *Users `json:"users"`
+}
+
 type Test struct {
 	Content *string `json:"content"`
 }
 
 type TestInput struct {
 	Content *string `json:"content"`
+}
+
+type Users struct {
+	Users      []*User     `json:"users"`
+	Pagination *Pagination `json:"pagination"`
 }
 
 type AddPostInput struct {
