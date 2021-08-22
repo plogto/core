@@ -32,3 +32,15 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 
 	return user, nil
 }
+
+func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
+	limit := 10
+	page := 1
+	users, err := s.User.GetUserByUsernameOrFullnameAndPagination(expression+"%", limit, page)
+
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+
+	return users, nil
+}
