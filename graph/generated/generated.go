@@ -93,7 +93,7 @@ type ComplexityRoot struct {
 	}
 
 	Search struct {
-		Users func(childComplexity int) int
+		User func(childComplexity int) int
 	}
 
 	Test struct {
@@ -370,12 +370,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Test(childComplexity, args["input"].(model.TestInput)), true
 
-	case "Search.users":
-		if e.complexity.Search.Users == nil {
+	case "Search.user":
+		if e.complexity.Search.User == nil {
 			break
 		}
 
-		return e.complexity.Search.Users(childComplexity), true
+		return e.complexity.Search.User(childComplexity), true
 
 	case "Test.content":
 		if e.complexity.Test.Content == nil {
@@ -599,7 +599,7 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/search.graphqls", Input: `type Search {
-  users: Users
+  user: Users
 }
 
 extend type Query {
@@ -1836,7 +1836,7 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Search_users(ctx context.Context, field graphql.CollectedField, obj *model.Search) (ret graphql.Marshaler) {
+func (ec *executionContext) _Search_user(ctx context.Context, field graphql.CollectedField, obj *model.Search) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -1854,7 +1854,7 @@ func (ec *executionContext) _Search_users(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Users, nil
+		return obj.User, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3799,8 +3799,8 @@ func (ec *executionContext) _Search(ctx context.Context, sel ast.SelectionSet, o
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Search")
-		case "users":
-			out.Values[i] = ec._Search_users(ctx, field, obj)
+		case "user":
+			out.Values[i] = ec._Search_user(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

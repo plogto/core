@@ -46,7 +46,7 @@ type RegisterInput struct {
 }
 
 type Search struct {
-	Users *Users `json:"users"`
+	User *Users `json:"user"`
 }
 
 type Test struct {
