@@ -10,6 +10,6 @@ func (s *Service) Search(ctx context.Context, expression string) (*model.Search,
 	users, _ := s.SearchUser(ctx, expression)
 
 	return &model.Search{
-		Users: users,
+		User: users,
 	}, nil
 }
