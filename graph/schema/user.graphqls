@@ -4,6 +4,7 @@ type User {
   email: String!
   fullname: String
   role: String!
+  private: Boolean!
   createdAt: Time!
   updatedAt: Time!
 }

@@ -55,6 +55,7 @@ func main() {
 		User:     user,
 		Password: database.Password{DB: DB},
 		Post:     database.Post{DB: DB},
+		Follower: database.Follower{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}

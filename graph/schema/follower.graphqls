@@ -1,0 +1,29 @@
+type Follower {
+  id: ID!
+  user: User!
+  follower: User!
+  status: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Followers{
+  followers: [Follower]!
+  pagination: Pagination
+}
+
+input GetUserFollowersByUserIdInput {
+  page: Int
+  limit: Int
+}
+
+extend type Query {
+  getUserFollowersByUserId(userId: ID!, input: GetUserFollowersByUserIdInput): User!
+}
+
+extend type Mutation {
+  followUser(userId: ID!): Follower!
+  unfollowUser(userId: ID!): Follower!
+  acceptUser(userId: ID!): Follower!
+  rejectUser(userId: ID!): Follower!
+}
