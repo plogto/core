@@ -12,6 +12,7 @@ type Service struct {
 	User     database.User
 	Password database.Password
 	Post     database.Post
+	Follower database.Follower
 }
 
 func New(service Service) *Service {
@@ -19,6 +20,7 @@ func New(service Service) *Service {
 		User:     service.User,
 		Password: service.Password,
 		Post:     service.Post,
+		Follower: service.Follower,
 	}
 }
 

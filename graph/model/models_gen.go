@@ -16,6 +16,16 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
+type Followers struct {
+	Followers  []*Follower `json:"followers"`
+	Pagination *Pagination `json:"pagination"`
+}
+
+type GetUserFollowersByUserIDInput struct {
+	Page  *int `json:"page"`
+	Limit *int `json:"limit"`
+}
+
 type GetUserPostsByUsernameInput struct {
 	Page  *int `json:"page"`
 	Limit *int `json:"limit"`
