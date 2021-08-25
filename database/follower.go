@@ -29,6 +29,11 @@ func (f *Follower) GetFollowerByUserIdAndFollowerId(userId string, followerId st
 	return &follower, err
 }
 
+func (f *Follower) UpdateFollower(follower *model.Follower) (*model.Follower, error) {
+	_, err := f.DB.Model(follower).Where("id = ?", follower.ID).Where("deleted_at is ?", nil).Returning("*").Update()
+	return follower, err
+}
+
 func (f *Follower) DeleteFollower(id string) (*model.Follower, error) {
 	DeletedAt := time.Now()
 	var follower = &model.Follower{
