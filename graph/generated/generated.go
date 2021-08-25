@@ -71,9 +71,11 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		AcceptUser   func(childComplexity int, userID string) int
 		AddPost      func(childComplexity int, input model.AddPostInput) int
 		FollowUser   func(childComplexity int, userID string) int
 		Register     func(childComplexity int, input model.RegisterInput) int
+		RejectUser   func(childComplexity int, userID string) int
 		Test         func(childComplexity int, input model.TestInput) int
 		UnfollowUser func(childComplexity int, userID string) int
 	}
@@ -144,6 +146,8 @@ type MutationResolver interface {
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error)
 	FollowUser(ctx context.Context, userID string) (*model.Follower, error)
 	UnfollowUser(ctx context.Context, userID string) (*model.Follower, error)
+	AcceptUser(ctx context.Context, userID string) (*model.Follower, error)
+	RejectUser(ctx context.Context, userID string) (*model.Follower, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
 }
 type PostResolver interface {
@@ -258,6 +262,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Followers.Pagination(childComplexity), true
 
+	case "Mutation.acceptUser":
+		if e.complexity.Mutation.AcceptUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_acceptUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AcceptUser(childComplexity, args["userId"].(string)), true
+
 	case "Mutation.addPost":
 		if e.complexity.Mutation.AddPost == nil {
 			break
@@ -293,6 +309,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.Register(childComplexity, args["input"].(model.RegisterInput)), true
+
+	case "Mutation.rejectUser":
+		if e.complexity.Mutation.RejectUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_rejectUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(string)), true
 
 	case "Mutation.test":
 		if e.complexity.Mutation.Test == nil {
@@ -691,6 +719,8 @@ extend type Query {
 extend type Mutation {
   followUser(userId: ID!): Follower!
   unfollowUser(userId: ID!): Follower!
+  acceptUser(userId: ID!): Follower!
+  rejectUser(userId: ID!): Follower!
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/main.graphqls", Input: `scalar Time
@@ -786,6 +816,21 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 
 // region    ***************************** args.gotpl *****************************
 
+func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -828,6 +873,21 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["userId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["userId"] = arg0
 	return args, nil
 }
 
@@ -1588,6 +1648,90 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().UnfollowUser(rctx, args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Follower)
+	fc.Result = res
+	return ec.marshalNFollower2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollower(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_acceptUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AcceptUser(rctx, args["userId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Follower)
+	fc.Result = res
+	return ec.marshalNFollower2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollower(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_rejectUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().RejectUser(rctx, args["userId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4310,6 +4454,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "unfollowUser":
 			out.Values[i] = ec._Mutation_unfollowUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "acceptUser":
+			out.Values[i] = ec._Mutation_acceptUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "rejectUser":
+			out.Values[i] = ec._Mutation_rejectUser(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
