@@ -72,6 +72,10 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Followe
 		return nil, errors.New(err.Error())
 	}
 
+	if user.ID == userID {
+		return nil, errors.New("can not accept yourself")
+	}
+
 	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(user.ID, userID)
 
 	if len(follower.ID) < 1 {
@@ -82,10 +86,35 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Followe
 		return follower, nil
 	}
 
-	status := 1
-	follower.Status = &status
+	*follower.Status = 1
 
 	updatedFollower, _ := s.Follower.UpdateFollower(follower)
 
 	return updatedFollower, nil
+}
+
+func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Follower, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	if user.ID == userID {
+		return nil, errors.New("can not reject yourself")
+	}
+
+	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(user.ID, userID)
+
+	if len(follower.ID) < 1 {
+		return nil, errors.New("follower not found")
+	}
+
+	if *follower.Status == 1 {
+		return nil, errors.New("can not reject accepted request")
+	}
+
+	deletedFollower, _ := s.Follower.DeleteFollower(follower.ID)
+
+	return deletedFollower, nil
 }

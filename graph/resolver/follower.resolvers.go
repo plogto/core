@@ -32,7 +32,7 @@ func (r *mutationResolver) AcceptUser(ctx context.Context, userID string) (*mode
 }
 
 func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*model.Follower, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.RejectUser(ctx, userID)
 }
 
 func (r *queryResolver) GetUserFollowersByUserID(ctx context.Context, userID string, input *model.GetUserFollowersByUserIDInput) (*model.User, error) {
