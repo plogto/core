@@ -24,6 +24,14 @@ func (r *mutationResolver) FollowUser(ctx context.Context, userID string) (*mode
 }
 
 func (r *mutationResolver) UnfollowUser(ctx context.Context, userID string) (*model.Follower, error) {
+	return r.Service.UnfollowUser(ctx, userID)
+}
+
+func (r *mutationResolver) AcceptUser(ctx context.Context, userID string) (*model.Follower, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
+func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*model.Follower, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
