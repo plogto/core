@@ -24,4 +24,6 @@ extend type Query {
 extend type Mutation {
   followUser(userId: ID!): Follower!
   unfollowUser(userId: ID!): Follower!
+  acceptUser(userId: ID!): Follower!
+  rejectUser(userId: ID!): Follower!
 }

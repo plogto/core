@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/favecode/note-core/graph/model"
 	"github.com/go-pg/pg"
@@ -26,4 +27,14 @@ func (f *Follower) GetFollowerByUserIdAndFollowerId(userId string, followerId st
 	var follower model.Follower
 	err := f.DB.Model(&follower).Where("user_id = ?", userId).Where("follower_id = ?", followerId).Where("deleted_at is ?", nil).First()
 	return &follower, err
+}
+
+func (f *Follower) DeleteFollower(id string) (*model.Follower, error) {
+	DeletedAt := time.Now()
+	var follower = &model.Follower{
+		ID:        id,
+		DeletedAt: &DeletedAt,
+	}
+	_, err := f.DB.Model(follower).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	return follower, err
 }

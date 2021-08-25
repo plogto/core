@@ -38,3 +38,21 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Followe
 
 	return newFollower, nil
 }
+
+func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Follower, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(userID, user.ID)
+
+	if len(follower.ID) < 1 {
+		return nil, errors.New("follower not found")
+	}
+
+	deletedFollower, _ := s.Follower.DeleteFollower(follower.ID)
+
+	return deletedFollower, nil
+}
