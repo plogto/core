@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/favecode/note-core/graph/generated"
 	"github.com/favecode/note-core/graph/model"
@@ -35,8 +34,12 @@ func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*mode
 	return r.Service.RejectUser(ctx, userID)
 }
 
-func (r *queryResolver) GetUserFollowersByUserID(ctx context.Context, userID string, input *model.GetUserFollowersByUserIDInput) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *queryResolver) GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserFollowersByUserIDInput) (*model.Followers, error) {
+	return r.Service.GetUserFollowersByUsername(ctx, username, input, "followers")
+}
+
+func (r *queryResolver) GetUserFollowingByUsername(ctx context.Context, username string, input *model.GetUserFollowersByUserIDInput) (*model.Followers, error) {
+	return r.Service.GetUserFollowersByUsername(ctx, username, input, "following")
 }
 
 // Follower returns generated.FollowerResolver implementation.

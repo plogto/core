@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/favecode/note-core/config"
 	"github.com/favecode/note-core/graph/model"
 	"github.com/favecode/note-core/middleware"
 )
@@ -117,4 +118,46 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Followe
 	deletedFollower, _ := s.Follower.DeleteFollower(follower.ID)
 
 	return deletedFollower, nil
+}
+
+func (s *Service) GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserFollowersByUserIDInput, resultType string) (*model.Followers, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	followingUser, _ := s.User.GetUserByUsername(username)
+
+	var limit int = config.POSTS_PAGE_LIMIT
+	var page int = 1
+
+	if input != nil {
+		if input.Limit != nil {
+			limit = *input.Limit
+		}
+
+		if input.Page != nil && *input.Page > 0 {
+			page = *input.Page
+		}
+	}
+
+	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(followingUser.ID, user.ID)
+	if followingUser.ID != user.ID {
+		if followingUser.Private == bool(true) {
+			if len(follower.ID) < 1 || *follower.Status == 0 {
+				return nil, errors.New("you need to follow this user")
+			}
+		}
+	}
+
+	if resultType == "followers" {
+		followers, _ := s.Follower.GetFollowersByUserIdAndPagination(followingUser.ID, limit, page)
+		return followers, nil
+	} else if resultType == "following" {
+		followers, _ := s.Follower.GetFollowingByUserIdAndPagination(followingUser.ID, limit, page)
+		return followers, nil
+	}
+
+	return nil, nil
 }

@@ -103,13 +103,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		GetUserByUsername        func(childComplexity int, username string) int
-		GetUserFollowersByUserID func(childComplexity int, userID string, input *model.GetUserFollowersByUserIDInput) int
-		GetUserInfo              func(childComplexity int) int
-		GetUserPostsByUsername   func(childComplexity int, username string, input *model.GetUserPostsByUsernameInput) int
-		Login                    func(childComplexity int, input model.LoginInput) int
-		Search                   func(childComplexity int, expression string) int
-		Test                     func(childComplexity int, input model.TestInput) int
+		GetUserByUsername          func(childComplexity int, username string) int
+		GetUserFollowersByUsername func(childComplexity int, username string, input *model.GetUserFollowersByUserIDInput) int
+		GetUserFollowingByUsername func(childComplexity int, username string, input *model.GetUserFollowersByUserIDInput) int
+		GetUserInfo                func(childComplexity int) int
+		GetUserPostsByUsername     func(childComplexity int, username string, input *model.GetUserPostsByUsernameInput) int
+		Login                      func(childComplexity int, input model.LoginInput) int
+		Search                     func(childComplexity int, expression string) int
+		Test                       func(childComplexity int, input model.TestInput) int
 	}
 
 	Search struct {
@@ -156,7 +157,8 @@ type PostResolver interface {
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
-	GetUserFollowersByUserID(ctx context.Context, userID string, input *model.GetUserFollowersByUserIDInput) (*model.User, error)
+	GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserFollowersByUserIDInput) (*model.Followers, error)
+	GetUserFollowingByUsername(ctx context.Context, username string, input *model.GetUserFollowersByUserIDInput) (*model.Followers, error)
 	GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
@@ -449,17 +451,29 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetUserByUsername(childComplexity, args["username"].(string)), true
 
-	case "Query.getUserFollowersByUserId":
-		if e.complexity.Query.GetUserFollowersByUserID == nil {
+	case "Query.getUserFollowersByUsername":
+		if e.complexity.Query.GetUserFollowersByUsername == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getUserFollowersByUserId_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getUserFollowersByUsername_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserFollowersByUserID(childComplexity, args["userId"].(string), args["input"].(*model.GetUserFollowersByUserIDInput)), true
+		return e.complexity.Query.GetUserFollowersByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserFollowersByUserIDInput)), true
+
+	case "Query.getUserFollowingByUsername":
+		if e.complexity.Query.GetUserFollowingByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getUserFollowingByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetUserFollowingByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserFollowersByUserIDInput)), true
 
 	case "Query.getUserInfo":
 		if e.complexity.Query.GetUserInfo == nil {
@@ -713,7 +727,8 @@ input GetUserFollowersByUserIdInput {
 }
 
 extend type Query {
-  getUserFollowersByUserId(userId: ID!, input: GetUserFollowersByUserIdInput): User!
+  getUserFollowersByUsername(username: String!, input: GetUserFollowersByUserIdInput): Followers!
+  getUserFollowingByUsername(username: String!, input: GetUserFollowersByUserIdInput): Followers!
 }
 
 extend type Mutation {
@@ -951,18 +966,42 @@ func (ec *executionContext) field_Query_getUserByUsername_args(ctx context.Conte
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getUserFollowersByUserId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getUserFollowersByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
-	if tmp, ok := rawArgs["userId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["userId"] = arg0
+	args["username"] = arg0
+	var arg1 *model.GetUserFollowersByUserIDInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalOGetUserFollowersByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐGetUserFollowersByUserIDInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUserFollowingByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	var arg1 *model.GetUserFollowersByUserIDInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
@@ -2317,7 +2356,7 @@ func (ec *executionContext) _Query_login(ctx context.Context, field graphql.Coll
 	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getUserFollowersByUserId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getUserFollowersByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2334,7 +2373,7 @@ func (ec *executionContext) _Query_getUserFollowersByUserId(ctx context.Context,
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getUserFollowersByUserId_args(ctx, rawArgs)
+	args, err := ec.field_Query_getUserFollowersByUsername_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2342,7 +2381,7 @@ func (ec *executionContext) _Query_getUserFollowersByUserId(ctx context.Context,
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserFollowersByUserID(rctx, args["userId"].(string), args["input"].(*model.GetUserFollowersByUserIDInput))
+		return ec.resolvers.Query().GetUserFollowersByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserFollowersByUserIDInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2354,9 +2393,51 @@ func (ec *executionContext) _Query_getUserFollowersByUserId(ctx context.Context,
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*model.Followers)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNFollowers2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollowers(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getUserFollowingByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getUserFollowingByUsername_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUserFollowingByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserFollowersByUserIDInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Followers)
+	fc.Result = res
+	return ec.marshalNFollowers2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollowers(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserPostsByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4654,7 +4735,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
-		case "getUserFollowersByUserId":
+		case "getUserFollowersByUsername":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -4662,7 +4743,21 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getUserFollowersByUserId(ctx, field)
+				res = ec._Query_getUserFollowersByUsername(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "getUserFollowingByUsername":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUserFollowingByUsername(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -5208,6 +5303,20 @@ func (ec *executionContext) marshalNFollower2ᚖgithubᚗcomᚋfavecodeᚋnote�
 		return graphql.Null
 	}
 	return ec._Follower(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNFollowers2githubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollowers(ctx context.Context, sel ast.SelectionSet, v model.Followers) graphql.Marshaler {
+	return ec._Followers(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNFollowers2ᚖgithubᚗcomᚋfavecodeᚋnoteᚑcoreᚋgraphᚋmodelᚐFollowers(ctx context.Context, sel ast.SelectionSet, v *model.Followers) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Followers(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {

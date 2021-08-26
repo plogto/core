@@ -18,7 +18,8 @@ input GetUserFollowersByUserIdInput {
 }
 
 extend type Query {
-  getUserFollowersByUserId(userId: ID!, input: GetUserFollowersByUserIdInput): User!
+  getUserFollowersByUsername(username: String!, input: GetUserFollowersByUserIdInput): Followers!
+  getUserFollowingByUsername(username: String!, input: GetUserFollowersByUserIdInput): Followers!
 }
 
 extend type Mutation {
