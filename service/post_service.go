@@ -28,13 +28,23 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 }
 
 func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error) {
-	_, err := middleware.GetCurrentUserFromCTX(ctx)
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	user, err := s.User.GetUserByUsername(username)
+	followingUser, err := s.User.GetUserByUsername(username)
+
+	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(followingUser.ID, user.ID)
+
+	if followingUser.ID != user.ID {
+		if followingUser.Private == bool(true) {
+			if len(follower.ID) < 1 || *follower.Status == 0 {
+				return nil, errors.New("you need to follow this user")
+			}
+		}
+	}
 
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -53,7 +63,7 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByUserIdAndPagination(user.ID, limit, page)
+	posts, _ := s.Post.GetPostsByUserIdAndPagination(followingUser.ID, limit, page)
 
 	return posts, nil
 }
