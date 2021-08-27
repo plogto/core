@@ -1,0 +1,30 @@
+type Connection {
+  id: ID!
+  following: User!
+  follower: User!
+  status: Int!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Connections{
+  connections: [Connection]!
+  pagination: Pagination
+}
+
+input GetUserConnectionsByUserIdInput {
+  page: Int
+  limit: Int
+}
+
+extend type Query {
+  getUserFollowersByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
+  getUserFollowingByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
+}
+
+extend type Mutation {
+  followUser(userId: ID!): Connection!
+  unfollowUser(userId: ID!): Connection!
+  acceptUser(userId: ID!): Connection!
+  rejectUser(userId: ID!): Connection!
+}
