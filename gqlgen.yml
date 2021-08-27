@@ -48,10 +48,10 @@ models:
     fields:
       user:
         resolver: true
-  Follower:
-    model: github.com/favecode/note-core/graph/model.Follower
+  Connection:
+    model: github.com/favecode/note-core/graph/model.Connection
     fields:
-      user:
+      following:
         resolver: true
       follower:
         resolver: true
