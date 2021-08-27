@@ -36,11 +36,11 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 
 	followingUser, err := s.User.GetUserByUsername(username)
 
-	follower, _ := s.Follower.GetFollowerByUserIdAndFollowerId(followingUser.ID, user.ID)
+	connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
 
 	if followingUser.ID != user.ID {
 		if followingUser.Private == bool(true) {
-			if len(follower.ID) < 1 || *follower.Status == 0 {
+			if len(connection.ID) < 1 || *connection.Status == 0 {
 				return nil, errors.New("you need to follow this user")
 			}
 		}
