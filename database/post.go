@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 
-	"github.com/favecode/note-core/graph/model"
-	"github.com/favecode/note-core/util"
+	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/poster-core/util"
 	"github.com/go-pg/pg"
 )
 

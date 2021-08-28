@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/note-core/graph/generated"
-	"github.com/favecode/note-core/graph/model"
+	"github.com/favecode/poster-core/graph/generated"
+	"github.com/favecode/poster-core/graph/model"
 )
 
 func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
