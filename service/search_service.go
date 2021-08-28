@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/note-core/graph/model"
+	"github.com/favecode/poster-core/graph/model"
 )
 
 func (s *Service) Search(ctx context.Context, expression string) (*model.Search, error) {
