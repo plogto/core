@@ -1,4 +1,4 @@
-module github.com/favecode/note-core
+module github.com/favecode/poster-core
 
 go 1.16
 

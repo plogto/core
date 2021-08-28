@@ -42,17 +42,17 @@ autobind: []
 # your liking
 models:
   User:
-    model: github.com/favecode/note-core/graph/model.User
+    model: github.com/favecode/poster-core/graph/model.User
     fields:
       connectionStatus:
         resolver: true
   Post:
-    model: github.com/favecode/note-core/graph/model.Post
+    model: github.com/favecode/poster-core/graph/model.Post
     fields:
       user:
         resolver: true
   Connection:
-    model: github.com/favecode/note-core/graph/model.Connection
+    model: github.com/favecode/poster-core/graph/model.Connection
     fields:
       following:
         resolver: true
