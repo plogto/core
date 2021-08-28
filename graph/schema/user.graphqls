@@ -5,6 +5,7 @@ type User {
   fullname: String
   role: String!
   private: Boolean!
+  connectionStatus: Int
   createdAt: Time!
   updatedAt: Time!
 }

@@ -7,7 +7,7 @@ type Connection {
   updatedAt: Time!
 }
 
-type Connections{
+type Connections {
   connections: [Connection]!
   pagination: Pagination
 }

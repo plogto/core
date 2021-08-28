@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 
+	"github.com/favecode/note-core/graph/generated"
 	"github.com/favecode/note-core/graph/model"
 )
 
@@ -16,3 +17,12 @@ func (r *queryResolver) GetUserInfo(ctx context.Context) (*model.User, error) {
 func (r *queryResolver) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	return r.Service.GetUserByUsername(ctx, username)
 }
+
+func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*int, error) {
+	return r.Service.GetConnectionStatus(ctx, obj.ID)
+}
+
+// User returns generated.UserResolver implementation.
+func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
+
+type userResolver struct{ *Resolver }
