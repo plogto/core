@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/favecode/note-core/graph/model"
+	"github.com/favecode/poster-core/graph/model"
 )
 
 type GetPaginationParams struct {

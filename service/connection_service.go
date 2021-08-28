@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/note-core/config"
-	"github.com/favecode/note-core/graph/model"
-	"github.com/favecode/note-core/middleware"
+	"github.com/favecode/poster-core/config"
+	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/poster-core/middleware"
 )
 
 func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connection, error) {
