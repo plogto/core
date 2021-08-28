@@ -161,3 +161,15 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 
 	return nil, nil
 }
+
+func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	connection, _ := s.Connection.GetConnection(userId, user.ID)
+
+	return connection.Status, nil
+}
