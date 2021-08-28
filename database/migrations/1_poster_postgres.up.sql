@@ -46,11 +46,12 @@ CREATE TABLE "post" (
   OIDS=FALSE
 );
 
+-- status => 1: pending, 2: following
 CREATE TABLE "connection" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"follower_id" uuid NOT NULL,
 	"following_id" uuid NOT NULL,
-	"status" INTEGER NOT NULL DEFAULT 0,
+	"status" INTEGER NOT NULL DEFAULT 1,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,

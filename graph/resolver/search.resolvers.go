@@ -6,7 +6,7 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/note-core/graph/model"
+	"github.com/favecode/poster-core/graph/model"
 )
 
 func (r *queryResolver) Search(ctx context.Context, expression string) (*model.Search, error) {
