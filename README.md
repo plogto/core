@@ -1,1 +1,1 @@
-# note-core
+# poster-core

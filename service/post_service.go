@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/note-core/config"
-	"github.com/favecode/note-core/graph/model"
-	"github.com/favecode/note-core/middleware"
+	"github.com/favecode/poster-core/config"
+	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/poster-core/middleware"
 )
 
 func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
