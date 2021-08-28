@@ -28,9 +28,9 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 		return connection, nil
 	}
 
-	status := 1
+	status := 2
 	if followingUser.Private == bool(true) {
-		status = 0
+		status = 1
 	}
 
 	newConnection := &model.Connection{
@@ -83,11 +83,11 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 		return nil, errors.New("connection not found")
 	}
 
-	if *connection.Status == 1 {
+	if *connection.Status == 2 {
 		return connection, nil
 	}
 
-	*connection.Status = 1
+	*connection.Status = 2
 
 	updatedConnection, _ := s.Connection.UpdateConnection(connection)
 
@@ -111,7 +111,7 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 		return nil, errors.New("connection not found")
 	}
 
-	if *connection.Status == 1 {
+	if *connection.Status == 2 {
 		return nil, errors.New("can not reject accepted request")
 	}
 
@@ -145,7 +145,7 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 	connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
 	if followingUser.ID != user.ID {
 		if followingUser.Private == bool(true) {
-			if len(connection.ID) < 1 || *connection.Status == 0 {
+			if len(connection.ID) < 1 || *connection.Status == 2 {
 				return nil, errors.New("you need to follow this user")
 			}
 		}
