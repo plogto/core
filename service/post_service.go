@@ -40,7 +40,7 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 
 	if followingUser.ID != user.ID {
 		if followingUser.Private == bool(true) {
-			if len(connection.ID) < 1 || *connection.Status == 0 {
+			if len(connection.ID) < 1 || *connection.Status < 2 {
 				return nil, errors.New("you need to follow this user")
 			}
 		}
