@@ -13,31 +13,46 @@ type Connection struct {
 	DB *pg.DB
 }
 
-func (f *Connection) GetConnectionsByFieldAndPagination(field string, value string, limit int, page int) (*model.Connections, error) {
+type ConnectionFilter struct {
+	Limit  int
+	Page   int
+	Status *int
+}
+
+func (f *Connection) GetConnectionsByFieldAndPagination(field string, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
-	var offset = (page - 1) * limit
+	var offset = (filter.Page - 1) * filter.Limit
 
-	query := f.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
-	query.Offset(offset).Limit(limit)
+	query := f.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
 
-	totalDocs, err := query.SelectAndCount()
+	if filter.Status != nil {
+		query.Where("status = ?", *filter.Status)
+	}
+
+	query.Offset(offset).Limit(filter.Limit)
+
+	totalDocs, err := query.Order("created_at DESC").Returning("*").SelectAndCount()
 
 	return &model.Connections{
 		Pagination: util.GetPatination(&util.GetPaginationParams{
-			Limit:     limit,
-			Page:      page,
+			Limit:     filter.Limit,
+			Page:      filter.Page,
 			TotalDocs: totalDocs,
 		}),
 		Connections: connections,
 	}, err
 }
 
-func (f *Connection) GetFollowersByUserIdAndPagination(followerId string, limit int, page int) (*model.Connections, error) {
-	return f.GetConnectionsByFieldAndPagination("following_id", followerId, limit, page)
+func (f *Connection) GetFollowersByUserIdAndPagination(followerId string, filter ConnectionFilter) (*model.Connections, error) {
+	return f.GetConnectionsByFieldAndPagination("following_id", followerId, filter)
 }
 
-func (f *Connection) GetFollowingByUserIdAndPagination(followingId string, limit int, page int) (*model.Connections, error) {
-	return f.GetConnectionsByFieldAndPagination("follower_id", followingId, limit, page)
+func (f *Connection) GetFollowingByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
+	return f.GetConnectionsByFieldAndPagination("follower_id", followingId, filter)
+}
+
+func (f *Connection) GetRequestedByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
+	return f.GetConnectionsByFieldAndPagination("following_id", followingId, filter)
 }
 
 func (f *Connection) CreateConnection(connection *model.Connection) (*model.Connection, error) {
