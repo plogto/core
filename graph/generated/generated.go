@@ -109,6 +109,7 @@ type ComplexityRoot struct {
 		GetUserFollowingByUsername func(childComplexity int, username string, input *model.GetUserConnectionsByUserIDInput) int
 		GetUserInfo                func(childComplexity int) int
 		GetUserPostsByUsername     func(childComplexity int, username string, input *model.GetUserPostsByUsernameInput) int
+		GetUserRequestedByUsername func(childComplexity int, username string, input *model.GetUserConnectionsByUserIDInput) int
 		Login                      func(childComplexity int, input model.LoginInput) int
 		Search                     func(childComplexity int, expression string) int
 		Test                       func(childComplexity int, input model.TestInput) int
@@ -161,6 +162,7 @@ type QueryResolver interface {
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
 	GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
 	GetUserFollowingByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
+	GetUserRequestedByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
 	GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
@@ -499,6 +501,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetUserPostsByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserPostsByUsernameInput)), true
 
+	case "Query.getUserRequestedByUsername":
+		if e.complexity.Query.GetUserRequestedByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getUserRequestedByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetUserRequestedByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput)), true
+
 	case "Query.login":
 		if e.complexity.Query.Login == nil {
 			break
@@ -741,6 +755,7 @@ input GetUserConnectionsByUserIdInput {
 extend type Query {
   getUserFollowersByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
   getUserFollowingByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
+  getUserRequestedByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
 }
 
 extend type Mutation {
@@ -809,7 +824,7 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/search.graphqls", Input: `type Search {
-  user: Users
+  user: Users!
 }
 
 extend type Query {
@@ -1043,6 +1058,30 @@ func (ec *executionContext) field_Query_getUserPostsByUsername_args(ctx context.
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg1, err = ec.unmarshalOGetUserPostsByUsernameInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserPostsByUsernameInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUserRequestedByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 *model.GetUserConnectionsByUserIDInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalOGetUserConnectionsByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserConnectionsByUserIDInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2423,6 +2462,48 @@ func (ec *executionContext) _Query_getUserFollowingByUsername(ctx context.Contex
 	return ec.marshalNConnections2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_getUserRequestedByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getUserRequestedByUsername_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUserRequestedByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Connections)
+	fc.Result = res
+	return ec.marshalNConnections2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_getUserPostsByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2671,11 +2752,14 @@ func (ec *executionContext) _Search_user(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Users)
 	fc.Result = res
-	return ec.marshalOUsers2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUsers(ctx, field.Selections, res)
+	return ec.marshalNUsers2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUsers(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Test_content(ctx context.Context, field graphql.CollectedField, obj *model.Test) (ret graphql.Marshaler) {
@@ -4736,6 +4820,20 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				}
 				return res
 			})
+		case "getUserRequestedByUsername":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUserRequestedByUsername(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "getUserPostsByUsername":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -4811,6 +4909,9 @@ func (ec *executionContext) _Search(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = graphql.MarshalString("Search")
 		case "user":
 			out.Values[i] = ec._Search_user(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5329,6 +5430,16 @@ func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑc
 	return ec._User(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNUsers2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUsers(ctx context.Context, sel ast.SelectionSet, v *model.Users) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Users(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
 	return ec.___Directive(ctx, sel, &v)
 }
@@ -5809,13 +5920,6 @@ func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑc
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUsers2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUsers(ctx context.Context, sel ast.SelectionSet, v *model.Users) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Users(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
