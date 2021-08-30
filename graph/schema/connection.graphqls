@@ -20,6 +20,7 @@ input GetUserConnectionsByUserIdInput {
 extend type Query {
   getUserFollowersByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
   getUserFollowingByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
+  getUserRequestedByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
 }
 
 extend type Mutation {
