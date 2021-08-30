@@ -8,7 +8,7 @@ type Post {
 }
 
 type Posts{
-  posts: [Post]!
+  posts: [Post]
   pagination: Pagination
 }
 
@@ -27,5 +27,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post!
+  addPost(input: addPostInput!): Post
 }
