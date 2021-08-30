@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/favecode/poster-core/config"
+	"github.com/favecode/poster-core/database"
 	"github.com/favecode/poster-core/graph/model"
 	"github.com/favecode/poster-core/middleware"
 )
@@ -158,11 +159,26 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 		}
 	}
 
-	if resultType == "follower" {
-		connections, _ := s.Connection.GetFollowersByUserIdAndPagination(followingUser.ID, limit, page)
+	switch resultType {
+	case "follower":
+		connections, _ := s.Connection.GetFollowersByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+			Limit: limit,
+			Page:  page,
+		})
 		return connections, nil
-	} else if resultType == "following" {
-		connections, _ := s.Connection.GetFollowingByUserIdAndPagination(followingUser.ID, limit, page)
+	case "following":
+		connections, _ := s.Connection.GetFollowingByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+			Limit: limit,
+			Page:  page,
+		})
+		return connections, nil
+	case "requested":
+		status := 1
+		connections, _ := s.Connection.GetRequestedByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+			Limit:  limit,
+			Page:   page,
+			Status: &status,
+		})
 		return connections, nil
 	}
 
