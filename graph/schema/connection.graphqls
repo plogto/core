@@ -2,13 +2,13 @@ type Connection {
   id: ID!
   following: User!
   follower: User!
-  status: Int!
+  status: Int
   createdAt: Time!
   updatedAt: Time!
 }
 
 type Connections {
-  connections: [Connection]!
+  connections: [Connection]
   pagination: Pagination
 }
 
@@ -23,8 +23,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  followUser(userId: ID!): Connection!
-  unfollowUser(userId: ID!): Connection!
-  acceptUser(userId: ID!): Connection!
-  rejectUser(userId: ID!): Connection!
+  followUser(userId: ID!): Connection
+  unfollowUser(userId: ID!): Connection
+  acceptUser(userId: ID!): Connection
+  rejectUser(userId: ID!): Connection
 }
