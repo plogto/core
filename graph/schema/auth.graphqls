@@ -20,9 +20,9 @@ type AuthResponse {
 }
 
 extend type Query {
-  login(input: LoginInput!): AuthResponse!
+  login(input: LoginInput!): AuthResponse
 }
 
 extend type Mutation {
-  register(input: RegisterInput!): AuthResponse!
+  register(input: RegisterInput!): AuthResponse
 }

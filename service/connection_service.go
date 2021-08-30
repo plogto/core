@@ -63,7 +63,14 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 
 	deletedConnection, _ := s.Connection.DeleteConnection(connection.ID)
 
-	return deletedConnection, nil
+	return &model.Connection{
+		ID:          deletedConnection.ID,
+		FollowerID:  deletedConnection.FollowerID,
+		FollowingID: deletedConnection.FollowingID,
+		Status:      nil,
+		CreatedAt:   deletedConnection.CreatedAt,
+		UpdatedAt:   deletedConnection.UpdatedAt,
+	}, nil
 }
 
 func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connection, error) {

@@ -3,5 +3,5 @@ type Search {
 }
 
 extend type Query {
-  search(expression: String!): Search!
+  search(expression: String!): Search
 }
