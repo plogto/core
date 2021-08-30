@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/favecode/poster-core/graph/model"
 	"github.com/favecode/poster-core/util"
@@ -14,12 +15,15 @@ type User struct {
 
 func (u *User) GetUserByField(field, value string) (*model.User, error) {
 	var user model.User
-	err := u.DB.Model(&user).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
+	value = strings.ToLower(value)
+	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = ?", field), value).Where("deleted_at is ?", nil).First()
 	return &user, err
 }
 
 func (u *User) GetUserByID(id string) (*model.User, error) {
-	return u.GetUserByField("id", id)
+	var user model.User
+	err := u.DB.Model(&user).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+	return &user, err
 }
 
 func (u *User) GetUserByEmail(email string) (*model.User, error) {
@@ -32,15 +36,17 @@ func (u *User) GetUserByUsername(username string) (*model.User, error) {
 
 func (u *User) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	var user model.User
-	err := u.DB.Model(&user).Where("username = ?", value).WhereOr("email = ?", value).Where("deleted_at is ?", nil).First()
+	value = strings.ToLower(value)
+	err := u.DB.Model(&user).Where("lower(username) = ?", value).WhereOr("lower(email) = ?", value).Where("deleted_at is ?", nil).First()
 	return &user, err
 }
 
 func (u *User) GetUserByUsernameOrFullnameAndPagination(value string, limit int, page int) (*model.Users, error) {
 	var users []*model.User
 	var offset = (page - 1) * limit
+	value = strings.ToLower(value)
 
-	query := u.DB.Model(&users).Where("username LIKE ?", value).WhereOr("fullname LIKE ?", value).Where("deleted_at is ?", nil)
+	query := u.DB.Model(&users).Where("lower(username) LIKE ?", value).WhereOr("lower(fullname) LIKE ?", value).Where("deleted_at is ?", nil)
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()

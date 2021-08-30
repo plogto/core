@@ -712,24 +712,24 @@ type AuthResponse {
 }
 
 extend type Query {
-  login(input: LoginInput!): AuthResponse!
+  login(input: LoginInput!): AuthResponse
 }
 
 extend type Mutation {
-  register(input: RegisterInput!): AuthResponse!
+  register(input: RegisterInput!): AuthResponse
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/connection.graphqls", Input: `type Connection {
   id: ID!
   following: User!
   follower: User!
-  status: Int!
+  status: Int
   createdAt: Time!
   updatedAt: Time!
 }
 
 type Connections {
-  connections: [Connection]!
+  connections: [Connection]
   pagination: Pagination
 }
 
@@ -744,10 +744,10 @@ extend type Query {
 }
 
 extend type Mutation {
-  followUser(userId: ID!): Connection!
-  unfollowUser(userId: ID!): Connection!
-  acceptUser(userId: ID!): Connection!
-  rejectUser(userId: ID!): Connection!
+  followUser(userId: ID!): Connection
+  unfollowUser(userId: ID!): Connection
+  acceptUser(userId: ID!): Connection
+  rejectUser(userId: ID!): Connection
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/main.graphqls", Input: `scalar Time
@@ -786,7 +786,7 @@ type Mutation {
 }
 
 type Posts{
-  posts: [Post]!
+  posts: [Post]
   pagination: Pagination
 }
 
@@ -805,7 +805,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post!
+  addPost(input: addPostInput!): Post
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/search.graphqls", Input: `type Search {
@@ -813,7 +813,7 @@ extend type Mutation {
 }
 
 extend type Query {
-  search(expression: String!): Search!
+  search(expression: String!): Search
 }`, BuiltIn: false},
 	{Name: "graph/schema/user.graphqls", Input: `type User {
   id: ID!
@@ -828,13 +828,13 @@ extend type Query {
 }
 
 type Users{
-  users: [User]!
+  users: [User]
   pagination: Pagination
 }
 
 extend type Query {
-  getUserInfo: User!
-  getUserByUsername(username: String!): User!
+  getUserInfo: User
+  getUserByUsername(username: String!): User
 }
 `, BuiltIn: false},
 }
@@ -1404,14 +1404,11 @@ func (ec *executionContext) _Connection_status(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalNInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connection_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
@@ -1509,14 +1506,11 @@ func (ec *executionContext) _Connections_connections(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Connection)
 	fc.Result = res
-	return ec.marshalNConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connections_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Connections) (ret graphql.Marshaler) {
@@ -1622,14 +1616,11 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_followUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1664,14 +1655,11 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalNConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1706,14 +1694,11 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalNConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1748,14 +1733,11 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalNConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1790,14 +1772,11 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalNConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1832,14 +1811,11 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Pagination_totalDocs(ctx context.Context, field graphql.CollectedField, obj *model.Pagination) (ret graphql.Marshaler) {
@@ -2246,14 +2222,11 @@ func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Posts_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
@@ -2359,14 +2332,11 @@ func (ec *executionContext) _Query_login(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalNAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserFollowersByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2527,14 +2497,11 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.Search)
 	fc.Result = res
-	return ec.marshalNSearch2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx, field.Selections, res)
+	return ec.marshalOSearch2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2562,14 +2529,11 @@ func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2604,14 +2568,11 @@ func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3083,14 +3044,11 @@ func (ec *executionContext) _Users_users(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Users_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Users) (ret graphql.Marshaler) {
@@ -4498,9 +4456,6 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 			})
 		case "status":
 			out.Values[i] = ec._Connection_status(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
-			}
 		case "createdAt":
 			out.Values[i] = ec._Connection_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -4535,9 +4490,6 @@ func (ec *executionContext) _Connections(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = graphql.MarshalString("Connections")
 		case "connections":
 			out.Values[i] = ec._Connections_connections(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "pagination":
 			out.Values[i] = ec._Connections_pagination(ctx, field, obj)
 		default:
@@ -4570,34 +4522,16 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_test(ctx, field)
 		case "register":
 			out.Values[i] = ec._Mutation_register(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "followUser":
 			out.Values[i] = ec._Mutation_followUser(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "unfollowUser":
 			out.Values[i] = ec._Mutation_unfollowUser(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "acceptUser":
 			out.Values[i] = ec._Mutation_acceptUser(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "rejectUser":
 			out.Values[i] = ec._Mutation_rejectUser(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "addPost":
 			out.Values[i] = ec._Mutation_addPost(ctx, field)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -4724,9 +4658,6 @@ func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = graphql.MarshalString("Posts")
 		case "posts":
 			out.Values[i] = ec._Posts_posts(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "pagination":
 			out.Values[i] = ec._Posts_pagination(ctx, field, obj)
 		default:
@@ -4775,9 +4706,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_login(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "getUserFollowersByUsername":
@@ -4831,9 +4759,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_search(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "getUserInfo":
@@ -4845,9 +4770,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserInfo(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "getUserByUsername":
@@ -4859,9 +4781,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserByUsername(ctx, field)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
 				return res
 			})
 		case "__type":
@@ -5010,9 +4929,6 @@ func (ec *executionContext) _Users(ctx context.Context, sel ast.SelectionSet, ob
 			out.Values[i] = graphql.MarshalString("Users")
 		case "users":
 			out.Values[i] = ec._Users_users(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
 		case "pagination":
 			out.Values[i] = ec._Users_pagination(ctx, field, obj)
 		default:
@@ -5271,20 +5187,6 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthResponse2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v model.AuthResponse) graphql.Marshaler {
-	return ec._AuthResponse(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._AuthResponse(ctx, sel, v)
-}
-
 func (ec *executionContext) marshalNAuthToken2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthToken(ctx context.Context, sel ast.SelectionSet, v *model.AuthToken) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -5308,57 +5210,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) marshalNConnection2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v model.Connection) graphql.Marshaler {
-	return ec._Connection(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Connection(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNConnections2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnections(ctx context.Context, sel ast.SelectionSet, v model.Connections) graphql.Marshaler {
@@ -5405,81 +5256,9 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := graphql.MarshalInt(*v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
 	res, err := ec.unmarshalInputLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNPost2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
-	return ec._Post(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNPost2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Post(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPosts2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v model.Posts) graphql.Marshaler {
@@ -5499,20 +5278,6 @@ func (ec *executionContext) marshalNPosts2ᚖgithubᚗcomᚋfavecodeᚋposterᚑ
 func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v interface{}) (model.RegisterInput, error) {
 	res, err := ec.unmarshalInputRegisterInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNSearch2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx context.Context, sel ast.SelectionSet, v model.Search) graphql.Marshaler {
-	return ec._Search(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNSearch2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx context.Context, sel ast.SelectionSet, v *model.Search) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	return ec._Search(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -5552,43 +5317,6 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 
 func (ec *executionContext) marshalNUser2githubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
-}
-
-func (ec *executionContext) marshalNUser2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
 }
 
 func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
@@ -5835,6 +5563,13 @@ func (ec *executionContext) unmarshalNaddPostInput2githubᚗcomᚋfavecodeᚋpos
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._AuthResponse(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -5857,6 +5592,46 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 		return graphql.Null
 	}
 	return graphql.MarshalBoolean(*v)
+}
+
+func (ec *executionContext) marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
@@ -5904,11 +5679,58 @@ func (ec *executionContext) marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋpost
 	return ec._Pagination(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
 func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOSearch2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx context.Context, sel ast.SelectionSet, v *model.Search) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Search(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOString2string(ctx context.Context, v interface{}) (string, error) {
@@ -5940,6 +5762,46 @@ func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋposterᚑc
 		return graphql.Null
 	}
 	return ec._Test(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
 }
 
 func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
