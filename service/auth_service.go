@@ -37,7 +37,7 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 }
 
 func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
-	_, err := s.User.GetUserByEmail(input.Email)
+	_, err := s.User.GetUserByUsernameOrEmail(input.Email)
 	if err == nil {
 		return nil, errors.New("email has already been taken")
 	}
