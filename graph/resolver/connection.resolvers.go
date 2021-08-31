@@ -42,8 +42,8 @@ func (r *queryResolver) GetUserFollowingByUsername(ctx context.Context, username
 	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "following")
 }
 
-func (r *queryResolver) GetUserRequestedByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
-	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "requested")
+func (r *queryResolver) GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
+	return r.Service.GetUserFollowRequests(ctx, input)
 }
 
 // Connection returns generated.ConnectionResolver implementation.
