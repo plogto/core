@@ -51,7 +51,7 @@ func (f *Connection) GetFollowingByUserIdAndPagination(followingId string, filte
 	return f.GetConnectionsByFieldAndPagination("follower_id", followingId, filter)
 }
 
-func (f *Connection) GetRequestedByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
+func (f *Connection) GetFollowRequestsByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
 	return f.GetConnectionsByFieldAndPagination("following_id", followingId, filter)
 }
 
