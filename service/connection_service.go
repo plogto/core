@@ -172,9 +172,9 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 			Page:  page,
 		})
 		return connections, nil
-	case "requested":
+	case "requests":
 		status := 1
-		connections, _ := s.Connection.GetRequestedByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+		connections, _ := s.Connection.GetFollowRequestsByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &status,
@@ -195,4 +195,14 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int,
 	connection, _ := s.Connection.GetConnection(userId, user.ID)
 
 	return connection.Status, nil
+}
+
+func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	return s.GetUserConnectionsByUsername(ctx, user.Username, input, "requests")
 }
