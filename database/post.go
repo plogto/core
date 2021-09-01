@@ -41,6 +41,11 @@ func (p *Post) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }
 
+func (p *Post) CountPostsByUserId(userId string) (*int, error) {
+	count, err := p.DB.Model((*model.Post)(nil)).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Count()
+	return &count, err
+}
+
 func (p *Post) CreatePost(post *model.Post) (*model.Post, error) {
 	_, err := p.DB.Model(post).Returning("*").Insert()
 	return post, err

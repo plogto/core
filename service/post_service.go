@@ -67,3 +67,15 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 
 	return posts, nil
 }
+
+func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	count, _ := s.Post.CountPostsByUserId(userId)
+
+	return count, nil
+}
