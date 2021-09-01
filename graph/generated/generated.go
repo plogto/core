@@ -127,8 +127,11 @@ type ComplexityRoot struct {
 		ConnectionStatus func(childComplexity int) int
 		CreatedAt        func(childComplexity int) int
 		Email            func(childComplexity int) int
+		FollowersCount   func(childComplexity int) int
+		FollowingCount   func(childComplexity int) int
 		Fullname         func(childComplexity int) int
 		ID               func(childComplexity int) int
+		PostsCount       func(childComplexity int) int
 		Private          func(childComplexity int) int
 		Role             func(childComplexity int) int
 		UpdatedAt        func(childComplexity int) int
@@ -170,6 +173,9 @@ type QueryResolver interface {
 }
 type UserResolver interface {
 	ConnectionStatus(ctx context.Context, obj *model.User) (*int, error)
+	FollowingCount(ctx context.Context, obj *model.User) (*int, error)
+	FollowersCount(ctx context.Context, obj *model.User) (*int, error)
+	PostsCount(ctx context.Context, obj *model.User) (*int, error)
 }
 
 type executableSchema struct {
@@ -584,6 +590,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Email(childComplexity), true
 
+	case "User.followersCount":
+		if e.complexity.User.FollowersCount == nil {
+			break
+		}
+
+		return e.complexity.User.FollowersCount(childComplexity), true
+
+	case "User.followingCount":
+		if e.complexity.User.FollowingCount == nil {
+			break
+		}
+
+		return e.complexity.User.FollowingCount(childComplexity), true
+
 	case "User.fullname":
 		if e.complexity.User.Fullname == nil {
 			break
@@ -597,6 +617,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+
+	case "User.postsCount":
+		if e.complexity.User.PostsCount == nil {
+			break
+		}
+
+		return e.complexity.User.PostsCount(childComplexity), true
 
 	case "User.private":
 		if e.complexity.User.Private == nil {
@@ -838,6 +865,9 @@ extend type Query {
   role: String!
   private: Boolean!
   connectionStatus: Int
+  followingCount: Int 
+  followersCount: Int 
+  postsCount: Int 
   createdAt: Time!
   updatedAt: Time!
 }
@@ -3024,6 +3054,102 @@ func (ec *executionContext) _User_connectionStatus(ctx context.Context, field gr
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_followingCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().FollowingCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_followersCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().FollowersCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().PostsCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -4985,6 +5111,39 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_connectionStatus(ctx, field, obj)
+				return res
+			})
+		case "followingCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_followingCount(ctx, field, obj)
+				return res
+			})
+		case "followersCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_followersCount(ctx, field, obj)
+				return res
+			})
+		case "postsCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_postsCount(ctx, field, obj)
 				return res
 			})
 		case "createdAt":

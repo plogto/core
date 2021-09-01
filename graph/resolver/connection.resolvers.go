@@ -35,7 +35,7 @@ func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*mode
 }
 
 func (r *queryResolver) GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
-	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "follower")
+	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "followers")
 }
 
 func (r *queryResolver) GetUserFollowingByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {

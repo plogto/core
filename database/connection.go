@@ -19,11 +19,11 @@ type ConnectionFilter struct {
 	Status *int
 }
 
-func (f *Connection) GetConnectionsByFieldAndPagination(field string, value string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connection) GetConnectionsByFieldAndPagination(field string, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
 	var offset = (filter.Page - 1) * filter.Limit
 
-	query := f.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
+	query := c.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
 
 	if filter.Status != nil {
 		query.Where("status = ?", *filter.Status)
@@ -43,46 +43,51 @@ func (f *Connection) GetConnectionsByFieldAndPagination(field string, value stri
 	}, err
 }
 
-func (f *Connection) GetFollowersByUserIdAndPagination(followerId string, filter ConnectionFilter) (*model.Connections, error) {
-	return f.GetConnectionsByFieldAndPagination("following_id", followerId, filter)
+func (c *Connection) GetFollowersByUserIdAndPagination(followerId string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("following_id", followerId, filter)
 }
 
-func (f *Connection) GetFollowingByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
-	return f.GetConnectionsByFieldAndPagination("follower_id", followingId, filter)
+func (c *Connection) GetFollowingByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("follower_id", followingId, filter)
 }
 
-func (f *Connection) GetFollowRequestsByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
-	return f.GetConnectionsByFieldAndPagination("following_id", followingId, filter)
+func (c *Connection) GetFollowRequestsByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("following_id", followingId, filter)
 }
 
-func (f *Connection) CreateConnection(connection *model.Connection) (*model.Connection, error) {
-	_, err := f.DB.Model(connection).Returning("*").Insert()
+func (c *Connection) CreateConnection(connection *model.Connection) (*model.Connection, error) {
+	_, err := c.DB.Model(connection).Returning("*").Insert()
 	return connection, err
 }
 
-func (f *Connection) GetConnectionByField(field, value string) (*model.Connection, error) {
+func (c *Connection) GetConnectionByField(field, value string) (*model.Connection, error) {
 	var connection model.Connection
-	err := f.DB.Model(&connection).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
+	err := c.DB.Model(&connection).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
 	return &connection, err
 }
 
-func (f *Connection) GetConnection(followingId string, followerId string) (*model.Connection, error) {
+func (c *Connection) GetConnection(followingId string, followerId string) (*model.Connection, error) {
 	var connection model.Connection
-	err := f.DB.Model(&connection).Where("following_id = ?", followingId).Where("follower_id = ?", followerId).Where("deleted_at is ?", nil).First()
+	err := c.DB.Model(&connection).Where("following_id = ?", followingId).Where("follower_id = ?", followerId).Where("deleted_at is ?", nil).First()
 	return &connection, err
 }
 
-func (f *Connection) UpdateConnection(connection *model.Connection) (*model.Connection, error) {
-	_, err := f.DB.Model(connection).Where("id = ?", connection.ID).Where("deleted_at is ?", nil).Returning("*").Update()
+func (c *Connection) UpdateConnection(connection *model.Connection) (*model.Connection, error) {
+	_, err := c.DB.Model(connection).Where("id = ?", connection.ID).Where("deleted_at is ?", nil).Returning("*").Update()
 	return connection, err
 }
 
-func (f *Connection) DeleteConnection(id string) (*model.Connection, error) {
+func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	DeletedAt := time.Now()
 	var connection = &model.Connection{
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := f.DB.Model(connection).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
 	return connection, err
+}
+
+func (c *Connection) CountConnectionByUserId(field string, userId string) (*int, error) {
+	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userId).Where("status = ?", 2).Where("deleted_at is ?", nil).Count()
+	return &count, err
 }
