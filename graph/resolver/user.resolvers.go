@@ -22,6 +22,18 @@ func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*
 	return r.Service.GetConnectionStatus(ctx, obj.ID)
 }
 
+func (r *userResolver) FollowingCount(ctx context.Context, obj *model.User) (*int, error) {
+	return r.Service.GetConnectionCount(ctx, obj.ID, "following")
+}
+
+func (r *userResolver) FollowersCount(ctx context.Context, obj *model.User) (*int, error) {
+	return r.Service.GetConnectionCount(ctx, obj.ID, "followers")
+}
+
+func (r *userResolver) PostsCount(ctx context.Context, obj *model.User) (*int, error) {
+	return r.Service.GetPostsCount(ctx, obj.ID)
+}
+
 // User returns generated.UserResolver implementation.
 func (r *Resolver) User() generated.UserResolver { return &userResolver{r} }
 
