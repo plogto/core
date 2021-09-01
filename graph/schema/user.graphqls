@@ -6,6 +6,9 @@ type User {
   role: String!
   private: Boolean!
   connectionStatus: Int
+  followingCount: Int 
+  followersCount: Int 
+  postsCount: Int 
   createdAt: Time!
   updatedAt: Time!
 }

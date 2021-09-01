@@ -46,6 +46,12 @@ models:
     fields:
       connectionStatus:
         resolver: true
+      followingCount:
+        resolver: true
+      followersCount:
+        resolver: true
+      postsCount:
+        resolver: true
   Post:
     model: github.com/favecode/poster-core/graph/model.Post
     fields:
