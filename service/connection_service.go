@@ -160,7 +160,7 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 	}
 
 	switch resultType {
-	case "follower":
+	case "followers":
 		connections, _ := s.Connection.GetFollowersByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit: limit,
 			Page:  page,
@@ -185,6 +185,16 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 	return nil, nil
 }
 
+func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	return s.GetUserConnectionsByUsername(ctx, user.Username, input, "requests")
+}
+
 func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
@@ -197,12 +207,21 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int,
 	return connection.Status, nil
 }
 
-func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
+func (s *Service) GetConnectionCount(ctx context.Context, userId string, resultType string) (*int, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	return s.GetUserConnectionsByUsername(ctx, user.Username, input, "requests")
+	switch resultType {
+	case "followers":
+		count, _ := s.Connection.CountConnectionByUserId("following_id", userId)
+		return count, nil
+	case "following":
+		count, _ := s.Connection.CountConnectionByUserId("follower_id", userId)
+		return count, nil
+	}
+
+	return nil, nil
 }
