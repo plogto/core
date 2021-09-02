@@ -30,6 +30,10 @@ func (r *userResolver) FollowersCount(ctx context.Context, obj *model.User) (*in
 	return r.Service.GetConnectionCount(ctx, obj.ID, "followers")
 }
 
+func (r *userResolver) FollowRequestsCount(ctx context.Context, obj *model.User) (*int, error) {
+	return r.Service.GetConnectionCount(ctx, obj.ID, "requests")
+}
+
 func (r *userResolver) PostsCount(ctx context.Context, obj *model.User) (*int, error) {
 	return r.Service.GetPostsCount(ctx, obj.ID)
 }
