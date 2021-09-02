@@ -124,18 +124,19 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		ConnectionStatus func(childComplexity int) int
-		CreatedAt        func(childComplexity int) int
-		Email            func(childComplexity int) int
-		FollowersCount   func(childComplexity int) int
-		FollowingCount   func(childComplexity int) int
-		Fullname         func(childComplexity int) int
-		ID               func(childComplexity int) int
-		PostsCount       func(childComplexity int) int
-		Private          func(childComplexity int) int
-		Role             func(childComplexity int) int
-		UpdatedAt        func(childComplexity int) int
-		Username         func(childComplexity int) int
+		ConnectionStatus    func(childComplexity int) int
+		CreatedAt           func(childComplexity int) int
+		Email               func(childComplexity int) int
+		FollowRequestsCount func(childComplexity int) int
+		FollowersCount      func(childComplexity int) int
+		FollowingCount      func(childComplexity int) int
+		Fullname            func(childComplexity int) int
+		ID                  func(childComplexity int) int
+		PostsCount          func(childComplexity int) int
+		Private             func(childComplexity int) int
+		Role                func(childComplexity int) int
+		UpdatedAt           func(childComplexity int) int
+		Username            func(childComplexity int) int
 	}
 
 	Users struct {
@@ -175,6 +176,7 @@ type UserResolver interface {
 	ConnectionStatus(ctx context.Context, obj *model.User) (*int, error)
 	FollowingCount(ctx context.Context, obj *model.User) (*int, error)
 	FollowersCount(ctx context.Context, obj *model.User) (*int, error)
+	FollowRequestsCount(ctx context.Context, obj *model.User) (*int, error)
 	PostsCount(ctx context.Context, obj *model.User) (*int, error)
 }
 
@@ -590,6 +592,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Email(childComplexity), true
 
+	case "User.followRequestsCount":
+		if e.complexity.User.FollowRequestsCount == nil {
+			break
+		}
+
+		return e.complexity.User.FollowRequestsCount(childComplexity), true
+
 	case "User.followersCount":
 		if e.complexity.User.FollowersCount == nil {
 			break
@@ -867,6 +876,7 @@ extend type Query {
   connectionStatus: Int
   followingCount: Int 
   followersCount: Int 
+  followRequestsCount: Int 
   postsCount: Int 
   createdAt: Time!
   updatedAt: Time!
@@ -3118,6 +3128,38 @@ func (ec *executionContext) _User_followersCount(ctx context.Context, field grap
 	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _User_followRequestsCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.User().FollowRequestsCount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -5133,6 +5175,17 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_followersCount(ctx, field, obj)
+				return res
+			})
+		case "followRequestsCount":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_followRequestsCount(ctx, field, obj)
 				return res
 			})
 		case "postsCount":
