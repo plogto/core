@@ -50,6 +50,8 @@ models:
         resolver: true
       followersCount:
         resolver: true
+      followRequestsCount:
+        resolver: true
       postsCount:
         resolver: true
   Post:
