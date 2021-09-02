@@ -8,6 +8,7 @@ type User {
   connectionStatus: Int
   followingCount: Int 
   followersCount: Int 
+  followRequestsCount: Int 
   postsCount: Int 
   createdAt: Time!
   updatedAt: Time!
