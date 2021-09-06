@@ -4,7 +4,7 @@ type User {
   email: String!
   fullname: String
   role: String!
-  private: Boolean!
+  isPrivate: Boolean!
   connectionStatus: Int
   followingCount: Int 
   followersCount: Int 
