@@ -132,8 +132,8 @@ type ComplexityRoot struct {
 		FollowingCount      func(childComplexity int) int
 		Fullname            func(childComplexity int) int
 		ID                  func(childComplexity int) int
+		IsPrivate           func(childComplexity int) int
 		PostsCount          func(childComplexity int) int
-		Private             func(childComplexity int) int
 		Role                func(childComplexity int) int
 		UpdatedAt           func(childComplexity int) int
 		Username            func(childComplexity int) int
@@ -627,19 +627,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
+	case "User.isPrivate":
+		if e.complexity.User.IsPrivate == nil {
+			break
+		}
+
+		return e.complexity.User.IsPrivate(childComplexity), true
+
 	case "User.postsCount":
 		if e.complexity.User.PostsCount == nil {
 			break
 		}
 
 		return e.complexity.User.PostsCount(childComplexity), true
-
-	case "User.private":
-		if e.complexity.User.Private == nil {
-			break
-		}
-
-		return e.complexity.User.Private(childComplexity), true
 
 	case "User.role":
 		if e.complexity.User.Role == nil {
@@ -872,7 +872,7 @@ extend type Query {
   email: String!
   fullname: String
   role: String!
-  private: Boolean!
+  isPrivate: Boolean!
   connectionStatus: Int
   followingCount: Int 
   followersCount: Int 
@@ -2997,7 +2997,7 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_private(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_isPrivate(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3015,7 +3015,7 @@ func (ec *executionContext) _User_private(ctx context.Context, field graphql.Col
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Private, nil
+		return obj.IsPrivate, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5139,8 +5139,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "private":
-			out.Values[i] = ec._User_private(ctx, field, obj)
+		case "isPrivate":
+			out.Values[i] = ec._User_isPrivate(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
