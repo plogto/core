@@ -14,7 +14,7 @@ type User struct {
 	Email     string     `json:"email"`
 	Fullname  *string    `json:"fullname"`
 	Role      string     `json:"role"`
-	Private   bool       `json:"private"`
+	IsPrivate bool       `json:"is_private"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
