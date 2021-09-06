@@ -30,7 +30,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	status := 2
-	if followingUser.Private == bool(true) {
+	if followingUser.IsPrivate == bool(true) {
 		status = 1
 	}
 
@@ -152,7 +152,7 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 
 	connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
 	if followingUser.ID != user.ID {
-		if followingUser.Private == bool(true) {
+		if followingUser.IsPrivate == bool(true) {
 			if len(connection.ID) < 1 || *connection.Status < 2 {
 				return nil, errors.New("you need to follow this user")
 			}

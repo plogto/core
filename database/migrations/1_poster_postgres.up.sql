@@ -12,7 +12,7 @@ CREATE TABLE "user" (
 	"email" VARCHAR(100) NOT NULL UNIQUE,
 	"fullname" VARCHAR(64) NOT NULL,
 	"role" user_roles DEFAULT 'USER',
-	"private" BOOLEAN NOT NULL DEFAULT FALSE,
+	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
   "created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
