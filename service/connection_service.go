@@ -196,10 +196,10 @@ func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.GetUse
 }
 
 func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	if err != nil {
-		return nil, errors.New(err.Error())
+	if user == nil {
+		return nil, nil
 	}
 
 	connection, _ := s.Connection.GetConnection(userId, user.ID)
@@ -218,8 +218,8 @@ func (s *Service) GetConnectionCount(ctx context.Context, userId string, resultT
 		count, _ := s.Connection.CountConnectionByUserId("follower_id", userId, 2)
 		return count, nil
 	case "requests":
-		if user.ID != userId {
-			return nil, errors.New("access denied")
+		if user == nil || user.ID != userId {
+			return nil, nil
 		}
 		count, _ := s.Connection.CountConnectionByUserId("following_id", userId, 1)
 		return count, nil
