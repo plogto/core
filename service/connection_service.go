@@ -129,11 +129,7 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 }
 
 func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput, resultType string) (*model.Connections, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	followingUser, _ := s.User.GetUserByUsername(username)
 
@@ -212,11 +208,7 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int,
 }
 
 func (s *Service) GetConnectionCount(ctx context.Context, userId string, resultType string) (*int, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	switch resultType {
 	case "followers":
