@@ -28,20 +28,18 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 }
 
 func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsByUsernameInput) (*model.Posts, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	followingUser, err := s.User.GetUserByUsername(username)
 
-	connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
+	if user != nil {
+		connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
 
-	if followingUser.ID != user.ID {
-		if followingUser.IsPrivate == bool(true) {
-			if len(connection.ID) < 1 || *connection.Status < 2 {
-				return nil, errors.New("you need to follow this user")
+		if followingUser.ID != user.ID {
+			if followingUser.IsPrivate == bool(true) {
+				if len(connection.ID) < 1 || *connection.Status < 2 {
+					return nil, errors.New("you need to follow this user")
+				}
 			}
 		}
 	}
@@ -69,12 +67,6 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 }
 
 func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error) {
-	_, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
 	count, _ := s.Post.CountPostsByUserId(userId)
 
 	return count, nil
