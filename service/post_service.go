@@ -7,6 +7,8 @@ import (
 	"github.com/favecode/poster-core/config"
 	"github.com/favecode/poster-core/graph/model"
 	"github.com/favecode/poster-core/middleware"
+	"github.com/favecode/poster-core/util"
+	"github.com/gernest/mention"
 )
 
 func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
@@ -23,6 +25,20 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	s.Post.CreatePost(post)
+
+	tags := mention.GetTagsAsUniqueStrings('#', post.Content)
+	for _, tagName := range util.UniqueSliceElement(tags) {
+		tag := &model.Tag{
+			Name: tagName,
+		}
+		s.Tag.CreateTag(tag)
+
+		postTag := &model.PostTag{
+			TagID:  tag.ID,
+			PostID: post.ID,
+		}
+		s.PostTag.CreatePostTag(postTag)
+	}
 
 	return post, nil
 }
