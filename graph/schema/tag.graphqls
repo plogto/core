@@ -1,6 +1,7 @@
 type Tag {
   id: ID!
   name: String!
+  count: Int 
   createdAt: Time!
   updatedAt: Time!
 }
