@@ -12,15 +12,10 @@ type Connections {
   pagination: Pagination
 }
 
-input GetUserConnectionsByUserIdInput {
-  page: Int
-  limit: Int
-}
-
 extend type Query {
-  getUserFollowersByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
-  getUserFollowingByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
-  getUserFollowRequests(input: GetUserConnectionsByUserIdInput): Connections!
+  getUserFollowersByUsername(username: String!, input: PaginationInput): Connections!
+  getUserFollowingByUsername(username: String!, input: PaginationInput): Connections!
+  getUserFollowRequests(input: PaginationInput): Connections!
 }
 
 extend type Mutation {

@@ -7,7 +7,7 @@ type Post {
   updatedAt: Time!
 }
 
-type Posts{
+type Posts {
   posts: [Post]
   pagination: Pagination
 }
@@ -17,14 +17,9 @@ input addPostInput {
   status: Int
 }
 
-input GetUserPostsInput {
-  page: Int
-  limit: Int
-}
-
 extend type Query {
-  getUserPostsByUsername(username: String!, input: GetUserPostsInput): Posts!
-  getUserPostsByTagName(tagName: String!, input: GetUserPostsInput): Posts!
+  getUserPostsByUsername(username: String!, input: PaginationInput): Posts!
+  getUserPostsByTagName(tagName: String!, input: PaginationInput): Posts!
 }
 
 extend type Mutation {

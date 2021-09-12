@@ -14,7 +14,7 @@ type User {
   updatedAt: Time!
 }
 
-type Users{
+type Users {
   users: [User]
   pagination: Pagination
 }
