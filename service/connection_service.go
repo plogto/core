@@ -128,7 +128,7 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 	return deletedConnection, nil
 }
 
-func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput, resultType string) (*model.Connections, error) {
+func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username string, input *model.PaginationInput, resultType string) (*model.Connections, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	followingUser, _ := s.User.GetUserByUsername(username)
@@ -185,7 +185,7 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 	return nil, nil
 }
 
-func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error) {
+func (s *Service) GetUserFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {

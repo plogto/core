@@ -43,7 +43,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	return post, nil
 }
 
-func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsInput) (*model.Posts, error) {
+func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	followingUser, err := s.User.GetUserByUsername(username)
@@ -82,7 +82,7 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 	return posts, nil
 }
 
-func (s *Service) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.GetUserPostsInput) (*model.Posts, error) {
+func (s *Service) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
 	tag, err := s.Tag.GetTagByName(tagName)
 
 	if err != nil {

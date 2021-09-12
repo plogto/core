@@ -6,7 +6,11 @@ type Tag {
   updatedAt: Time!
 }
 
-type Tags{
+type Tags {
   tags: [Tag]
   pagination: Pagination
+}
+
+extend type Query {
+  getTrands(input: PaginationInput): Tags
 }

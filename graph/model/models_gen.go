@@ -21,16 +21,6 @@ type Connections struct {
 	Pagination  *Pagination   `json:"pagination"`
 }
 
-type GetUserConnectionsByUserIDInput struct {
-	Page  *int `json:"page"`
-	Limit *int `json:"limit"`
-}
-
-type GetUserPostsInput struct {
-	Page  *int `json:"page"`
-	Limit *int `json:"limit"`
-}
-
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -42,6 +32,11 @@ type Pagination struct {
 	Limit      int  `json:"limit"`
 	Page       int  `json:"page"`
 	NextPage   *int `json:"nextPage"`
+}
+
+type PaginationInput struct {
+	Page  *int `json:"page"`
+	Limit *int `json:"limit"`
 }
 
 type Posts struct {

@@ -8,6 +8,11 @@ type Pagination {
   nextPage: Int
 }
 
+input PaginationInput {
+  page: Int
+  limit: Int
+}
+
 type Test {
   content: String
 }
