@@ -40,6 +40,7 @@ type ResolverRoot interface {
 	Mutation() MutationResolver
 	Post() PostResolver
 	Query() QueryResolver
+	Tag() TagResolver
 	User() UserResolver
 }
 
@@ -104,13 +105,14 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GetTrands                  func(childComplexity int, input *model.PaginationInput) int
 		GetUserByUsername          func(childComplexity int, username string) int
-		GetUserFollowRequests      func(childComplexity int, input *model.GetUserConnectionsByUserIDInput) int
-		GetUserFollowersByUsername func(childComplexity int, username string, input *model.GetUserConnectionsByUserIDInput) int
-		GetUserFollowingByUsername func(childComplexity int, username string, input *model.GetUserConnectionsByUserIDInput) int
+		GetUserFollowRequests      func(childComplexity int, input *model.PaginationInput) int
+		GetUserFollowersByUsername func(childComplexity int, username string, input *model.PaginationInput) int
+		GetUserFollowingByUsername func(childComplexity int, username string, input *model.PaginationInput) int
 		GetUserInfo                func(childComplexity int) int
-		GetUserPostsByTagName      func(childComplexity int, tagName string, input *model.GetUserPostsInput) int
-		GetUserPostsByUsername     func(childComplexity int, username string, input *model.GetUserPostsInput) int
+		GetUserPostsByTagName      func(childComplexity int, tagName string, input *model.PaginationInput) int
+		GetUserPostsByUsername     func(childComplexity int, username string, input *model.PaginationInput) int
 		Login                      func(childComplexity int, input model.LoginInput) int
 		Search                     func(childComplexity int, expression string) int
 		Test                       func(childComplexity int, input model.TestInput) int
@@ -122,6 +124,7 @@ type ComplexityRoot struct {
 	}
 
 	Tag struct {
+		Count     func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -178,14 +181,18 @@ type PostResolver interface {
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
-	GetUserFollowersByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
-	GetUserFollowingByUsername(ctx context.Context, username string, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
-	GetUserFollowRequests(ctx context.Context, input *model.GetUserConnectionsByUserIDInput) (*model.Connections, error)
-	GetUserPostsByUsername(ctx context.Context, username string, input *model.GetUserPostsInput) (*model.Posts, error)
-	GetUserPostsByTagName(ctx context.Context, tagName string, input *model.GetUserPostsInput) (*model.Posts, error)
+	GetUserFollowersByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error)
+	GetUserFollowingByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error)
+	GetUserFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error)
+	GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
+	GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
+	GetTrands(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
+}
+type TagResolver interface {
+	Count(ctx context.Context, obj *model.Tag) (*int, error)
 }
 type UserResolver interface {
 	ConnectionStatus(ctx context.Context, obj *model.User) (*int, error)
@@ -469,6 +476,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Posts.Posts(childComplexity), true
 
+	case "Query.getTrands":
+		if e.complexity.Query.GetTrands == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTrands_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTrands(childComplexity, args["input"].(*model.PaginationInput)), true
+
 	case "Query.getUserByUsername":
 		if e.complexity.Query.GetUserByUsername == nil {
 			break
@@ -491,7 +510,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserFollowRequests(childComplexity, args["input"].(*model.GetUserConnectionsByUserIDInput)), true
+		return e.complexity.Query.GetUserFollowRequests(childComplexity, args["input"].(*model.PaginationInput)), true
 
 	case "Query.getUserFollowersByUsername":
 		if e.complexity.Query.GetUserFollowersByUsername == nil {
@@ -503,7 +522,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserFollowersByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput)), true
+		return e.complexity.Query.GetUserFollowersByUsername(childComplexity, args["username"].(string), args["input"].(*model.PaginationInput)), true
 
 	case "Query.getUserFollowingByUsername":
 		if e.complexity.Query.GetUserFollowingByUsername == nil {
@@ -515,7 +534,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserFollowingByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput)), true
+		return e.complexity.Query.GetUserFollowingByUsername(childComplexity, args["username"].(string), args["input"].(*model.PaginationInput)), true
 
 	case "Query.getUserInfo":
 		if e.complexity.Query.GetUserInfo == nil {
@@ -534,7 +553,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserPostsByTagName(childComplexity, args["tagName"].(string), args["input"].(*model.GetUserPostsInput)), true
+		return e.complexity.Query.GetUserPostsByTagName(childComplexity, args["tagName"].(string), args["input"].(*model.PaginationInput)), true
 
 	case "Query.getUserPostsByUsername":
 		if e.complexity.Query.GetUserPostsByUsername == nil {
@@ -546,7 +565,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetUserPostsByUsername(childComplexity, args["username"].(string), args["input"].(*model.GetUserPostsInput)), true
+		return e.complexity.Query.GetUserPostsByUsername(childComplexity, args["username"].(string), args["input"].(*model.PaginationInput)), true
 
 	case "Query.login":
 		if e.complexity.Query.Login == nil {
@@ -597,6 +616,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Search.User(childComplexity), true
+
+	case "Tag.count":
+		if e.complexity.Tag.Count == nil {
+			break
+		}
+
+		return e.complexity.Tag.Count(childComplexity), true
 
 	case "Tag.createdAt":
 		if e.complexity.Tag.CreatedAt == nil {
@@ -859,15 +885,10 @@ type Connections {
   pagination: Pagination
 }
 
-input GetUserConnectionsByUserIdInput {
-  page: Int
-  limit: Int
-}
-
 extend type Query {
-  getUserFollowersByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
-  getUserFollowingByUsername(username: String!, input: GetUserConnectionsByUserIdInput): Connections!
-  getUserFollowRequests(input: GetUserConnectionsByUserIdInput): Connections!
+  getUserFollowersByUsername(username: String!, input: PaginationInput): Connections!
+  getUserFollowingByUsername(username: String!, input: PaginationInput): Connections!
+  getUserFollowRequests(input: PaginationInput): Connections!
 }
 
 extend type Mutation {
@@ -885,6 +906,11 @@ type Pagination {
   limit: Int!
   page: Int!
   nextPage: Int
+}
+
+input PaginationInput {
+  page: Int
+  limit: Int
 }
 
 type Test {
@@ -912,7 +938,7 @@ type Mutation {
   updatedAt: Time!
 }
 
-type Posts{
+type Posts {
   posts: [Post]
   pagination: Pagination
 }
@@ -922,14 +948,9 @@ input addPostInput {
   status: Int
 }
 
-input GetUserPostsInput {
-  page: Int
-  limit: Int
-}
-
 extend type Query {
-  getUserPostsByUsername(username: String!, input: GetUserPostsInput): Posts!
-  getUserPostsByTagName(tagName: String!, input: GetUserPostsInput): Posts!
+  getUserPostsByUsername(username: String!, input: PaginationInput): Posts!
+  getUserPostsByTagName(tagName: String!, input: PaginationInput): Posts!
 }
 
 extend type Mutation {
@@ -947,14 +968,20 @@ extend type Query {
 	{Name: "graph/schema/tag.graphqls", Input: `type Tag {
   id: ID!
   name: String!
+  count: Int 
   createdAt: Time!
   updatedAt: Time!
 }
 
-type Tags{
+type Tags {
   tags: [Tag]
   pagination: Pagination
-}`, BuiltIn: false},
+}
+
+extend type Query {
+  getTrands(input: PaginationInput): Tags
+}
+`, BuiltIn: false},
 	{Name: "graph/schema/user.graphqls", Input: `type User {
   id: ID!
   username: String!
@@ -971,7 +998,7 @@ type Tags{
   updatedAt: Time!
 }
 
-type Users{
+type Users {
   users: [User]
   pagination: Pagination
 }
@@ -1108,6 +1135,21 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getTrands_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.PaginationInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getUserByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1126,10 +1168,10 @@ func (ec *executionContext) field_Query_getUserByUsername_args(ctx context.Conte
 func (ec *executionContext) field_Query_getUserFollowRequests_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.GetUserConnectionsByUserIDInput
+	var arg0 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOGetUserConnectionsByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserConnectionsByUserIDInput(ctx, tmp)
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1150,10 +1192,10 @@ func (ec *executionContext) field_Query_getUserFollowersByUsername_args(ctx cont
 		}
 	}
 	args["username"] = arg0
-	var arg1 *model.GetUserConnectionsByUserIDInput
+	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOGetUserConnectionsByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserConnectionsByUserIDInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1174,10 +1216,10 @@ func (ec *executionContext) field_Query_getUserFollowingByUsername_args(ctx cont
 		}
 	}
 	args["username"] = arg0
-	var arg1 *model.GetUserConnectionsByUserIDInput
+	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOGetUserConnectionsByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserConnectionsByUserIDInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1198,10 +1240,10 @@ func (ec *executionContext) field_Query_getUserPostsByTagName_args(ctx context.C
 		}
 	}
 	args["tagName"] = arg0
-	var arg1 *model.GetUserPostsInput
+	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOGetUserPostsInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserPostsInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1222,10 +1264,10 @@ func (ec *executionContext) field_Query_getUserPostsByUsername_args(ctx context.
 		}
 	}
 	args["username"] = arg0
-	var arg1 *model.GetUserPostsInput
+	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOGetUserPostsInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserPostsInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2547,7 +2589,7 @@ func (ec *executionContext) _Query_getUserFollowersByUsername(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserFollowersByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput))
+		return ec.resolvers.Query().GetUserFollowersByUsername(rctx, args["username"].(string), args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2589,7 +2631,7 @@ func (ec *executionContext) _Query_getUserFollowingByUsername(ctx context.Contex
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserFollowingByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserConnectionsByUserIDInput))
+		return ec.resolvers.Query().GetUserFollowingByUsername(rctx, args["username"].(string), args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2631,7 +2673,7 @@ func (ec *executionContext) _Query_getUserFollowRequests(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserFollowRequests(rctx, args["input"].(*model.GetUserConnectionsByUserIDInput))
+		return ec.resolvers.Query().GetUserFollowRequests(rctx, args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2673,7 +2715,7 @@ func (ec *executionContext) _Query_getUserPostsByUsername(ctx context.Context, f
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserPostsByUsername(rctx, args["username"].(string), args["input"].(*model.GetUserPostsInput))
+		return ec.resolvers.Query().GetUserPostsByUsername(rctx, args["username"].(string), args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2715,7 +2757,7 @@ func (ec *executionContext) _Query_getUserPostsByTagName(ctx context.Context, fi
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetUserPostsByTagName(rctx, args["tagName"].(string), args["input"].(*model.GetUserPostsInput))
+		return ec.resolvers.Query().GetUserPostsByTagName(rctx, args["tagName"].(string), args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2769,6 +2811,45 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	res := resTmp.(*model.Search)
 	fc.Result = res
 	return ec.marshalOSearch2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐSearch(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getTrands(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getTrands_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTrands(rctx, args["input"].(*model.PaginationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Tags)
+	fc.Result = res
+	return ec.marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3051,6 +3132,38 @@ func (ec *executionContext) _Tag_name(ctx context.Context, field graphql.Collect
 	res := resTmp.(string)
 	fc.Result = res
 	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Tag_count(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Tag",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Tag().Count(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tag_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
@@ -4807,62 +4920,6 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputGetUserConnectionsByUserIdInput(ctx context.Context, obj interface{}) (model.GetUserConnectionsByUserIDInput, error) {
-	var it model.GetUserConnectionsByUserIDInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "page":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-			it.Page, err = ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "limit":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-			it.Limit, err = ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputGetUserPostsInput(ctx context.Context, obj interface{}) (model.GetUserPostsInput, error) {
-	var it model.GetUserPostsInput
-	var asMap = obj.(map[string]interface{})
-
-	for k, v := range asMap {
-		switch k {
-		case "page":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
-			it.Page, err = ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "limit":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
-			it.Limit, err = ec.unmarshalOInt2ᚖint(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj interface{}) (model.LoginInput, error) {
 	var it model.LoginInput
 	var asMap = obj.(map[string]interface{})
@@ -4882,6 +4939,34 @@ func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj in
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, obj interface{}) (model.PaginationInput, error) {
+	var it model.PaginationInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "page":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("page"))
+			it.Page, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "limit":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("limit"))
+			it.Limit, err = ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5426,6 +5511,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_search(ctx, field)
 				return res
 			})
+		case "getTrands":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTrands(ctx, field)
+				return res
+			})
 		case "getUserInfo":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -5509,22 +5605,33 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 		case "id":
 			out.Values[i] = ec._Tag_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 			out.Values[i] = ec._Tag_name(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
+		case "count":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Tag_count(ctx, field, obj)
+				return res
+			})
 		case "createdAt":
 			out.Values[i] = ec._Tag_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Tag_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -6446,22 +6553,6 @@ func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋpost
 	return ec._Connection(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOGetUserConnectionsByUserIdInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserConnectionsByUserIDInput(ctx context.Context, v interface{}) (*model.GetUserConnectionsByUserIDInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGetUserConnectionsByUserIdInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalOGetUserPostsInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐGetUserPostsInput(ctx context.Context, v interface{}) (*model.GetUserPostsInput, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := ec.unmarshalInputGetUserPostsInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -6482,6 +6573,14 @@ func (ec *executionContext) marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋpost
 		return graphql.Null
 	}
 	return ec._Pagination(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx context.Context, v interface{}) (*model.PaginationInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputPaginationInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
@@ -6607,6 +6706,13 @@ func (ec *executionContext) marshalOTag2ᚖgithubᚗcomᚋfavecodeᚋposterᚑco
 		return graphql.Null
 	}
 	return ec._Tag(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐTags(ctx context.Context, sel ast.SelectionSet, v *model.Tags) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Tags(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋposterᚑcoreᚋgraphᚋmodelᚐTest(ctx context.Context, sel ast.SelectionSet, v *model.Test) graphql.Marshaler {
