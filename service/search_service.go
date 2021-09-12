@@ -12,8 +12,10 @@ func (s *Service) Search(ctx context.Context, expression string) (*model.Search,
 		return nil, errors.New("expression is not valid")
 	}
 	users, _ := s.SearchUser(ctx, expression)
+	tags, _ := s.SearchTag(ctx, expression)
 
 	return &model.Search{
 		User: users,
+		Tag:  tags,
 	}, nil
 }
