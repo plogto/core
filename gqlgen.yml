@@ -66,3 +66,5 @@ models:
         resolver: true
       follower:
         resolver: true
+  Tag:
+    model: github.com/favecode/poster-core/graph/model.Tag

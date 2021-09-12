@@ -17,13 +17,14 @@ input addPostInput {
   status: Int
 }
 
-input GetUserPostsByUsernameInput {
+input GetUserPostsInput {
   page: Int
   limit: Int
 }
 
 extend type Query {
-  getUserPostsByUsername(username: String!, input: GetUserPostsByUsernameInput): Posts!
+  getUserPostsByUsername(username: String!, input: GetUserPostsInput): Posts!
+  getUserPostsByTagName(tagName: String!, input: GetUserPostsInput): Posts!
 }
 
 extend type Mutation {
