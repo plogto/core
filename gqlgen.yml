@@ -68,3 +68,6 @@ models:
         resolver: true
   Tag:
     model: github.com/favecode/poster-core/graph/model.Tag
+    fields:
+      count:
+        resolver: true

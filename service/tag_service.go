@@ -18,3 +18,9 @@ func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags
 
 	return tags, nil
 }
+
+func (s *Service) CountTagByTagId(ctx context.Context, tagId string) (*int, error) {
+	tagCount, _ := s.PostTag.CountPostTagsByTagId(tagId)
+
+	return tagCount, nil
+}
