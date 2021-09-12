@@ -41,7 +41,7 @@ func (u *User) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	return &user, err
 }
 
-func (u *User) GetUserByUsernameOrFullnameAndPagination(value string, limit int, page int) (*model.Users, error) {
+func (u *User) GetUsersByUsernameOrFullnameAndPagination(value string, limit int, page int) (*model.Users, error) {
 	var users []*model.User
 	var offset = (page - 1) * limit
 	value = strings.ToLower(value)

@@ -26,7 +26,7 @@ type GetUserConnectionsByUserIDInput struct {
 	Limit *int `json:"limit"`
 }
 
-type GetUserPostsByUsernameInput struct {
+type GetUserPostsInput struct {
 	Page  *int `json:"page"`
 	Limit *int `json:"limit"`
 }
@@ -57,6 +57,12 @@ type RegisterInput struct {
 
 type Search struct {
 	User *Users `json:"user"`
+	Tag  *Tags  `json:"tag"`
+}
+
+type Tags struct {
+	Tags       []*Tag      `json:"tags"`
+	Pagination *Pagination `json:"pagination"`
 }
 
 type Test struct {

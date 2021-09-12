@@ -1,0 +1,11 @@
+type Tag {
+  id: ID!
+  name: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Tags{
+  tags: [Tag]
+  pagination: Pagination
+}
