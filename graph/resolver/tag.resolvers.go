@@ -10,6 +10,10 @@ import (
 	"github.com/favecode/poster-core/graph/model"
 )
 
+func (r *queryResolver) GetTrands(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
+	return r.Service.GetTrends(ctx, input)
+}
+
 func (r *tagResolver) Count(ctx context.Context, obj *model.Tag) (*int, error) {
 	return r.Service.CountTagByTagId(ctx, obj.ID)
 }
