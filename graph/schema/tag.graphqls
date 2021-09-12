@@ -1,11 +1,16 @@
 type Tag {
   id: ID!
   name: String!
+  count: Int 
   createdAt: Time!
   updatedAt: Time!
 }
 
-type Tags{
+type Tags {
   tags: [Tag]
   pagination: Pagination
+}
+
+extend type Query {
+  getTrands(input: PaginationInput): Tags
 }
