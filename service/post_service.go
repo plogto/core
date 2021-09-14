@@ -3,12 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"regexp"
+	"strings"
 
 	"github.com/favecode/poster-core/config"
 	"github.com/favecode/poster-core/graph/model"
 	"github.com/favecode/poster-core/middleware"
 	"github.com/favecode/poster-core/util"
-	"github.com/gernest/mention"
 )
 
 func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
@@ -25,8 +26,11 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	s.Post.CreatePost(post)
-
-	tags := mention.GetTagsAsUniqueStrings('#', post.Content)
+	r := regexp.MustCompile("#(\\w|_)+")
+	tags := r.FindAllString(input.Content, -1)
+	for i, tag := range tags {
+		tags[i] = strings.TrimLeft(tag, "#")
+	}
 	for _, tagName := range util.UniqueSliceElement(tags) {
 		tag := &model.Tag{
 			Name: tagName,
