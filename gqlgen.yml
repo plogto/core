@@ -42,7 +42,7 @@ autobind: []
 # your liking
 models:
   User:
-    model: github.com/favecode/poster-core/graph/model.User
+    model: github.com/favecode/plog-core/graph/model.User
     fields:
       connectionStatus:
         resolver: true
@@ -55,19 +55,19 @@ models:
       postsCount:
         resolver: true
   Post:
-    model: github.com/favecode/poster-core/graph/model.Post
+    model: github.com/favecode/plog-core/graph/model.Post
     fields:
       user:
         resolver: true
   Connection:
-    model: github.com/favecode/poster-core/graph/model.Connection
+    model: github.com/favecode/plog-core/graph/model.Connection
     fields:
       following:
         resolver: true
       follower:
         resolver: true
   Tag:
-    model: github.com/favecode/poster-core/graph/model.Tag
+    model: github.com/favecode/plog-core/graph/model.Tag
     fields:
       count:
         resolver: true

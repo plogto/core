@@ -6,7 +6,7 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/plog-core/graph/model"
 )
 
 func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {

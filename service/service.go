@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/favecode/poster-core/database"
-	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/plog-core/database"
+	"github.com/favecode/plog-core/graph/model"
 )
 
 type Service struct {

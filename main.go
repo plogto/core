@@ -11,11 +11,11 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
-	"github.com/favecode/poster-core/database"
-	"github.com/favecode/poster-core/graph/generated"
-	graph "github.com/favecode/poster-core/graph/resolver"
-	customMiddleware "github.com/favecode/poster-core/middleware"
-	"github.com/favecode/poster-core/service"
+	"github.com/favecode/plog-core/database"
+	"github.com/favecode/plog-core/graph/generated"
+	graph "github.com/favecode/plog-core/graph/resolver"
+	customMiddleware "github.com/favecode/plog-core/middleware"
+	"github.com/favecode/plog-core/service"
 )
 
 const defaultPort = "8080"

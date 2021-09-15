@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/poster-core/graph/generated"
-	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/plog-core/graph/generated"
+	"github.com/favecode/plog-core/graph/model"
 )
 
 func (r *connectionResolver) Following(ctx context.Context, obj *model.Connection) (*model.User, error) {

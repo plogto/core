@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/poster-core/config"
-	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/plog-core/config"
+	"github.com/favecode/plog-core/graph/model"
 )
 
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {

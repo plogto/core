@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/poster-core/config"
-	"github.com/favecode/poster-core/database"
-	"github.com/favecode/poster-core/graph/model"
-	"github.com/favecode/poster-core/middleware"
+	"github.com/favecode/plog-core/config"
+	"github.com/favecode/plog-core/database"
+	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/middleware"
 )
 
 func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connection, error) {
