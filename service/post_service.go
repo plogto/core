@@ -6,10 +6,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/favecode/poster-core/config"
-	"github.com/favecode/poster-core/graph/model"
-	"github.com/favecode/poster-core/middleware"
-	"github.com/favecode/poster-core/util"
+	"github.com/favecode/plog-core/config"
+	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/middleware"
+	"github.com/favecode/plog-core/util"
 )
 
 func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
