@@ -7,8 +7,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/favecode/poster-core/graph/generated"
-	"github.com/favecode/poster-core/graph/model"
+	"github.com/favecode/plog-core/graph/generated"
+	"github.com/favecode/plog-core/graph/model"
 )
 
 func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
