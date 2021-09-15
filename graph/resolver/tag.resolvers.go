@@ -10,6 +10,10 @@ import (
 	"github.com/favecode/poster-core/graph/model"
 )
 
+func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error) {
+	return r.Service.GetTagByName(ctx, tagName)
+}
+
 func (r *queryResolver) GetTrands(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
 	return r.Service.GetTrends(ctx, input)
 }
