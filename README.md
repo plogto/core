@@ -1,1 +1,1 @@
-# poster-core
+# plog-core

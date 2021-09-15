@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/poster-core/graph/model"
-	"github.com/favecode/poster-core/middleware"
+	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/middleware"
 )
 
 func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {

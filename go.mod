@@ -1,4 +1,4 @@
-module github.com/favecode/poster-core
+module github.com/favecode/plog-core
 
 go 1.16
 

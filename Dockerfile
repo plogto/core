@@ -16,4 +16,4 @@ ENV PORT 8080
 
 RUN go build
 
-CMD ["./poster-core"]
+CMD ["./plog-core"]

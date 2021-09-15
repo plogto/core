@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/favecode/poster-core/graph/model"
-	"github.com/favecode/poster-core/util"
+	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/util"
 	"github.com/go-pg/pg"
 )
 
