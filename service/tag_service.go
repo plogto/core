@@ -43,3 +43,13 @@ func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (
 
 	return tags, nil
 }
+
+func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
+	tag, _ := s.Tag.GetTagByName(tagName)
+
+	if len(tag.ID) < 1 {
+		return nil, nil
+	}
+
+	return tag, nil
+}

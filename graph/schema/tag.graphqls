@@ -12,5 +12,6 @@ type Tags {
 }
 
 extend type Query {
+  getTagByTagName(tagName: String!): Tag
   getTrands(input: PaginationInput): Tags
 }
