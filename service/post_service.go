@@ -52,15 +52,17 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 
 	followingUser, err := s.User.GetUserByUsername(username)
 
-	if user != nil {
-		connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
+	if followingUser.IsPrivate == bool(true) {
+		if user != nil {
+			connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
 
-		if followingUser.ID != user.ID {
-			if followingUser.IsPrivate == bool(true) {
+			if followingUser.ID != user.ID {
 				if len(connection.ID) < 1 || *connection.Status < 2 {
 					return nil, errors.New("you need to follow this user")
 				}
 			}
+		} else {
+			return nil, errors.New("you need to login first")
 		}
 	}
 
