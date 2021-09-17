@@ -14,7 +14,7 @@ func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*m
 	return r.Service.GetTagByName(ctx, tagName)
 }
 
-func (r *queryResolver) GetTrands(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
+func (r *queryResolver) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
 	return r.Service.GetTrends(ctx, input)
 }
 
