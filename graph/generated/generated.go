@@ -106,7 +106,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		GetTagByTagName            func(childComplexity int, tagName string) int
-		GetTrands                  func(childComplexity int, input *model.PaginationInput) int
+		GetTrends                  func(childComplexity int, input *model.PaginationInput) int
 		GetUserByUsername          func(childComplexity int, username string) int
 		GetUserFollowRequests      func(childComplexity int, input *model.PaginationInput) int
 		GetUserFollowersByUsername func(childComplexity int, username string, input *model.PaginationInput) int
@@ -189,7 +189,7 @@ type QueryResolver interface {
 	GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
-	GetTrands(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
+	GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
 }
@@ -490,17 +490,17 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetTagByTagName(childComplexity, args["tagName"].(string)), true
 
-	case "Query.getTrands":
-		if e.complexity.Query.GetTrands == nil {
+	case "Query.getTrends":
+		if e.complexity.Query.GetTrends == nil {
 			break
 		}
 
-		args, err := ec.field_Query_getTrands_args(context.TODO(), rawArgs)
+		args, err := ec.field_Query_getTrends_args(context.TODO(), rawArgs)
 		if err != nil {
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTrands(childComplexity, args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetTrends(childComplexity, args["input"].(*model.PaginationInput)), true
 
 	case "Query.getUserByUsername":
 		if e.complexity.Query.GetUserByUsername == nil {
@@ -994,7 +994,7 @@ type Tags {
 
 extend type Query {
   getTagByTagName(tagName: String!): Tag
-  getTrands(input: PaginationInput): Tags
+  getTrends(input: PaginationInput): Tags
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/user.graphqls", Input: `type User {
@@ -1165,7 +1165,7 @@ func (ec *executionContext) field_Query_getTagByTagName_args(ctx context.Context
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_getTrands_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+func (ec *executionContext) field_Query_getTrends_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PaginationInput
@@ -2882,7 +2882,7 @@ func (ec *executionContext) _Query_getTagByTagName(ctx context.Context, field gr
 	return ec.marshalOTag2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Query_getTrands(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+func (ec *executionContext) _Query_getTrends(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -2899,7 +2899,7 @@ func (ec *executionContext) _Query_getTrands(ctx context.Context, field graphql.
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Query_getTrands_args(ctx, rawArgs)
+	args, err := ec.field_Query_getTrends_args(ctx, rawArgs)
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
@@ -2907,7 +2907,7 @@ func (ec *executionContext) _Query_getTrands(ctx context.Context, field graphql.
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTrands(rctx, args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetTrends(rctx, args["input"].(*model.PaginationInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5591,7 +5591,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_getTagByTagName(ctx, field)
 				return res
 			})
-		case "getTrands":
+		case "getTrends":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -5599,7 +5599,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_getTrands(ctx, field)
+				res = ec._Query_getTrends(ctx, field)
 				return res
 			})
 		case "getUserInfo":
