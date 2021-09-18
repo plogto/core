@@ -16,7 +16,7 @@ type User struct {
 func (u *User) GetUserByField(field, value string) (*model.User, error) {
 	var user model.User
 	value = strings.ToLower(value)
-	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = ?", field), value).Where("deleted_at is ?", nil).First()
+	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = lower(?)", field), value).Where("deleted_at is ?", nil).First()
 	return &user, err
 }
 
@@ -37,7 +37,7 @@ func (u *User) GetUserByUsername(username string) (*model.User, error) {
 func (u *User) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	var user model.User
 	value = strings.ToLower(value)
-	err := u.DB.Model(&user).Where("lower(username) = ?", value).WhereOr("lower(email) = ?", value).Where("deleted_at is ?", nil).First()
+	err := u.DB.Model(&user).Where("lower(username) = lower(?)", value).WhereOr("lower(email) = lower(?)", value).Where("deleted_at is ?", nil).First()
 	return &user, err
 }
 
@@ -46,7 +46,7 @@ func (u *User) GetUsersByUsernameOrFullnameAndPagination(value string, limit int
 	var offset = (page - 1) * limit
 	value = strings.ToLower(value)
 
-	query := u.DB.Model(&users).Where("lower(username) LIKE ?", value).WhereOr("lower(fullname) LIKE ?", value).Where("deleted_at is ?", nil)
+	query := u.DB.Model(&users).Where("lower(username) LIKE lower(?)", value).WhereOr("lower(fullname) LIKE lower(?)", value).Where("deleted_at is ?", nil)
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
