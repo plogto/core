@@ -18,7 +18,7 @@ func (t *Tag) GetTagsByTagNameAndPagination(value string, limit int, page int) (
 	var offset = (page - 1) * limit
 	value = strings.ToLower(value)
 
-	query := t.DB.Model(&tags).Where("lower(name) LIKE ?", value).Where("deleted_at is ?", nil)
+	query := t.DB.Model(&tags).Where("lower(name) LIKE lower(?)", value).Where("deleted_at is ?", nil)
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -35,7 +35,7 @@ func (t *Tag) GetTagsByTagNameAndPagination(value string, limit int, page int) (
 
 func (t *Tag) GetTagByField(field, value string) (*model.Tag, error) {
 	var tag model.Tag
-	err := t.DB.Model(&tag).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
+	err := t.DB.Model(&tag).Where(fmt.Sprintf("lower(%v) = lower(?)", field), value).Where("deleted_at is ?", nil).First()
 	return &tag, err
 }
 
