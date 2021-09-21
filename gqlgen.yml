@@ -59,6 +59,10 @@ models:
     fields:
       user:
         resolver: true
+      likes:
+        resolver: true
+      isLiked:
+        resolver: true
   Connection:
     model: github.com/favecode/plog-core/graph/model.Connection
     fields:
@@ -70,4 +74,11 @@ models:
     model: github.com/favecode/plog-core/graph/model.Tag
     fields:
       count:
+        resolver: true
+  PostLike:
+    model: github.com/favecode/plog-core/graph/model.PostLike
+    fields:
+      user:
+        resolver: true
+      post:
         resolver: true
