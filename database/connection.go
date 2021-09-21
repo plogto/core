@@ -34,7 +34,7 @@ func (c *Connection) GetConnectionsByFieldAndPagination(field string, value stri
 	totalDocs, err := query.Order("created_at DESC").Returning("*").SelectAndCount()
 
 	return &model.Connections{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     filter.Limit,
 			Page:      filter.Page,
 			TotalDocs: totalDocs,
