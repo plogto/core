@@ -52,7 +52,7 @@ func (u *User) GetUsersByUsernameOrFullnameAndPagination(value string, limit int
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.Users{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,

@@ -146,13 +146,8 @@ func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username str
 		}
 	}
 
-	connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
-	if followingUser.ID != user.ID {
-		if followingUser.IsPrivate == bool(true) {
-			if len(connection.ID) < 1 || *connection.Status < 2 {
-				return nil, errors.New("you need to follow this user")
-			}
-		}
+	if s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, errors.New("access denied")
 	}
 
 	connectedStatus := 2
