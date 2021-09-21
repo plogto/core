@@ -52,18 +52,8 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 
 	followingUser, err := s.User.GetUserByUsername(username)
 
-	if followingUser.IsPrivate == bool(true) {
-		if user != nil {
-			connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
-
-			if followingUser.ID != user.ID {
-				if len(connection.ID) < 1 || *connection.Status < 2 {
-					return nil, errors.New("you need to follow this user")
-				}
-			}
-		} else {
-			return nil, errors.New("you need to login first")
-		}
+	if s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, errors.New("access denied")
 	}
 
 	if err != nil {
@@ -117,4 +107,10 @@ func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error
 	count, _ := s.Post.CountPostsByUserId(userId)
 
 	return count, nil
+}
+
+func (s *Service) GetUserPostsByID(ctx context.Context, postId string) (*model.Post, error) {
+	post, _ := s.Post.GetPostByID(postId)
+
+	return post, nil
 }

@@ -37,6 +37,7 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, limit int, page int)
 	}, err
 }
 
+// TODO: extract posts only for public user
 func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit

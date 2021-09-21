@@ -77,6 +77,7 @@ func (c *Connection) UpdateConnection(connection *model.Connection) (*model.Conn
 	return connection, err
 }
 
+// TODO: fix this name or functionality
 func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	DeletedAt := time.Now()
 	var connection = &model.Connection{
