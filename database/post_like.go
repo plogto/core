@@ -31,7 +31,7 @@ func (p *PostLike) GetPostLikesByPostIdAndPagination(postId string, limit int, p
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.PostLikes{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,

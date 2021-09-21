@@ -28,7 +28,7 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, limit int, page int)
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.Posts{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
@@ -54,7 +54,7 @@ func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.Posts{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
