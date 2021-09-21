@@ -44,3 +44,21 @@ func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Use
 
 	return users, nil
 }
+
+func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) bool {
+	if followingUser.IsPrivate == bool(true) {
+		if user != nil {
+			connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
+
+			if followingUser.ID != user.ID {
+				if len(connection.ID) < 1 || *connection.Status < 2 {
+					return false
+				}
+			}
+		} else {
+			return false
+		}
+	}
+
+	return true
+}

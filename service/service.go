@@ -15,6 +15,7 @@ type Service struct {
 	Connection database.Connection
 	Tag        database.Tag
 	PostTag    database.PostTag
+	PostLike   database.PostLike
 }
 
 func New(service Service) *Service {
@@ -25,6 +26,7 @@ func New(service Service) *Service {
 		Connection: service.Connection,
 		Tag:        service.Tag,
 		PostTag:    service.PostTag,
+		PostLike:   service.PostLike,
 	}
 }
 

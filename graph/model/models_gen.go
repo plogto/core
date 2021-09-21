@@ -39,6 +39,11 @@ type PaginationInput struct {
 	Limit *int `json:"limit"`
 }
 
+type PostLikes struct {
+	PostLikes  []*PostLike `json:"postLikes"`
+	Pagination *Pagination `json:"pagination"`
+}
+
 type Posts struct {
 	Posts      []*Post     `json:"posts"`
 	Pagination *Pagination `json:"pagination"`
