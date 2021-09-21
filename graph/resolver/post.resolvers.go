@@ -18,6 +18,14 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
+func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
+	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
+}
+
+func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
+	return r.Service.IsPostLiked(ctx, obj.ID)
+}
+
 func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	return r.Service.GetUserPostsByUsername(ctx, username, input)
 }
