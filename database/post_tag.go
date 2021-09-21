@@ -40,7 +40,7 @@ func (p *PostTag) GetTagsOrderByCountTags(limit int, page int) (*model.Tags, err
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.Tags{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
