@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches:
+      - main 
+  
+jobs:
+  deploy:
+    runs-on: ubuntu-latest 
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v1
+        with:
+          go-version: 1.16
+
+      - name: Update Liara 
+        env:
+            LIARA_TOKEN: ${{ secrets.LIARA_API_TOKEN }}
+        run: |
+          npm i -g @liara/cli@2
+          liara deploy --api-token="$LIARA_TOKEN" --region iran --detach

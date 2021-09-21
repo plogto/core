@@ -34,7 +34,7 @@ func (c *Connection) GetConnectionsByFieldAndPagination(field string, value stri
 	totalDocs, err := query.Order("created_at DESC").Returning("*").SelectAndCount()
 
 	return &model.Connections{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     filter.Limit,
 			Page:      filter.Page,
 			TotalDocs: totalDocs,
@@ -77,6 +77,7 @@ func (c *Connection) UpdateConnection(connection *model.Connection) (*model.Conn
 	return connection, err
 }
 
+// TODO: fix this name or functionality
 func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	DeletedAt := time.Now()
 	var connection = &model.Connection{

@@ -24,7 +24,7 @@ func (t *Tag) GetTagsByTagNameAndPagination(value string, limit int, page int) (
 	totalDocs, err := query.SelectAndCount()
 
 	return &model.Tags{
-		Pagination: util.GetPatination(&util.GetPaginationParams{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
