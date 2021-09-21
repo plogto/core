@@ -3,6 +3,8 @@ type Post {
   user: User!
   content: String!
   status: Int
+  likes: PostLikes
+  isLiked: PostLike
   createdAt: Time!
   updatedAt: Time!
 }
