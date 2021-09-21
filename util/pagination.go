@@ -10,7 +10,7 @@ type GetPaginationParams struct {
 	TotalDocs int
 }
 
-func GetPatination(params *GetPaginationParams) (pagination *model.Pagination) {
+func GetPagination(params *GetPaginationParams) (pagination *model.Pagination) {
 	var totalPages int = params.TotalDocs / params.Limit
 	var nextPage *int
 
