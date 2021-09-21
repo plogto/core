@@ -58,6 +58,7 @@ func main() {
 		Connection: database.Connection{DB: DB},
 		Tag:        database.Tag{DB: DB},
 		PostTag:    database.PostTag{DB: DB},
+		PostLike:   database.PostLike{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}

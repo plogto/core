@@ -1,0 +1,21 @@
+type PostLike {
+  id: ID!
+  user: User!
+  post: Post!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PostLikes {
+  postLikes: [PostLike]
+  pagination: Pagination
+}
+
+extend type Query {
+  getPostPostLikesByPostId(postId: String!, input: PaginationInput): PostLikes!
+}
+
+extend type Mutation {
+  likePost(postId: String!):PostLike 
+  unlikePost(postId: String!):PostLike 
+}
