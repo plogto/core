@@ -13,7 +13,9 @@ import (
 	"github.com/pkg/errors"
 )
 
-const CurrentUserKey = "currentUser"
+type key string
+
+const CurrentUserKey key = "currentUser"
 
 func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {

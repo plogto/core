@@ -4,10 +4,15 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
-	"github.com/99designs/gqlgen/handler"
+	"github.com/99designs/gqlgen/graphql/handler"
+	"github.com/99designs/gqlgen/graphql/handler/extension"
+	"github.com/99designs/gqlgen/graphql/handler/transport"
+	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
@@ -62,9 +67,19 @@ func main() {
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
-	queryHandler := handler.GraphQL(generated.NewExecutableSchema(c))
+	queryHandler := handler.New(generated.NewExecutableSchema(c))
+	queryHandler.AddTransport(transport.POST{})
+	queryHandler.AddTransport(transport.Websocket{
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
+	queryHandler.Use(extension.Introspection{})
 
-	router.Handle("/", handler.Playground("GraphQL playground", "/query"))
+	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
 	router.Handle("/query", queryHandler)
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
