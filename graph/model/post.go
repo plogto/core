@@ -5,7 +5,7 @@ import (
 )
 
 type Post struct {
-	tableName struct{}   `sql:"post"`
+	tableName struct{}   `sql:"post" pg:",discard_unknown_columns"`
 	ID        string     `json:"id"`
 	UserID    string     `json:"userId"`
 	Content   string     `json:"content"`
