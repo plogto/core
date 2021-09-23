@@ -37,7 +37,6 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, limit int, page int)
 	}, err
 }
 
-// TODO: extract posts only for public user
 func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
@@ -45,14 +44,16 @@ func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (
 	query := p.DB.Model(&posts).
 		ColumnExpr("post_tag.post_id, post_tag.tag_id").
 		ColumnExpr("post.*").
+		ColumnExpr("\"user\".*").
 		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagId).
+		Join("INNER JOIN \"user\" ON post.user_id = \"user\".id").
 		Where("post_tag.post_id = post.id").
 		Where("post.deleted_at is ?", nil).
-		Order("created_at DESC").Returning("*")
+		Where("\"user\".is_private = ?", false).
+		Order("post.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
-
 	return &model.Posts{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
