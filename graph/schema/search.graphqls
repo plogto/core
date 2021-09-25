@@ -1,6 +1,6 @@
 type Search {
-  user: Users!
-  tag: Tags!
+  user: Users
+  tag: Tags
 }
 
 extend type Query {

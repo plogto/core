@@ -8,11 +8,12 @@ require (
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-pg/pg v8.0.7+incompatible
-	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/joho/godotenv v1.3.0
 	github.com/mitchellh/mapstructure v1.4.2 // indirect
+	github.com/onsi/gomega v1.16.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/rs/cors v1.8.0
 	github.com/vektah/gqlparser/v2 v2.2.0

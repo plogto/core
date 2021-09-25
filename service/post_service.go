@@ -50,14 +50,10 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	followingUser, err := s.User.GetUserByUsername(username)
+	followingUser, _ := s.User.GetUserByUsername(username)
 
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
-	}
-
-	if err != nil {
-		return nil, errors.New("user not found")
 	}
 
 	var limit int = config.POSTS_PAGE_LIMIT
@@ -79,11 +75,7 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 }
 
 func (s *Service) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	tag, err := s.Tag.GetTagByName(tagName)
-
-	if err != nil {
-		return nil, errors.New("tag not found")
-	}
+	tag, _ := s.Tag.GetTagByName(tagName)
 
 	var limit int = config.POSTS_PAGE_LIMIT
 	var page int = 1
