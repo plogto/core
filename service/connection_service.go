@@ -131,6 +131,10 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 func (s *Service) GetUserConnectionsByUsername(ctx context.Context, username string, input *model.PaginationInput, resultType string) (*model.Connections, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
+	if user == nil {
+		return nil, nil
+	}
+
 	followingUser, _ := s.User.GetUserByUsername(username)
 
 	var limit int = config.POSTS_PAGE_LIMIT
