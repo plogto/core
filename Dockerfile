@@ -1,19 +1,27 @@
-FROM golang:alpine
+FROM golang:1.16-alpine AS build
 
 LABEL maintainer="Mohammad Mahdi <favecode@gmail.com>"
 
 WORKDIR /app
 
-COPY go.mod .
+COPY . ./
 
-COPY go.sum .
+# Install dependencies
+RUN go mod download && \
+  # Build the app
+  GOOS=linux GOARCH=amd64 go build -o main && \
+  # Make the final output executable
+  chmod +x ./main
 
-RUN go mod download
+FROM alpine:latest
 
-COPY . .
+# Install os packages
+RUN apk --no-cache add bash
 
-ENV PORT 8080 
+WORKDIR /app
 
-RUN go build
+COPY --from=build /app/main .
 
-CMD ["./plog-core"]
+CMD ["./main"]
+
+EXPOSE 8080
