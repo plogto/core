@@ -57,14 +57,11 @@ func (s *Service) GetPostLikesByPostId(ctx context.Context, postID string) (*mod
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := s.Post.GetPostByID(postID)
-	followingUser, err := s.User.GetUserByID(post.UserID)
+	followingUser, _ := s.User.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
 
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
 	// TODO: add inputPagination
 	postLikes, _ := s.PostLike.GetPostLikesByPostIdAndPagination(postID, 10, 1)
 
@@ -74,14 +71,14 @@ func (s *Service) GetPostLikesByPostId(ctx context.Context, postID string) (*mod
 func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLike, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, _ := s.Post.GetPostByID(postID)
-	followingUser, err := s.User.GetUserByID(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
+	if user == nil {
+		return nil, nil
 	}
 
-	if err != nil {
-		return nil, errors.New("user not found")
+	post, _ := s.Post.GetPostByID(postID)
+	followingUser, _ := s.User.GetUserByID(post.UserID)
+	if s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, errors.New("access denied")
 	}
 
 	postLike, _ := s.PostLike.GetPostLikeByUserIdAndPostId(user.ID, postID)
