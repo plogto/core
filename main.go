@@ -13,7 +13,6 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/websocket"
-	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
 	"github.com/favecode/plog-core/database"
@@ -24,13 +23,6 @@ import (
 )
 
 const defaultPort = "8080"
-
-func init() {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-}
 
 func main() {
 	DB := database.New()

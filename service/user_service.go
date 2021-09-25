@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"errors"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -14,21 +13,13 @@ func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	user, err := s.User.GetUserByID(id)
-
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
+	user, _ := s.User.GetUserByID(id)
 
 	return user, nil
 }
 
 func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	user, err := s.User.GetUserByUsername(username)
-
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
+	user, _ := s.User.GetUserByUsername(username)
 
 	return user, nil
 }
@@ -36,11 +27,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	limit := 10
 	page := 1
-	users, err := s.User.GetUsersByUsernameOrFullnameAndPagination(expression+"%", limit, page)
-
-	if err != nil {
-		return nil, errors.New("user not found")
-	}
+	users, _ := s.User.GetUsersByUsernameOrFullnameAndPagination(expression+"%", limit, page)
 
 	return users, nil
 }
