@@ -1115,12 +1115,12 @@ type PostLikes {
 }
 
 extend type Query {
-  getPostPostLikesByPostId(postId: String!, input: PaginationInput): PostLikes
+  getPostPostLikesByPostId(postId: ID!, input: PaginationInput): PostLikes
 }
 
 extend type Mutation {
-  likePost(postId: String!):PostLike 
-  unlikePost(postId: String!):PostLike 
+  likePost(postId: ID!):PostLike 
+  unlikePost(postId: ID!):PostLike 
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_tag.graphqls", Input: `type Tag {
@@ -1233,7 +1233,7 @@ func (ec *executionContext) field_Mutation_likePost_args(ctx context.Context, ra
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1308,7 +1308,7 @@ func (ec *executionContext) field_Mutation_unlikePost_args(ctx context.Context, 
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1338,7 +1338,7 @@ func (ec *executionContext) field_Query_getPostPostLikesByPostId_args(ctx contex
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
