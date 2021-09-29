@@ -12,7 +12,7 @@ type PostLikes {
 }
 
 extend type Query {
-  getPostPostLikesByPostId(postId: ID!, input: PaginationInput): PostLikes
+  getPostLikesByPostId(postId: String!, input: PaginationInput): PostLikes
 }
 
 extend type Mutation {
