@@ -1,0 +1,21 @@
+type PostSave {
+  id: ID!
+  user: User!
+  post: Post!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PostSaves {
+  postSaves: [PostSave]
+  pagination: Pagination
+}
+
+extend type Query {
+  getSavedPosts( input: PaginationInput): PostSaves
+}
+
+extend type Mutation {
+  savePost(postId: String!):PostSave 
+  unsavePost(postId: String!):PostSave 
+}
