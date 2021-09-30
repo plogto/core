@@ -26,6 +26,10 @@ func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.Pos
 	return r.Service.IsPostLiked(ctx, obj.ID)
 }
 
+func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.PostSave, error) {
+	return r.Service.IsPostSaved(ctx, obj.ID)
+}
+
 func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	return r.Service.GetUserPostsByUsername(ctx, username, input)
 }

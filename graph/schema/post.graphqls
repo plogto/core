@@ -5,6 +5,7 @@ type Post {
   status: Int
   likes: PostLikes
   isLiked: PostLike
+  isSaved: PostSave
   createdAt: Time!
   updatedAt: Time!
 }
