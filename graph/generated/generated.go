@@ -1260,8 +1260,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: String!):PostSave 
-  unsavePost(postId: String!):PostSave 
+  savePost(postId: ID!):PostSave 
+  unsavePost(postId: ID!):PostSave 
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_tag.graphqls", Input: `type Tag {
@@ -1419,7 +1419,7 @@ func (ec *executionContext) field_Mutation_savePost_args(ctx context.Context, ra
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1479,7 +1479,7 @@ func (ec *executionContext) field_Mutation_unsavePost_args(ctx context.Context, 
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
