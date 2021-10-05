@@ -22,6 +22,10 @@ func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostL
 	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
 }
 
+func (r *postResolver) Comments(ctx context.Context, obj *model.Post) (*model.PostComments, error) {
+	return r.Service.GetPostComments(ctx, obj.ID)
+}
+
 func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
 	return r.Service.IsPostLiked(ctx, obj.ID)
 }
