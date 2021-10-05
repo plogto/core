@@ -4,6 +4,7 @@ type Post {
   content: String!
   status: Int
   likes: PostLikes
+  comments: PostComments
   isLiked: PostLike
   isSaved: PostSave
   createdAt: Time!

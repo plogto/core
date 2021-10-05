@@ -39,6 +39,7 @@ type ResolverRoot interface {
 	Connection() ConnectionResolver
 	Mutation() MutationResolver
 	Post() PostResolver
+	PostComment() PostCommentResolver
 	PostLike() PostLikeResolver
 	PostSave() PostSaveResolver
 	Query() QueryResolver
@@ -75,17 +76,18 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser   func(childComplexity int, userID string) int
-		AddPost      func(childComplexity int, input model.AddPostInput) int
-		FollowUser   func(childComplexity int, userID string) int
-		LikePost     func(childComplexity int, postID string) int
-		Register     func(childComplexity int, input model.RegisterInput) int
-		RejectUser   func(childComplexity int, userID string) int
-		SavePost     func(childComplexity int, postID string) int
-		Test         func(childComplexity int, input model.TestInput) int
-		UnfollowUser func(childComplexity int, userID string) int
-		UnlikePost   func(childComplexity int, postID string) int
-		UnsavePost   func(childComplexity int, postID string) int
+		AcceptUser     func(childComplexity int, userID string) int
+		AddPost        func(childComplexity int, input model.AddPostInput) int
+		AddPostComment func(childComplexity int, input model.CommentPostInput) int
+		FollowUser     func(childComplexity int, userID string) int
+		LikePost       func(childComplexity int, postID string) int
+		Register       func(childComplexity int, input model.RegisterInput) int
+		RejectUser     func(childComplexity int, userID string) int
+		SavePost       func(childComplexity int, postID string) int
+		Test           func(childComplexity int, input model.TestInput) int
+		UnfollowUser   func(childComplexity int, userID string) int
+		UnlikePost     func(childComplexity int, postID string) int
+		UnsavePost     func(childComplexity int, postID string) int
 	}
 
 	Pagination struct {
@@ -97,6 +99,7 @@ type ComplexityRoot struct {
 	}
 
 	Post struct {
+		Comments  func(childComplexity int) int
 		Content   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
@@ -106,6 +109,22 @@ type ComplexityRoot struct {
 		Status    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
 		User      func(childComplexity int) int
+	}
+
+	PostComment struct {
+		Children  func(childComplexity int) int
+		Content   func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Parent    func(childComplexity int) int
+		Post      func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+		User      func(childComplexity int) int
+	}
+
+	PostComments struct {
+		Pagination   func(childComplexity int) int
+		PostComments func(childComplexity int) int
 	}
 
 	PostLike struct {
@@ -140,6 +159,7 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
+		GetPostComments            func(childComplexity int, postID string, input *model.PaginationInput) int
 		GetPostLikesByPostID       func(childComplexity int, postID string, input *model.PaginationInput) int
 		GetSavedPosts              func(childComplexity int, input *model.PaginationInput) int
 		GetTagByTagName            func(childComplexity int, tagName string) int
@@ -212,6 +232,7 @@ type MutationResolver interface {
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
+	AddPostComment(ctx context.Context, input model.CommentPostInput) (*model.PostComment, error)
 	LikePost(ctx context.Context, postID string) (*model.PostLike, error)
 	UnlikePost(ctx context.Context, postID string) (*model.PostLike, error)
 	SavePost(ctx context.Context, postID string) (*model.PostSave, error)
@@ -221,8 +242,15 @@ type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
 
 	Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error)
+	Comments(ctx context.Context, obj *model.Post) (*model.PostComments, error)
 	IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error)
 	IsSaved(ctx context.Context, obj *model.Post) (*model.PostSave, error)
+}
+type PostCommentResolver interface {
+	Parent(ctx context.Context, obj *model.PostComment) (*model.PostComment, error)
+	Children(ctx context.Context, obj *model.PostComment) (*model.PostComments, error)
+	User(ctx context.Context, obj *model.PostComment) (*model.User, error)
+	Post(ctx context.Context, obj *model.PostComment) (*model.Post, error)
 }
 type PostLikeResolver interface {
 	User(ctx context.Context, obj *model.PostLike) (*model.User, error)
@@ -240,6 +268,7 @@ type QueryResolver interface {
 	GetUserFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error)
 	GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
 	GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
+	GetPostComments(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostComments, error)
 	GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error)
 	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
@@ -381,6 +410,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddPost(childComplexity, args["input"].(model.AddPostInput)), true
+
+	case "Mutation.addPostComment":
+		if e.complexity.Mutation.AddPostComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addPostComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddPostComment(childComplexity, args["input"].(model.CommentPostInput)), true
 
 	case "Mutation.followUser":
 		if e.complexity.Mutation.FollowUser == nil {
@@ -525,6 +566,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Pagination.TotalPages(childComplexity), true
 
+	case "Post.comments":
+		if e.complexity.Post.Comments == nil {
+			break
+		}
+
+		return e.complexity.Post.Comments(childComplexity), true
+
 	case "Post.content":
 		if e.complexity.Post.Content == nil {
 			break
@@ -587,6 +635,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.User(childComplexity), true
+
+	case "PostComment.children":
+		if e.complexity.PostComment.Children == nil {
+			break
+		}
+
+		return e.complexity.PostComment.Children(childComplexity), true
+
+	case "PostComment.content":
+		if e.complexity.PostComment.Content == nil {
+			break
+		}
+
+		return e.complexity.PostComment.Content(childComplexity), true
+
+	case "PostComment.createdAt":
+		if e.complexity.PostComment.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.PostComment.CreatedAt(childComplexity), true
+
+	case "PostComment.id":
+		if e.complexity.PostComment.ID == nil {
+			break
+		}
+
+		return e.complexity.PostComment.ID(childComplexity), true
+
+	case "PostComment.parent":
+		if e.complexity.PostComment.Parent == nil {
+			break
+		}
+
+		return e.complexity.PostComment.Parent(childComplexity), true
+
+	case "PostComment.post":
+		if e.complexity.PostComment.Post == nil {
+			break
+		}
+
+		return e.complexity.PostComment.Post(childComplexity), true
+
+	case "PostComment.updatedAt":
+		if e.complexity.PostComment.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.PostComment.UpdatedAt(childComplexity), true
+
+	case "PostComment.user":
+		if e.complexity.PostComment.User == nil {
+			break
+		}
+
+		return e.complexity.PostComment.User(childComplexity), true
+
+	case "PostComments.pagination":
+		if e.complexity.PostComments.Pagination == nil {
+			break
+		}
+
+		return e.complexity.PostComments.Pagination(childComplexity), true
+
+	case "PostComments.postComments":
+		if e.complexity.PostComments.PostComments == nil {
+			break
+		}
+
+		return e.complexity.PostComments.PostComments(childComplexity), true
 
 	case "PostLike.createdAt":
 		if e.complexity.PostLike.CreatedAt == nil {
@@ -699,6 +817,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Posts.Posts(childComplexity), true
+
+	case "Query.getPostComments":
+		if e.complexity.Query.GetPostComments == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPostComments_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPostComments(childComplexity, args["postId"].(string), args["input"].(*model.PaginationInput)), true
 
 	case "Query.getPostLikesByPostId":
 		if e.complexity.Query.GetPostLikesByPostID == nil {
@@ -1195,6 +1325,7 @@ type Mutation {
   content: String!
   status: Int
   likes: PostLikes
+  comments: PostComments
   isLiked: PostLike
   isSaved: PostSave
   createdAt: Time!
@@ -1220,6 +1351,36 @@ extend type Mutation {
   addPost(input: addPostInput!): Post
 }
 `, BuiltIn: false},
+	{Name: "graph/schema/post_comment.graphqls", Input: `type PostComment {
+  id: ID!
+  parent: PostComment
+  children: PostComments
+  user: User!
+  post: Post!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PostComments {
+  postComments: [PostComment]
+  pagination: Pagination
+}
+
+input CommentPostInput {
+  parentId: ID
+  postId: ID!
+  content: String!
+}
+
+extend type Query {
+  getPostComments(postId: ID!, input: PaginationInput): PostComments
+}
+
+extend type Mutation {
+  addPostComment(input: CommentPostInput!): PostComment 
+}
+`, BuiltIn: false},
 	{Name: "graph/schema/post_like.graphqls", Input: `type PostLike {
   id: ID!
   user: User!
@@ -1238,8 +1399,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!):PostLike 
-  unlikePost(postId: ID!):PostLike 
+  likePost(postId: ID!): PostLike 
+  unlikePost(postId: ID!): PostLike 
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_save.graphqls", Input: `type PostSave {
@@ -1260,8 +1421,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: ID!):PostSave 
-  unsavePost(postId: ID!):PostSave 
+  savePost(postId: ID!): PostSave 
+  unsavePost(postId: ID!): PostSave 
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_tag.graphqls", Input: `type Tag {
@@ -1335,6 +1496,21 @@ func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, 
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addPostComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.CommentPostInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCommentPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1500,6 +1676,30 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPostComments_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postId"] = arg0
+	var arg1 *model.PaginationInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -2465,6 +2665,45 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_addPostComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addPostComment_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddPostComment(rctx, args["input"].(model.CommentPostInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PostComment)
+	fc.Result = res
+	return ec.marshalOPostComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -2962,6 +3201,38 @@ func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.Colle
 	return ec.marshalOPostLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().Comments(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PostComments)
+	fc.Result = res
+	return ec.marshalOPostComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComments(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3094,6 +3365,344 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 	res := resTmp.(time.Time)
 	fc.Result = res
 	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_id(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_parent(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostComment().Parent(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PostComment)
+	fc.Result = res
+	return ec.marshalOPostComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_children(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostComment().Children(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PostComments)
+	fc.Result = res
+	return ec.marshalOPostComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComments(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_user(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostComment().User(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_post(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostComment().Post(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_content(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Content, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComment_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.PostComment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComments_postComments(ctx context.Context, field graphql.CollectedField, obj *model.PostComments) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComments",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PostComments, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PostComment)
+	fc.Result = res
+	return ec.marshalOPostComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PostComments_pagination(ctx context.Context, field graphql.CollectedField, obj *model.PostComments) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "PostComments",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Pagination, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Pagination)
+	fc.Result = res
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostLike_id(ctx context.Context, field graphql.CollectedField, obj *model.PostLike) (ret graphql.Marshaler) {
@@ -3909,6 +4518,45 @@ func (ec *executionContext) _Query_getUserPostsByTagName(ctx context.Context, fi
 	res := resTmp.(*model.Posts)
 	fc.Result = res
 	return ec.marshalOPosts2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getPostComments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getPostComments_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPostComments(rctx, args["postId"].(string), args["input"].(*model.PaginationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.PostComments)
+	fc.Result = res
+	return ec.marshalOPostComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComments(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostLikesByPostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6203,6 +6851,45 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputCommentPostInput(ctx context.Context, obj interface{}) (model.CommentPostInput, error) {
+	var it model.CommentPostInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "parentId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
+			it.ParentID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "postId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+			it.PostID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "content":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			it.Content, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj interface{}) (model.LoginInput, error) {
 	var it model.LoginInput
 	asMap := map[string]interface{}{}
@@ -6552,6 +7239,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_rejectUser(ctx, field)
 		case "addPost":
 			out.Values[i] = ec._Mutation_addPost(ctx, field)
+		case "addPostComment":
+			out.Values[i] = ec._Mutation_addPostComment(ctx, field)
 		case "likePost":
 			out.Values[i] = ec._Mutation_likePost(ctx, field)
 		case "unlikePost":
@@ -6663,6 +7352,17 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				res = ec._Post_likes(ctx, field, obj)
 				return res
 			})
+		case "comments":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_comments(ctx, field, obj)
+				return res
+			})
 		case "isLiked":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -6695,6 +7395,124 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postCommentImplementors = []string{"PostComment"}
+
+func (ec *executionContext) _PostComment(ctx context.Context, sel ast.SelectionSet, obj *model.PostComment) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postCommentImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostComment")
+		case "id":
+			out.Values[i] = ec._PostComment_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "parent":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostComment_parent(ctx, field, obj)
+				return res
+			})
+		case "children":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostComment_children(ctx, field, obj)
+				return res
+			})
+		case "user":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostComment_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "post":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostComment_post(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
+		case "content":
+			out.Values[i] = ec._PostComment_content(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "createdAt":
+			out.Values[i] = ec._PostComment_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "updatedAt":
+			out.Values[i] = ec._PostComment_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postCommentsImplementors = []string{"PostComments"}
+
+func (ec *executionContext) _PostComments(ctx context.Context, sel ast.SelectionSet, obj *model.PostComments) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postCommentsImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostComments")
+		case "postComments":
+			out.Values[i] = ec._PostComments_postComments(ctx, field, obj)
+		case "pagination":
+			out.Values[i] = ec._PostComments_pagination(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7004,6 +7822,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserPostsByTagName(ctx, field)
+				return res
+			})
+		case "getPostComments":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPostComments(ctx, field)
 				return res
 			})
 		case "getPostLikesByPostId":
@@ -7642,6 +8471,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) unmarshalNCommentPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx context.Context, v interface{}) (model.CommentPostInput, error) {
+	res, err := ec.unmarshalInputCommentPostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8093,6 +8927,21 @@ func (ec *executionContext) marshalOConnections2ᚖgithubᚗcomᚋfavecodeᚋplo
 	return ec._Connections(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return graphql.MarshalID(*v)
+}
+
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
 	if v == nil {
 		return nil, nil
@@ -8169,6 +9018,61 @@ func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcor
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPostComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx context.Context, sel ast.SelectionSet, v []*model.PostComment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPostComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOPostComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComment(ctx context.Context, sel ast.SelectionSet, v *model.PostComment) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PostComment(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPostComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostComments(ctx context.Context, sel ast.SelectionSet, v *model.PostComments) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._PostComments(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v []*model.PostLike) graphql.Marshaler {

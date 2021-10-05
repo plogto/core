@@ -1,0 +1,29 @@
+type PostComment {
+  id: ID!
+  parent: PostComment
+  children: PostComments
+  user: User!
+  post: Post!
+  content: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type PostComments {
+  postComments: [PostComment]
+  pagination: Pagination
+}
+
+input CommentPostInput {
+  parentId: ID
+  postId: ID!
+  content: String!
+}
+
+extend type Query {
+  getPostComments(postId: ID!, input: PaginationInput): PostComments
+}
+
+extend type Mutation {
+  addPostComment(input: CommentPostInput!): PostComment 
+}
