@@ -61,6 +61,8 @@ models:
         resolver: true
       likes:
         resolver: true
+      comments:
+        resolver: true
       isLiked:
         resolver: true
       isSaved:
@@ -90,4 +92,15 @@ models:
       user:
         resolver: true
       post:
+        resolver: true
+  PostComment:
+    model: github.com/favecode/plog-core/graph/model.PostComment
+    fields:
+      parent:
+        resolver: true
+      user:
+        resolver: true
+      post:
+        resolver: true
+      children:
         resolver: true
