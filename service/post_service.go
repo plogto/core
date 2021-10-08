@@ -47,7 +47,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	return post, nil
 }
 
-func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
+func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	followingUser, _ := s.User.GetUserByUsername(username)
@@ -74,7 +74,7 @@ func (s *Service) GetUserPostsByUsername(ctx context.Context, username string, i
 	return posts, nil
 }
 
-func (s *Service) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
+func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
 	tag, _ := s.Tag.GetTagByName(tagName)
 
 	var limit int = config.POSTS_PAGE_LIMIT
