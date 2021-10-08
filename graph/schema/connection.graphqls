@@ -13,9 +13,9 @@ type Connections {
 }
 
 extend type Query {
-  getUserFollowersByUsername(username: String!, input: PaginationInput): Connections
-  getUserFollowingByUsername(username: String!, input: PaginationInput): Connections
-  getUserFollowRequests(input: PaginationInput): Connections
+  getFollowersByUsername(username: String!, input: PaginationInput): Connections
+  getFollowingByUsername(username: String!, input: PaginationInput): Connections
+  getFollowRequests(input: PaginationInput): Connections
 }
 
 extend type Mutation {

@@ -22,8 +22,8 @@ input addPostInput {
 }
 
 extend type Query {
-  getUserPostsByUsername(username: String!, input: PaginationInput): Posts
-  getUserPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostsByUsername(username: String!, input: PaginationInput): Posts
+  getPostsByTagName(tagName: String!, input: PaginationInput): Posts
 }
 
 extend type Mutation {

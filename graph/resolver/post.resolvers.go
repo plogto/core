@@ -34,12 +34,12 @@ func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.Pos
 	return r.Service.IsPostSaved(ctx, obj.ID)
 }
 
-func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetUserPostsByUsername(ctx, username, input)
+func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
+	return r.Service.GetPostsByUsername(ctx, username, input)
 }
 
-func (r *queryResolver) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetUserPostsByTagName(ctx, tagName, input)
+func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
+	return r.Service.GetPostsByTagName(ctx, tagName, input)
 }
 
 // Post returns generated.PostResolver implementation.
