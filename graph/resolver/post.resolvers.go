@@ -42,6 +42,10 @@ func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, i
 	return r.Service.GetPostsByTagName(ctx, tagName, input)
 }
 
+func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
+	return r.Service.GetPostByURL(ctx, url)
+}
+
 // Post returns generated.PostResolver implementation.
 func (r *Resolver) Post() generated.PostResolver { return &postResolver{r} }
 

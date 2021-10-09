@@ -27,7 +27,7 @@ func (r *postCommentResolver) User(ctx context.Context, obj *model.PostComment) 
 }
 
 func (r *postCommentResolver) Post(ctx context.Context, obj *model.PostComment) (*model.Post, error) {
-	return r.Service.GetUserPostsByID(ctx, obj.PostID)
+	return r.Service.GetPostsByID(ctx, obj.PostID)
 }
 
 func (r *queryResolver) GetPostComments(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostComments, error) {

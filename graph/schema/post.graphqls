@@ -2,7 +2,7 @@ type Post {
   id: ID!
   user: User!
   content: String!
-  status: Int
+  url: String!
   likes: PostLikes
   comments: PostComments
   isLiked: PostLike
@@ -24,6 +24,7 @@ input addPostInput {
 extend type Query {
   getPostsByUsername(username: String!, input: PaginationInput): Posts
   getPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostByUrl(url: String!): Post
 }
 
 extend type Mutation {
