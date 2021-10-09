@@ -9,7 +9,7 @@ type Post struct {
 	ID        string     `json:"id"`
 	UserID    string     `json:"userId"`
 	Content   string     `json:"content"`
-	Status    *int       `json:"status"`
+	Url       string     `json:"url"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`

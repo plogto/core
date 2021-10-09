@@ -23,7 +23,7 @@ func (r *postSaveResolver) User(ctx context.Context, obj *model.PostSave) (*mode
 }
 
 func (r *postSaveResolver) Post(ctx context.Context, obj *model.PostSave) (*model.Post, error) {
-	return r.Service.GetUserPostsByID(ctx, obj.PostID)
+	return r.Service.GetPostsByID(ctx, obj.PostID)
 }
 
 func (r *queryResolver) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error) {

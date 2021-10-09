@@ -106,8 +106,8 @@ type ComplexityRoot struct {
 		IsLiked   func(childComplexity int) int
 		IsSaved   func(childComplexity int) int
 		Likes     func(childComplexity int) int
-		Status    func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
+		Url       func(childComplexity int) int
 		User      func(childComplexity int) int
 	}
 
@@ -162,6 +162,7 @@ type ComplexityRoot struct {
 		GetFollowRequests      func(childComplexity int, input *model.PaginationInput) int
 		GetFollowersByUsername func(childComplexity int, username string, input *model.PaginationInput) int
 		GetFollowingByUsername func(childComplexity int, username string, input *model.PaginationInput) int
+		GetPostByURL           func(childComplexity int, url string) int
 		GetPostComments        func(childComplexity int, postID string, input *model.PaginationInput) int
 		GetPostLikesByPostID   func(childComplexity int, postID string, input *model.PaginationInput) int
 		GetPostsByTagName      func(childComplexity int, tagName string, input *model.PaginationInput) int
@@ -268,6 +269,7 @@ type QueryResolver interface {
 	GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error)
 	GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
+	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
 	GetPostComments(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostComments, error)
 	GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error)
 	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error)
@@ -615,19 +617,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.Likes(childComplexity), true
 
-	case "Post.status":
-		if e.complexity.Post.Status == nil {
-			break
-		}
-
-		return e.complexity.Post.Status(childComplexity), true
-
 	case "Post.updatedAt":
 		if e.complexity.Post.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Post.UpdatedAt(childComplexity), true
+
+	case "Post.url":
+		if e.complexity.Post.Url == nil {
+			break
+		}
+
+		return e.complexity.Post.Url(childComplexity), true
 
 	case "Post.user":
 		if e.complexity.Post.User == nil {
@@ -853,6 +855,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetFollowingByUsername(childComplexity, args["username"].(string), args["input"].(*model.PaginationInput)), true
+
+	case "Query.getPostByUrl":
+		if e.complexity.Query.GetPostByURL == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPostByUrl_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPostByURL(childComplexity, args["url"].(string)), true
 
 	case "Query.getPostComments":
 		if e.complexity.Query.GetPostComments == nil {
@@ -1323,7 +1337,7 @@ type Mutation {
   id: ID!
   user: User!
   content: String!
-  status: Int
+  url: String!
   likes: PostLikes
   comments: PostComments
   isLiked: PostLike
@@ -1345,6 +1359,7 @@ input addPostInput {
 extend type Query {
   getPostsByUsername(username: String!, input: PaginationInput): Posts
   getPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostByUrl(url: String!): Post
 }
 
 extend type Mutation {
@@ -1739,6 +1754,21 @@ func (ec *executionContext) field_Query_getFollowingByUsername_args(ctx context.
 		}
 	}
 	args["input"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPostByUrl_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["url"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("url"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["url"] = arg0
 	return args, nil
 }
 
@@ -3137,7 +3167,7 @@ func (ec *executionContext) _Post_content(ctx context.Context, field graphql.Col
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -3155,18 +3185,21 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return obj.Url, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -4518,6 +4551,45 @@ func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field 
 	res := resTmp.(*model.Posts)
 	fc.Result = res
 	return ec.marshalOPosts2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_getPostByUrl_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPostByURL(rctx, args["url"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostComments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7339,8 +7411,11 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "status":
-			out.Values[i] = ec._Post_status(ctx, field, obj)
+		case "url":
+			out.Values[i] = ec._Post_url(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "likes":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7822,6 +7897,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getPostsByTagName(ctx, field)
+				return res
+			})
+		case "getPostByUrl":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPostByUrl(ctx, field)
 				return res
 			})
 		case "getPostComments":
