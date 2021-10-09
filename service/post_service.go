@@ -22,7 +22,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	post := &model.Post{
 		UserID:  user.ID,
 		Content: input.Content,
-		Status:  input.Status,
+		Url:     util.RandomString(20),
 	}
 
 	s.Post.CreatePost(post)
@@ -101,8 +101,13 @@ func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error
 	return count, nil
 }
 
-func (s *Service) GetUserPostsByID(ctx context.Context, postId string) (*model.Post, error) {
+func (s *Service) GetPostsByID(ctx context.Context, postId string) (*model.Post, error) {
 	post, _ := s.Post.GetPostByID(postId)
+
+	return post, nil
+}
+func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
+	post, _ := s.Post.GetPostByURL(url)
 
 	return post, nil
 }
