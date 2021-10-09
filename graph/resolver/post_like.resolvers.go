@@ -23,7 +23,7 @@ func (r *postLikeResolver) User(ctx context.Context, obj *model.PostLike) (*mode
 }
 
 func (r *postLikeResolver) Post(ctx context.Context, obj *model.PostLike) (*model.Post, error) {
-	return r.Service.GetUserPostsByID(ctx, obj.PostID)
+	return r.Service.GetPostsByID(ctx, obj.PostID)
 }
 
 func (r *queryResolver) GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error) {
