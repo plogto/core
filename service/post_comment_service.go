@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -56,6 +57,8 @@ func (s *Service) GetPostComments(ctx context.Context, postID string) (*model.Po
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
+
+	fmt.Println("====>>>>", postID)
 
 	// TODO: add inputPagination
 	postComments, _ := s.PostComment.GetPostCommentsByPostIdAndPagination(postID, 10, 1)
