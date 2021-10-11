@@ -37,7 +37,7 @@ CREATE TABLE "post" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"user_id" uuid NOT NULL,
 	"content" TEXT NOT NULL,
-	"status" INTEGER NOT NULL DEFAULT 0,
+	"url" VARCHAR(20) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -95,6 +95,32 @@ CREATE TABLE "post_like" (
   OIDS=FALSE
 );
 
+CREATE TABLE "post_save" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" uuid NOT NULL,
+	"post_id" uuid NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "post_save_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
+CREATE TABLE "post_comment" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"parent_id" uuid DEFAULT NULL,
+	"user_id" uuid NOT NULL,
+	"post_id" uuid NOT NULL,
+	"content" TEXT NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "post_comment_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()   
 RETURNS TRIGGER AS $$
@@ -111,6 +137,8 @@ CREATE TRIGGER update_connection BEFORE UPDATE ON "connection" FOR EACH ROW EXEC
 CREATE TRIGGER update_tag BEFORE UPDATE ON "tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_tag BEFORE UPDATE ON "post_tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_post_comment BEFORE UPDATE ON "post_comment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
@@ -121,3 +149,8 @@ ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk0" FOREIGN KEY ("tag_id") REFE
 ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "post_save" ADD CONSTRAINT "post_save_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
+ALTER TABLE "post_save" ADD CONSTRAINT "post_save_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk0" FOREIGN KEY ("parent_id") REFERENCES "post_comment"("id");
+ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk1" FOREIGN KEY ("user_id") REFERENCES "user"("id");
+ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk2" FOREIGN KEY ("post_id") REFERENCES "post"("id");

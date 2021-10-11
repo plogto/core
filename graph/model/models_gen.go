@@ -16,6 +16,12 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
+type CommentPostInput struct {
+	ParentID *string `json:"parentId"`
+	PostID   string  `json:"postId"`
+	Content  string  `json:"content"`
+}
+
 type Connections struct {
 	Connections []*Connection `json:"connections"`
 	Pagination  *Pagination   `json:"pagination"`
@@ -39,8 +45,18 @@ type PaginationInput struct {
 	Limit *int `json:"limit"`
 }
 
+type PostComments struct {
+	PostComments []*PostComment `json:"postComments"`
+	Pagination   *Pagination    `json:"pagination"`
+}
+
 type PostLikes struct {
 	PostLikes  []*PostLike `json:"postLikes"`
+	Pagination *Pagination `json:"pagination"`
+}
+
+type PostSaves struct {
+	PostSaves  []*PostSave `json:"postSaves"`
 	Pagination *Pagination `json:"pagination"`
 }
 
