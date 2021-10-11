@@ -16,6 +16,10 @@ func (s *Service) AddPostComment(ctx context.Context, input model.CommentPostInp
 		return nil, errors.New(err.Error())
 	}
 
+	if len(input.Content) < 1 {
+		return nil, errors.New("content is empty")
+	}
+
 	post, _ := s.Post.GetPostByID(input.PostID)
 	followingUser, _ := s.User.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
