@@ -34,16 +34,16 @@ func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*mode
 	return r.Service.RejectUser(ctx, userID)
 }
 
-func (r *queryResolver) GetUserFollowersByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "followers")
+func (r *queryResolver) GetFollowersByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
+	return r.Service.GetConnectionsByUsername(ctx, username, input, "followers")
 }
 
-func (r *queryResolver) GetUserFollowingByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetUserConnectionsByUsername(ctx, username, input, "following")
+func (r *queryResolver) GetFollowingByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
+	return r.Service.GetConnectionsByUsername(ctx, username, input, "following")
 }
 
-func (r *queryResolver) GetUserFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetUserFollowRequests(ctx, input)
+func (r *queryResolver) GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error) {
+	return r.Service.GetFollowRequests(ctx, input)
 }
 
 // Connection returns generated.ConnectionResolver implementation.

@@ -9,6 +9,7 @@ import (
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/util"
 )
 
 func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
@@ -16,6 +17,7 @@ func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*mo
 }
 
 func (r *queryResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
+	fmt.Println(util.RandomString(20))
 	return &model.Test{
 		Content: input.Content,
 	}, nil
