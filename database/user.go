@@ -17,6 +17,9 @@ func (u *User) GetUserByField(field, value string) (*model.User, error) {
 	var user model.User
 	value = strings.ToLower(value)
 	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = lower(?)", field), value).Where("deleted_at is ?", nil).First()
+	if len(user.ID) < 1 {
+		return nil, nil
+	}
 	return &user, err
 }
 
