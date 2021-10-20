@@ -2,6 +2,7 @@ type Post {
   id: ID!
   user: User!
   content: String!
+  attachment: String
   url: String!
   likes: PostLikes
   comments: PostComments
@@ -19,6 +20,7 @@ type Posts {
 input addPostInput {
   content: String!
   status: Int
+  attachment: String
 }
 
 extend type Query {

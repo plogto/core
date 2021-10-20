@@ -37,6 +37,7 @@ CREATE TABLE "post" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"user_id" uuid NOT NULL,
 	"content" TEXT NOT NULL,
+	"attachment" TEXT DEFAULT NULL,
 	"url" VARCHAR(20) NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
