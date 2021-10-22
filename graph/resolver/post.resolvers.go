@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
@@ -18,12 +19,16 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) (*string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
 	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *model.Post) (*model.PostComments, error) {
-	return r.Service.GetPostComments(ctx, obj.ID)
+func (r *postResolver) Comments(ctx context.Context, obj *model.Post) (*model.Comments, error) {
+	return r.Service.GetComments(ctx, obj.ID)
 }
 
 func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {

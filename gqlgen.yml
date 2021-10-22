@@ -93,8 +93,8 @@ models:
         resolver: true
       post:
         resolver: true
-  PostComment:
-    model: github.com/favecode/plog-core/graph/model.PostComment
+  Comment:
+    model: github.com/favecode/plog-core/graph/model.Comment
     fields:
       parent:
         resolver: true
