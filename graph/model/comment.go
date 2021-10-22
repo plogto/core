@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-type PostComment struct {
-	tableName struct{}   `sql:"post_comment"`
+type Comment struct {
+	tableName struct{}   `sql:"comment"`
 	ID        string     `json:"id"`
 	ParentID  *string    `json:"parent_id"`
 	UserID    string     `json:"user_id"`
