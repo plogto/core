@@ -122,12 +122,24 @@ CREATE TABLE "post_comment" (
   OIDS=FALSE
 );
 
+CREATE TABLE "post_comment_like" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" uuid NOT NULL,
+	"comment_id" uuid NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "post_comment_like_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
-CREATE OR REPLACE FUNCTION trigger_set_updated_at()   
+CREATE OR REPLACE FUNCTION trigger_set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at= now();
-    RETURN NEW;   
+    RETURN NEW;
 END;
 $$ language 'plpgsql';
 
@@ -140,6 +152,7 @@ CREATE TRIGGER update_post_tag BEFORE UPDATE ON "post_tag" FOR EACH ROW EXECUTE 
 CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_comment BEFORE UPDATE ON "post_comment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_post_comment_like BEFORE UPDATE ON "post_comment_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
@@ -155,3 +168,5 @@ ALTER TABLE "post_save" ADD CONSTRAINT "post_save_fk1" FOREIGN KEY ("post_id") R
 ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk0" FOREIGN KEY ("parent_id") REFERENCES "post_comment"("id");
 ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk1" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post_comment" ADD CONSTRAINT "post_comment_fk2" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "post_comment_like" ADD CONSTRAINT "post_comment_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
+ALTER TABLE "post_comment_like" ADD CONSTRAINT "post_comment_like_fk1" FOREIGN KEY ("comment_id") REFERENCES "post_comment"("id");
