@@ -5,7 +5,7 @@ type Post {
   attachment: String
   url: String!
   likes: PostLikes
-  comments: PostComments
+  comments: Comments
   isLiked: PostLike
   isSaved: PostSave
   createdAt: Time!

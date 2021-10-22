@@ -9,28 +9,28 @@ import (
 )
 
 type Service struct {
-	User        database.User
-	Password    database.Password
-	Post        database.Post
-	Connection  database.Connection
-	Tag         database.Tag
-	PostTag     database.PostTag
-	PostLike    database.PostLike
-	PostSave    database.PostSave
-	PostComment database.PostComment
+	User       database.User
+	Password   database.Password
+	Post       database.Post
+	Connection database.Connection
+	Tag        database.Tag
+	PostTag    database.PostTag
+	PostLike   database.PostLike
+	PostSave   database.PostSave
+	Comment    database.Comment
 }
 
 func New(service Service) *Service {
 	return &Service{
-		User:        service.User,
-		Password:    service.Password,
-		Post:        service.Post,
-		Connection:  service.Connection,
-		Tag:         service.Tag,
-		PostTag:     service.PostTag,
-		PostLike:    service.PostLike,
-		PostSave:    service.PostSave,
-		PostComment: service.PostComment,
+		User:       service.User,
+		Password:   service.Password,
+		Post:       service.Post,
+		Connection: service.Connection,
+		Tag:        service.Tag,
+		PostTag:    service.PostTag,
+		PostLike:   service.PostLike,
+		PostSave:   service.PostSave,
+		Comment:    service.Comment,
 	}
 }
 

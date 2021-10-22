@@ -1,7 +1,7 @@
-type PostComment {
+type Comment {
   id: ID!
-  parent: PostComment
-  children: PostComments
+  parent: Comment
+  children: Comments
   user: User!
   post: Post!
   content: String!
@@ -9,8 +9,8 @@ type PostComment {
   updatedAt: Time!
 }
 
-type PostComments {
-  postComments: [PostComment]
+type Comments {
+  comments: [Comment]
   pagination: Pagination
 }
 
@@ -21,9 +21,9 @@ input CommentPostInput {
 }
 
 extend type Query {
-  getPostComments(postId: ID!, input: PaginationInput): PostComments
+  getComments(postId: ID!, input: PaginationInput): Comments
 }
 
 extend type Mutation {
-  addPostComment(input: CommentPostInput!): PostComment 
+  addComment(input: CommentPostInput!): Comment 
 }
