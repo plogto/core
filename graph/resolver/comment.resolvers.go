@@ -5,34 +5,33 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
 )
 
 func (r *commentResolver) Parent(ctx context.Context, obj *model.Comment) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetCommentByID(ctx, obj.ParentID)
 }
 
 func (r *commentResolver) Children(ctx context.Context, obj *model.Comment) (*model.Comments, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetChildrenComments(ctx, obj.PostID, obj.ID)
 }
 
 func (r *commentResolver) User(ctx context.Context, obj *model.Comment) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 func (r *commentResolver) Post(ctx context.Context, obj *model.Comment) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetPostsByID(ctx, obj.PostID)
 }
 
 func (r *mutationResolver) AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.AddComment(ctx, input)
 }
 
 func (r *queryResolver) GetComments(ctx context.Context, postID string, input *model.PaginationInput) (*model.Comments, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetComments(ctx, postID)
 }
 
 // Comment returns generated.CommentResolver implementation.
