@@ -5,30 +5,29 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
 )
 
 func (r *commentLikeResolver) User(ctx context.Context, obj *model.CommentLike) (*model.User, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 func (r *commentLikeResolver) Comment(ctx context.Context, obj *model.CommentLike) (*model.Comment, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetCommentByID(ctx, &obj.CommentID)
 }
 
 func (r *mutationResolver) LikeComment(ctx context.Context, commentID string) (*model.CommentLike, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.LikeComment(ctx, commentID)
 }
 
 func (r *mutationResolver) UnlikeComment(ctx context.Context, commentID string) (*model.CommentLike, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.UnlikeComment(ctx, commentID)
 }
 
 func (r *queryResolver) GetCommentLikesByCommentID(ctx context.Context, commentID string, input *model.PaginationInput) (*model.CommentLikes, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetCommentLikesByCommentId(ctx, commentID)
 }
 
 // CommentLike returns generated.CommentLikeResolver implementation.

@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
@@ -17,10 +16,6 @@ func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput
 
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
 	return r.Service.GetUserByID(ctx, obj.UserID)
-}
-
-func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) (*string, error) {
-	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
