@@ -3,13 +3,12 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
 )
 
-func (s *Service) AddPostComment(ctx context.Context, input model.CommentPostInput) (*model.PostComment, error) {
+func (s *Service) AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -26,19 +25,19 @@ func (s *Service) AddPostComment(ctx context.Context, input model.CommentPostInp
 		return nil, errors.New("access denied")
 	}
 
-	postComment := &model.PostComment{
+	comment := &model.Comment{
 		UserID:   user.ID,
 		PostID:   input.PostID,
 		Content:  input.Content,
 		ParentID: input.ParentID,
 	}
 
-	s.PostComment.CreatePostComment(postComment)
+	s.Comment.CreateComment(comment)
 
-	return postComment, nil
+	return comment, nil
 }
 
-func (s *Service) GetChildrenPostComments(ctx context.Context, postID string, parentId string) (*model.PostComments, error) {
+func (s *Service) GetChildrenComments(ctx context.Context, postID string, parentId string) (*model.Comments, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := s.Post.GetPostByID(postID)
@@ -48,12 +47,12 @@ func (s *Service) GetChildrenPostComments(ctx context.Context, postID string, pa
 	}
 
 	// TODO: add inputPagination
-	postComments, _ := s.PostComment.GetPostCommentsByParentIdAndPagination(parentId, 10, 1)
+	comments, _ := s.Comment.GetCommentsByParentIdAndPagination(parentId, 10, 1)
 
-	return postComments, nil
+	return comments, nil
 }
 
-func (s *Service) GetPostComments(ctx context.Context, postID string) (*model.PostComments, error) {
+func (s *Service) GetComments(ctx context.Context, postID string) (*model.Comments, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := s.Post.GetPostByID(postID)
@@ -62,20 +61,18 @@ func (s *Service) GetPostComments(ctx context.Context, postID string) (*model.Po
 		return nil, errors.New("access denied")
 	}
 
-	fmt.Println("====>>>>", postID)
-
 	// TODO: add inputPagination
-	postComments, _ := s.PostComment.GetPostCommentsByPostIdAndPagination(postID, 10, 1)
+	comments, _ := s.Comment.GetCommentsByPostIdAndPagination(postID, 10, 1)
 
-	return postComments, nil
+	return comments, nil
 }
 
-func (s *Service) GetPostCommentByID(ctx context.Context, id *string) (*model.PostComment, error) {
+func (s *Service) GetCommentByID(ctx context.Context, id *string) (*model.Comment, error) {
 	if id == nil {
 		return nil, nil
 	}
 
-	postComment, _ := s.PostComment.GetPostCommentByID(*id)
+	comment, _ := s.Comment.GetCommentByID(*id)
 
-	return postComment, nil
+	return comment, nil
 }
