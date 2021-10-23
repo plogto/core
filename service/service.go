@@ -17,7 +17,8 @@ type Service struct {
 	PostTag     database.PostTag
 	PostLike    database.PostLike
 	PostSave    database.PostSave
-	PostComment database.PostComment
+	Comment     database.Comment
+	CommentLike database.CommentLike
 }
 
 func New(service Service) *Service {
@@ -30,7 +31,8 @@ func New(service Service) *Service {
 		PostTag:     service.PostTag,
 		PostLike:    service.PostLike,
 		PostSave:    service.PostSave,
-		PostComment: service.PostComment,
+		Comment:     service.Comment,
+		CommentLike: service.CommentLike,
 	}
 }
 
