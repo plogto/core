@@ -8,9 +8,11 @@ ALTER TABLE "post_like" DROP CONSTRAINT IF EXISTS "post_like_fk0";
 ALTER TABLE "post_like" DROP CONSTRAINT IF EXISTS "post_like_fk1";
 ALTER TABLE "post_save" DROP CONSTRAINT IF EXISTS "post_save_fk0";
 ALTER TABLE "post_save" DROP CONSTRAINT IF EXISTS "post_save_fk1";
-ALTER TABLE "post_comment" DROP CONSTRAINT IF EXISTS "post_comment_fk0";
-ALTER TABLE "post_comment" DROP CONSTRAINT IF EXISTS "post_comment_fk1";
-ALTER TABLE "post_comment" DROP CONSTRAINT IF EXISTS "post_comment_fk2";
+ALTER TABLE "comment" DROP CONSTRAINT IF EXISTS "comment_fk0";
+ALTER TABLE "comment" DROP CONSTRAINT IF EXISTS "comment_fk1";
+ALTER TABLE "comment" DROP CONSTRAINT IF EXISTS "comment_fk2";
+ALTER TABLE "comment_like" DROP CONSTRAINT IF EXISTS "comment_like_fk0";
+ALTER TABLE "comment_like" DROP CONSTRAINT IF EXISTS "comment_like_fk1";
 
 -- Tables
 DROP TABLE IF EXISTS "user";
@@ -21,7 +23,8 @@ DROP TABLE IF EXISTS "tag";
 DROP TABLE IF EXISTS "post_tag";
 DROP TABLE IF EXISTS "post_like";
 DROP TABLE IF EXISTS "post_save";
-DROP TABLE IF EXISTS "post_comment";
+DROP TABLE IF EXISTS "comment";
+DROP TABLE IF EXISTS "comment_like";
 
 -- Types
 DROP TYPE IF EXISTS "user_roles";
