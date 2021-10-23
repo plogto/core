@@ -272,8 +272,6 @@ type MutationResolver interface {
 type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
 
-	Attachment(ctx context.Context, obj *model.Post) (*string, error)
-
 	Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error)
 	Comments(ctx context.Context, obj *model.Post) (*model.Comments, error)
 	IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error)
@@ -4030,14 +4028,14 @@ func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.
 		Object:     "Post",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Attachment(rctx, obj)
+		return obj.Attachment, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4046,9 +4044,9 @@ func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(string)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -8218,16 +8216,7 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "attachment":
-			field := field
-			out.Concurrently(i, func() (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_attachment(ctx, field, obj)
-				return res
-			})
+			out.Values[i] = ec._Post_attachment(ctx, field, obj)
 		case "url":
 			out.Values[i] = ec._Post_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
