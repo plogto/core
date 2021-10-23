@@ -16,14 +16,6 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
-type CommentLike struct {
-	ID        string    `json:"id"`
-	User      *User     `json:"user"`
-	Comment   *Comment  `json:"comment"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 type CommentLikes struct {
 	CommentLikes []*CommentLike `json:"commentLikes"`
 	Pagination   *Pagination    `json:"pagination"`

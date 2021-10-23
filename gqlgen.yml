@@ -104,3 +104,10 @@ models:
         resolver: true
       children:
         resolver: true
+  CommentLike:
+    model: github.com/favecode/plog-core/graph/model.CommentLike
+    fields:
+      user:
+        resolver: true
+      comment:
+        resolver: true
