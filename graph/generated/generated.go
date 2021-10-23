@@ -37,6 +37,7 @@ type Config struct {
 
 type ResolverRoot interface {
 	Comment() CommentResolver
+	CommentLike() CommentLikeResolver
 	Connection() ConnectionResolver
 	Mutation() MutationResolver
 	Post() PostResolver
@@ -243,6 +244,10 @@ type CommentResolver interface {
 	Children(ctx context.Context, obj *model.Comment) (*model.Comments, error)
 	User(ctx context.Context, obj *model.Comment) (*model.User, error)
 	Post(ctx context.Context, obj *model.Comment) (*model.Post, error)
+}
+type CommentLikeResolver interface {
+	User(ctx context.Context, obj *model.CommentLike) (*model.User, error)
+	Comment(ctx context.Context, obj *model.CommentLike) (*model.Comment, error)
 }
 type ConnectionResolver interface {
 	Following(ctx context.Context, obj *model.Connection) (*model.User, error)
@@ -1437,8 +1442,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  likeComment(commentId: ID!): CommentLike 
-  unlikeComment(commentId: ID!): CommentLike 
+  likeComment(commentId: ID!): CommentLike
+  unlikeComment(commentId: ID!): CommentLike
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/connection.graphqls", Input: `type Connection {
@@ -2663,14 +2668,14 @@ func (ec *executionContext) _CommentLike_user(ctx context.Context, field graphql
 		Object:     "CommentLike",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.User, nil
+		return ec.resolvers.CommentLike().User(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2698,14 +2703,14 @@ func (ec *executionContext) _CommentLike_comment(ctx context.Context, field grap
 		Object:     "CommentLike",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Comment, nil
+		return ec.resolvers.CommentLike().Comment(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7883,27 +7888,45 @@ func (ec *executionContext) _CommentLike(ctx context.Context, sel ast.SelectionS
 		case "id":
 			out.Values[i] = ec._CommentLike_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "user":
-			out.Values[i] = ec._CommentLike_user(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CommentLike_user(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "comment":
-			out.Values[i] = ec._CommentLike_comment(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CommentLike_comment(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "createdAt":
 			out.Values[i] = ec._CommentLike_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._CommentLike_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -9242,6 +9265,10 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNComment2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
+	return ec._Comment(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
