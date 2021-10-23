@@ -62,7 +62,8 @@ func main() {
 		PostTag:     database.PostTag{DB: DB},
 		PostLike:    database.PostLike{DB: DB},
 		PostSave:    database.PostSave{DB: DB},
-		PostComment: database.PostComment{DB: DB},
+		Comment:     database.Comment{DB: DB},
+		CommentLike: database.CommentLike{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
