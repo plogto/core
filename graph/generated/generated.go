@@ -67,6 +67,7 @@ type ComplexityRoot struct {
 		Content   func(childComplexity int) int
 		CreatedAt func(childComplexity int) int
 		ID        func(childComplexity int) int
+		IsLiked   func(childComplexity int) int
 		Parent    func(childComplexity int) int
 		Post      func(childComplexity int) int
 		UpdatedAt func(childComplexity int) int
@@ -109,6 +110,7 @@ type ComplexityRoot struct {
 		AcceptUser    func(childComplexity int, userID string) int
 		AddComment    func(childComplexity int, input model.CommentPostInput) int
 		AddPost       func(childComplexity int, input model.AddPostInput) int
+		DeleteComment func(childComplexity int, commentID string) int
 		FollowUser    func(childComplexity int, userID string) int
 		LikeComment   func(childComplexity int, commentID string) int
 		LikePost      func(childComplexity int, postID string) int
@@ -244,6 +246,8 @@ type CommentResolver interface {
 	Children(ctx context.Context, obj *model.Comment) (*model.Comments, error)
 	User(ctx context.Context, obj *model.Comment) (*model.User, error)
 	Post(ctx context.Context, obj *model.Comment) (*model.Post, error)
+
+	IsLiked(ctx context.Context, obj *model.Comment) (*model.CommentLike, error)
 }
 type CommentLikeResolver interface {
 	User(ctx context.Context, obj *model.CommentLike) (*model.User, error)
@@ -257,6 +261,7 @@ type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error)
 	AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error)
+	DeleteComment(ctx context.Context, commentID string) (*model.Comment, error)
 	LikeComment(ctx context.Context, commentID string) (*model.CommentLike, error)
 	UnlikeComment(ctx context.Context, commentID string) (*model.CommentLike, error)
 	FollowUser(ctx context.Context, userID string) (*model.Connection, error)
@@ -385,6 +390,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Comment.ID(childComplexity), true
+
+	case "Comment.isLiked":
+		if e.complexity.Comment.IsLiked == nil {
+			break
+		}
+
+		return e.complexity.Comment.IsLiked(childComplexity), true
 
 	case "Comment.parent":
 		if e.complexity.Comment.Parent == nil {
@@ -568,6 +580,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddPost(childComplexity, args["input"].(model.AddPostInput)), true
+
+	case "Mutation.deleteComment":
+		if e.complexity.Mutation.DeleteComment == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteComment_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteComment(childComplexity, args["commentId"].(string)), true
 
 	case "Mutation.followUser":
 		if e.complexity.Mutation.FollowUser == nil {
@@ -1399,6 +1423,7 @@ extend type Mutation {
   user: User!
   post: Post!
   content: String!
+  isLiked: CommentLike
   createdAt: Time!
   updatedAt: Time!
 }
@@ -1419,7 +1444,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  addComment(input: CommentPostInput!): Comment 
+  addComment(input: CommentPostInput!): Comment
+  deleteComment(commentId: ID!): Comment
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/comment_like.graphqls", Input: `type CommentLike {
@@ -1682,6 +1708,21 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["commentId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("commentId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["commentId"] = arg0
 	return args, nil
 }
 
@@ -2550,6 +2591,38 @@ func (ec *executionContext) _Comment_content(ctx context.Context, field graphql.
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Comment_isLiked(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Comment",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Comment().IsLiked(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.CommentLike)
+	fc.Result = res
+	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Comment_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3298,6 +3371,45 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().AddComment(rctx, args["input"].(model.CommentPostInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Comment)
+	fc.Result = res
+	return ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteComment_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteComment(rctx, args["commentId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7851,6 +7963,17 @@ func (ec *executionContext) _Comment(ctx context.Context, sel ast.SelectionSet, 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "isLiked":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Comment_isLiked(ctx, field, obj)
+				return res
+			})
 		case "createdAt":
 			out.Values[i] = ec._Comment_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -8103,6 +8226,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_register(ctx, field)
 		case "addComment":
 			out.Values[i] = ec._Mutation_addComment(ctx, field)
+		case "deleteComment":
+			out.Values[i] = ec._Mutation_deleteComment(ctx, field)
 		case "likeComment":
 			out.Values[i] = ec._Mutation_likeComment(ctx, field)
 		case "unlikeComment":
