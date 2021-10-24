@@ -5,6 +5,7 @@ type Comment {
   user: User!
   post: Post!
   content: String!
+  isLiked: CommentLike
   createdAt: Time!
   updatedAt: Time!
 }
@@ -25,5 +26,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  addComment(input: CommentPostInput!): Comment 
+  addComment(input: CommentPostInput!): Comment
+  deleteComment(commentId: ID!): Comment
 }

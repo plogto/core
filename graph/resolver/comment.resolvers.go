@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
@@ -26,8 +27,16 @@ func (r *commentResolver) Post(ctx context.Context, obj *model.Comment) (*model.
 	return r.Service.GetPostsByID(ctx, obj.PostID)
 }
 
+func (r *commentResolver) IsLiked(ctx context.Context, obj *model.Comment) (*model.CommentLike, error) {
+	return r.Service.IsCommentLiked(ctx, obj.PostID)
+}
+
 func (r *mutationResolver) AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error) {
 	return r.Service.AddComment(ctx, input)
+}
+
+func (r *mutationResolver) DeleteComment(ctx context.Context, commentID string) (*model.Comment, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *queryResolver) GetComments(ctx context.Context, postID string, input *model.PaginationInput) (*model.Comments, error) {
