@@ -111,3 +111,5 @@ models:
         resolver: true
       comment:
         resolver: true
+      isLiked:
+        resolver: true
