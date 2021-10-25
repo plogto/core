@@ -28,7 +28,7 @@ func (r *commentResolver) Post(ctx context.Context, obj *model.Comment) (*model.
 }
 
 func (r *commentResolver) IsLiked(ctx context.Context, obj *model.Comment) (*model.CommentLike, error) {
-	return r.Service.IsCommentLiked(ctx, obj.PostID)
+	return r.Service.IsCommentLiked(ctx, obj.ID)
 }
 
 func (r *mutationResolver) AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error) {
