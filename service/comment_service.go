@@ -37,6 +37,26 @@ func (s *Service) AddComment(ctx context.Context, input model.CommentPostInput) 
 	return comment, nil
 }
 
+func (s *Service) DeleteComment(ctx context.Context, commentID string) (*model.Comment, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	comment, _ := s.Comment.GetCommentByID(commentID)
+	if comment == nil || comment.UserID != user.ID {
+		return nil, errors.New("access denied")
+	}
+
+	followingUser, _ := s.User.GetUserByID(comment.UserID)
+	if s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, errors.New("access denied")
+	}
+
+	return s.Comment.DeleteCommentByID(commentID)
+}
+
 func (s *Service) GetChildrenComments(ctx context.Context, postID string, parentId string) (*model.Comments, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
