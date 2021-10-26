@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/util"
@@ -77,4 +78,14 @@ func (p *Comment) GetCommentsByParentIdAndPagination(parentId string, limit int,
 		}),
 		Comments: comments,
 	}, err
+}
+
+func (p *Comment) DeleteCommentByID(id string) (*model.Comment, error) {
+	DeletedAt := time.Now()
+	var comment = &model.Comment{
+		ID:        id,
+		DeletedAt: &DeletedAt,
+	}
+	_, err := p.DB.Model(comment).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	return comment, err
 }
