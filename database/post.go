@@ -45,12 +45,9 @@ func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (
 	query := p.DB.Model(&posts).
 		ColumnExpr("post_tag.post_id, post_tag.tag_id").
 		ColumnExpr("post.*").
-		ColumnExpr("\"user\".*").
 		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagId).
-		Join("INNER JOIN \"user\" ON post.user_id = \"user\".id").
 		Where("post_tag.post_id = post.id").
 		Where("post.deleted_at is ?", nil).
-		Where("\"user\".is_private = ?", false).
 		Order("post.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
@@ -67,6 +64,10 @@ func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (
 
 func (p *Post) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
+}
+
+func (p *Post) GetPostByURL(id string) (*model.Post, error) {
+	return p.GetPostByField("url", id)
 }
 
 func (p *Post) CountPostsByUserId(userId string) (*int, error) {

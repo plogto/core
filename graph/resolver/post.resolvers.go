@@ -22,16 +22,28 @@ func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostL
 	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
 }
 
+func (r *postResolver) Comments(ctx context.Context, obj *model.Post) (*model.Comments, error) {
+	return r.Service.GetComments(ctx, obj.ID)
+}
+
 func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
 	return r.Service.IsPostLiked(ctx, obj.ID)
 }
 
-func (r *queryResolver) GetUserPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetUserPostsByUsername(ctx, username, input)
+func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.PostSave, error) {
+	return r.Service.IsPostSaved(ctx, obj.ID)
 }
 
-func (r *queryResolver) GetUserPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetUserPostsByTagName(ctx, tagName, input)
+func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
+	return r.Service.GetPostsByUsername(ctx, username, input)
+}
+
+func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
+	return r.Service.GetPostsByTagName(ctx, tagName, input)
+}
+
+func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
+	return r.Service.GetPostByURL(ctx, url)
 }
 
 // Post returns generated.PostResolver implementation.
