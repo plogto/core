@@ -5,12 +5,13 @@ import (
 )
 
 type Post struct {
-	tableName struct{}   `sql:"post" pg:",discard_unknown_columns"`
-	ID        string     `json:"id"`
-	UserID    string     `json:"userId"`
-	Content   string     `json:"content"`
-	Status    *int       `json:"status"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
+	tableName  struct{}   `sql:"post" pg:",discard_unknown_columns"`
+	ID         string     `json:"id"`
+	UserID     string     `json:"userId"`
+	Content    string     `json:"content"`
+	Url        string     `json:"url"`
+	Attachment string     `json:"attachment"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	UpdatedAt  time.Time  `json:"updatedAt"`
+	DeletedAt  *time.Time `json:"-" sql:",soft_delete"`
 }

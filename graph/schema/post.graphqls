@@ -2,9 +2,12 @@ type Post {
   id: ID!
   user: User!
   content: String!
-  status: Int
+  attachment: String
+  url: String!
   likes: PostLikes
+  comments: Comments
   isLiked: PostLike
+  isSaved: PostSave
   createdAt: Time!
   updatedAt: Time!
 }
@@ -17,11 +20,13 @@ type Posts {
 input addPostInput {
   content: String!
   status: Int
+  attachment: String
 }
 
 extend type Query {
-  getUserPostsByUsername(username: String!, input: PaginationInput): Posts
-  getUserPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostsByUsername(username: String!, input: PaginationInput): Posts
+  getPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostByUrl(url: String!): Post
 }
 
 extend type Mutation {

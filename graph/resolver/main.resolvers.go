@@ -16,9 +16,7 @@ func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*mo
 }
 
 func (r *queryResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
-	return &model.Test{
-		Content: input.Content,
-	}, nil
+	panic(fmt.Errorf("not implemented"))
 }
 
 // Mutation returns generated.MutationResolver implementation.
