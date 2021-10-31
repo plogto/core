@@ -54,13 +54,16 @@ func main() {
 	router.Use(customMiddleware.AuthMiddleware(user))
 
 	s := service.New(service.Service{
-		User:       user,
-		Password:   database.Password{DB: DB},
-		Post:       database.Post{DB: DB},
-		Connection: database.Connection{DB: DB},
-		Tag:        database.Tag{DB: DB},
-		PostTag:    database.PostTag{DB: DB},
-		PostLike:   database.PostLike{DB: DB},
+		User:        user,
+		Password:    database.Password{DB: DB},
+		Post:        database.Post{DB: DB},
+		Connection:  database.Connection{DB: DB},
+		Tag:         database.Tag{DB: DB},
+		PostTag:     database.PostTag{DB: DB},
+		PostLike:    database.PostLike{DB: DB},
+		PostSave:    database.PostSave{DB: DB},
+		Comment:     database.Comment{DB: DB},
+		CommentLike: database.CommentLike{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
