@@ -1,0 +1,9 @@
+type OnlineUser {
+  id: ID!
+  userId: ID!
+  token: String!
+  socketId: String!
+  userAgent: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
