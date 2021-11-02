@@ -138,6 +138,7 @@ CREATE TABLE "online_user" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"user_id" uuid NOT NULL,
 	"socket_id" VARCHAR(20) NOT NULL,
+	"token" TEXT NOT NULL,
 	"user_agent" TEXT NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
