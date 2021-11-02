@@ -113,3 +113,8 @@ models:
         resolver: true
       isLiked:
         resolver: true
+  OnlineUser:
+    model: github.com/favecode/plog-core/graph/model.OnlineUser
+    fields:
+      user:
+        resolver: true

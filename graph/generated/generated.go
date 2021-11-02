@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -44,6 +45,7 @@ type ResolverRoot interface {
 	PostLike() PostLikeResolver
 	PostSave() PostSaveResolver
 	Query() QueryResolver
+	Subscription() SubscriptionResolver
 	Tag() TagResolver
 	User() UserResolver
 }
@@ -124,6 +126,16 @@ type ComplexityRoot struct {
 		UnsavePost    func(childComplexity int, postID string) int
 	}
 
+	OnlineUser struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		SocketID  func(childComplexity int) int
+		Token     func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+		UserAgent func(childComplexity int) int
+		UserID    func(childComplexity int) int
+	}
+
 	Pagination struct {
 		Limit      func(childComplexity int) int
 		NextPage   func(childComplexity int) int
@@ -200,6 +212,10 @@ type ComplexityRoot struct {
 	Search struct {
 		Tag  func(childComplexity int) int
 		User func(childComplexity int) int
+	}
+
+	Subscription struct {
+		Test func(childComplexity int, input model.TestInput) int
 	}
 
 	Tag struct {
@@ -308,6 +324,9 @@ type QueryResolver interface {
 	GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
+}
+type SubscriptionResolver interface {
+	Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error)
 }
 type TagResolver interface {
 	Count(ctx context.Context, obj *model.Tag) (*int, error)
@@ -724,6 +743,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UnsavePost(childComplexity, args["postId"].(string)), true
+
+	case "OnlineUser.createdAt":
+		if e.complexity.OnlineUser.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.CreatedAt(childComplexity), true
+
+	case "OnlineUser.id":
+		if e.complexity.OnlineUser.ID == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.ID(childComplexity), true
+
+	case "OnlineUser.socketId":
+		if e.complexity.OnlineUser.SocketID == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.SocketID(childComplexity), true
+
+	case "OnlineUser.token":
+		if e.complexity.OnlineUser.Token == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.Token(childComplexity), true
+
+	case "OnlineUser.updatedAt":
+		if e.complexity.OnlineUser.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.UpdatedAt(childComplexity), true
+
+	case "OnlineUser.userAgent":
+		if e.complexity.OnlineUser.UserAgent == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.UserAgent(childComplexity), true
+
+	case "OnlineUser.userId":
+		if e.complexity.OnlineUser.UserID == nil {
+			break
+		}
+
+		return e.complexity.OnlineUser.UserID(childComplexity), true
 
 	case "Pagination.limit":
 		if e.complexity.Pagination.Limit == nil {
@@ -1162,6 +1230,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Search.User(childComplexity), true
 
+	case "Subscription.test":
+		if e.complexity.Subscription.Test == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_test_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.Test(childComplexity, args["input"].(model.TestInput)), true
+
 	case "Tag.count":
 		if e.complexity.Tag.Count == nil {
 			break
@@ -1361,6 +1441,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next()
+
+			if data == nil {
+				return nil
+			}
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -1527,7 +1624,20 @@ type Query {
 type Mutation {
   test(input: TestInput!): Test
 }
+
+type Subscription {
+  test(input: TestInput!): Test
+}
 `, BuiltIn: false},
+	{Name: "graph/schema/online_user.graphqls", Input: `type OnlineUser {
+  id: ID!
+  userId: ID!
+  token: String!
+  socketId: String!
+  userAgent: String!
+  createdAt: Time!
+  updatedAt: Time!
+}`, BuiltIn: false},
 	{Name: "graph/schema/post.graphqls", Input: `type Post {
   id: ID!
   user: User!
@@ -1641,10 +1751,10 @@ extend type Query {
   role: String!
   isPrivate: Boolean!
   connectionStatus: Int
-  followingCount: Int 
-  followersCount: Int 
-  followRequestsCount: Int 
-  postsCount: Int 
+  followingCount: Int
+  followersCount: Int
+  followRequestsCount: Int
+  postsCount: Int
   createdAt: Time!
   updatedAt: Time!
 }
@@ -2195,6 +2305,21 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 }
 
 func (ec *executionContext) field_Query_test_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.TestInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_test_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 model.TestInput
@@ -3850,6 +3975,251 @@ func (ec *executionContext) _Mutation_unsavePost(ctx context.Context, field grap
 	res := resTmp.(*model.PostSave)
 	fc.Result = res
 	return ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_id(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_userId(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_token(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Token, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_socketId(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SocketID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_userAgent(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UserAgent, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _OnlineUser_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "OnlineUser",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	fc.Result = res
+	return ec.marshalNTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Pagination_totalDocs(ctx context.Context, field graphql.CollectedField, obj *model.Pagination) (ret graphql.Marshaler) {
@@ -5725,6 +6095,55 @@ func (ec *executionContext) _Search_tag(ctx context.Context, field graphql.Colle
 	res := resTmp.(*model.Tags)
 	fc.Result = res
 	return ec.marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Subscription_test(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Subscription_test_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().Test(rctx, args["input"].(model.TestInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		return nil
+	}
+	return func() graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *model.Test)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
 }
 
 func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
@@ -8261,6 +8680,63 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	return out
 }
 
+var onlineUserImplementors = []string{"OnlineUser"}
+
+func (ec *executionContext) _OnlineUser(ctx context.Context, sel ast.SelectionSet, obj *model.OnlineUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, onlineUserImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OnlineUser")
+		case "id":
+			out.Values[i] = ec._OnlineUser_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userId":
+			out.Values[i] = ec._OnlineUser_userId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "token":
+			out.Values[i] = ec._OnlineUser_token(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "socketId":
+			out.Values[i] = ec._OnlineUser_socketId(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "userAgent":
+			out.Values[i] = ec._OnlineUser_userAgent(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "createdAt":
+			out.Values[i] = ec._OnlineUser_createdAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updatedAt":
+			out.Values[i] = ec._OnlineUser_updatedAt(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var paginationImplementors = []string{"Pagination"}
 
 func (ec *executionContext) _Pagination(ctx context.Context, sel ast.SelectionSet, obj *model.Pagination) graphql.Marshaler {
@@ -8861,6 +9337,26 @@ func (ec *executionContext) _Search(ctx context.Context, sel ast.SelectionSet, o
 		return graphql.Null
 	}
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func() graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "test":
+		return ec._Subscription_test(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var tagImplementors = []string{"Tag"}
