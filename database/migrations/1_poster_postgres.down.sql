@@ -27,6 +27,7 @@ DROP TABLE IF EXISTS "post_save";
 DROP TABLE IF EXISTS "comment";
 DROP TABLE IF EXISTS "comment_like";
 DROP TABLE IF EXISTS "online_user";
+DROP TABLE IF EXISTS "notification_type";
 
 -- Types
 DROP TYPE IF EXISTS "user_roles";

@@ -148,6 +148,18 @@ CREATE TABLE "online_user" (
   OIDS=FALSE
 );
 
+CREATE TABLE "notification_type" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"name" VARCHAR(100) NOT NULL,
+	"template" TEXT NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "notification_type_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()
 RETURNS TRIGGER AS $$
@@ -168,6 +180,7 @@ CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUT
 CREATE TRIGGER update_comment BEFORE UPDATE ON "comment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_comment_like BEFORE UPDATE ON "comment_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_notification_type BEFORE UPDATE ON "notification_type" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
