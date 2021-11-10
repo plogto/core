@@ -160,6 +160,23 @@ CREATE TABLE "notification_type" (
   OIDS=FALSE
 );
 
+CREATE TABLE "notification" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"notification_type_id" uuid NOT NULL,
+	"sender_id" uuid NOT NULL,
+	"receiver_id" uuid NOT NULL,
+	"post_id" uuid DEFAULT NULL,
+	"comment_id" uuid DEFAULT NULL,
+	"url" TEXT NOT NULL,
+	"read" BOOLEAN NOT NULL DEFAULT FALSE,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "notification_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()
 RETURNS TRIGGER AS $$
@@ -181,6 +198,7 @@ CREATE TRIGGER update_comment BEFORE UPDATE ON "comment" FOR EACH ROW EXECUTE PR
 CREATE TRIGGER update_comment_like BEFORE UPDATE ON "comment_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_notification_type BEFORE UPDATE ON "notification_type" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_notification BEFORE UPDATE ON "notification" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
@@ -199,3 +217,8 @@ ALTER TABLE "comment" ADD CONSTRAINT "comment_fk2" FOREIGN KEY ("post_id") REFER
 ALTER TABLE "comment_like" ADD CONSTRAINT "comment_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "comment_like" ADD CONSTRAINT "comment_like_fk1" FOREIGN KEY ("comment_id") REFERENCES "comment"("id");
 ALTER TABLE "online_user" ADD CONSTRAINT "online_user_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk0" FOREIGN KEY ("notification_type_id") REFERENCES "notification_type"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk1" FOREIGN KEY ("sender_id") REFERENCES "user"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk2" FOREIGN KEY ("receiver_id") REFERENCES "user"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk3" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk4" FOREIGN KEY ("comment_id") REFERENCES "comment"("id");
