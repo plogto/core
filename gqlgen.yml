@@ -118,3 +118,5 @@ models:
     fields:
       user:
         resolver: true
+  NotificationType:
+    model: github.com/favecode/plog-core/graph/model.NotificationType
