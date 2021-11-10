@@ -55,15 +55,6 @@ type Notification struct {
 	UpdatedAt        time.Time         `json:"updatedAt"`
 }
 
-type NotificationType struct {
-	ID        string    `json:"id"`
-	Name      string    `json:"name"`
-	Type      string    `json:"type"`
-	Template  string    `json:"template"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
-}
-
 type Pagination struct {
 	TotalDocs  int  `json:"totalDocs"`
 	TotalPages int  `json:"totalPages"`
