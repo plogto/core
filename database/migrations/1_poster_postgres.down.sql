@@ -13,6 +13,7 @@ ALTER TABLE "comment" DROP CONSTRAINT IF EXISTS "comment_fk1";
 ALTER TABLE "comment" DROP CONSTRAINT IF EXISTS "comment_fk2";
 ALTER TABLE "comment_like" DROP CONSTRAINT IF EXISTS "comment_like_fk0";
 ALTER TABLE "comment_like" DROP CONSTRAINT IF EXISTS "comment_like_fk1";
+ALTER TABLE "online_user" DROP CONSTRAINT IF EXISTS "online_user_fk0";
 
 -- Tables
 DROP TABLE IF EXISTS "user";
@@ -25,6 +26,7 @@ DROP TABLE IF EXISTS "post_like";
 DROP TABLE IF EXISTS "post_save";
 DROP TABLE IF EXISTS "comment";
 DROP TABLE IF EXISTS "comment_like";
+DROP TABLE IF EXISTS "online_user";
 
 -- Types
 DROP TYPE IF EXISTS "user_roles";

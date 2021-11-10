@@ -8,14 +8,20 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/favecode/plog-core/config"
 	"github.com/favecode/plog-core/database"
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/pkg/errors"
 )
 
-type key string
+type OnlineUserContext struct {
+	User      model.User
+	Token     string
+	SocketID  string
+	UserAgent string
+}
 
-const CurrentUserKey key = "currentUser"
+var errAuthenticationFailed error = errors.New("Authentication failed")
 
 func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
@@ -39,7 +45,7 @@ func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), CurrentUserKey, user)
+			ctx := context.WithValue(r.Context(), config.CURRENT_USER_KEY, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -76,16 +82,29 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 }
 
 func GetCurrentUserFromCTX(ctx context.Context) (*model.User, error) {
-	errAutheticationFailed := errors.New("Authetication failed")
-
-	if ctx.Value(CurrentUserKey) == nil {
-		return nil, errAutheticationFailed
+	if ctx.Value(config.CURRENT_USER_KEY) == nil {
+		return nil, errAuthenticationFailed
 	}
 
-	user, ok := ctx.Value(CurrentUserKey).(*model.User)
+	user, ok := ctx.Value(config.CURRENT_USER_KEY).(*model.User)
+
 	if !ok || user.ID == "" {
-		return nil, errAutheticationFailed
+		return nil, errAuthenticationFailed
 	}
 
 	return user, nil
+}
+
+func GetCurrentOnlineUserFromCTX(ctx context.Context) (*OnlineUserContext, error) {
+	if ctx.Value(config.CURRENT_ONLINE_USER_KEY) == nil {
+		return nil, errAuthenticationFailed
+	}
+
+	onlineUser, ok := ctx.Value(config.CURRENT_ONLINE_USER_KEY).(*OnlineUserContext)
+
+	if !ok || onlineUser == nil {
+		return nil, errAuthenticationFailed
+	}
+
+	return onlineUser, nil
 }

@@ -1,0 +1,25 @@
+type NotificationType {
+  id: ID!
+  name: String!
+  type: String!
+  template: String!
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+type Notification {
+  id: ID!
+  notificationType: NotificationType!
+  sender: User!
+  receiver: User!
+  post: Post
+  comment: Comment
+  url: String!
+  read: Boolean
+  createdAt: Time!
+  updatedAt: Time!
+}
+
+extend type Subscription {
+  getNotification: Notification
+}
