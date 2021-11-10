@@ -134,6 +134,20 @@ CREATE TABLE "comment_like" (
   OIDS=FALSE
 );
 
+CREATE TABLE "online_user" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" uuid NOT NULL,
+	"socket_id" VARCHAR(20) NOT NULL,
+	"token" TEXT NOT NULL,
+	"user_agent" TEXT NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "online_user_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()
 RETURNS TRIGGER AS $$
@@ -153,6 +167,7 @@ CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUT
 CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_comment BEFORE UPDATE ON "comment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_comment_like BEFORE UPDATE ON "comment_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
@@ -170,3 +185,4 @@ ALTER TABLE "comment" ADD CONSTRAINT "comment_fk1" FOREIGN KEY ("user_id") REFER
 ALTER TABLE "comment" ADD CONSTRAINT "comment_fk2" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "comment_like" ADD CONSTRAINT "comment_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "comment_like" ADD CONSTRAINT "comment_like_fk1" FOREIGN KEY ("comment_id") REFERENCES "comment"("id");
+ALTER TABLE "online_user" ADD CONSTRAINT "online_user_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
