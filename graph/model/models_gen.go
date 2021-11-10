@@ -42,6 +42,28 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type Notification struct {
+	ID               string            `json:"id"`
+	NotificationType *NotificationType `json:"notificationType"`
+	Sender           *User             `json:"sender"`
+	Receiver         *User             `json:"receiver"`
+	Post             *Post             `json:"post"`
+	Comment          *Comment          `json:"comment"`
+	URL              string            `json:"url"`
+	Read             *bool             `json:"read"`
+	CreatedAt        time.Time         `json:"createdAt"`
+	UpdatedAt        time.Time         `json:"updatedAt"`
+}
+
+type NotificationType struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	Template  string    `json:"template"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
+}
+
 type Pagination struct {
 	TotalDocs  int  `json:"totalDocs"`
 	TotalPages int  `json:"totalPages"`

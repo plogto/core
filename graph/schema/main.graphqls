@@ -28,3 +28,7 @@ type Query {
 type Mutation {
   test(input: TestInput!): Test
 }
+
+type Subscription {
+  test(input: TestInput!): Test
+}
