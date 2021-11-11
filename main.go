@@ -55,7 +55,7 @@ func main() {
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
-	// router.Use(customMiddleware.AuthMiddleware(user))
+	router.Use(customMiddleware.AuthMiddleware(user))
 
 	s := service.New(service.Service{
 		User:         user,
