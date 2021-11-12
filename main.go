@@ -79,7 +79,9 @@ func main() {
 		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
 			claims := jwt.MapClaims{}
 
-			util.ParseJWTWithClaims(initPayload.Authorization(), &claims)
+			token, _ := customMiddleware.StripBearerPrefixFromToken(initPayload.Authorization())
+
+			util.ParseJWTWithClaims(token, &claims)
 
 			user, err := user.GetUserByID(claims["jti"].(string))
 			if err != nil {
@@ -88,7 +90,7 @@ func main() {
 
 			currentOnlineUser := &customMiddleware.OnlineUserContext{
 				User:      *user,
-				Token:     initPayload.Authorization(),
+				Token:     token,
 				SocketID:  util.RandomString(20),
 				UserAgent: "UserAgent",
 			}
