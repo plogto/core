@@ -54,10 +54,10 @@ func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 
 var authHeaderExtractor = &request.PostExtractionFilter{
 	Extractor: request.HeaderExtractor{"Authorization"},
-	Filter:    stripBearerPrefixFromToken,
+	Filter:    StripBearerPrefixFromToken,
 }
 
-func stripBearerPrefixFromToken(token string) (string, error) {
+func StripBearerPrefixFromToken(token string) (string, error) {
 	bearer := "BEARER"
 
 	if len(token) > len(bearer) && strings.ToUpper(token[0:len(bearer)]) == bearer {
