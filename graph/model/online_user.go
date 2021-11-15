@@ -11,7 +11,7 @@ type OnlineUser struct {
 	Token     string     `json:"token"`
 	SocketID  string     `json:"socket_id"`
 	UserAgent string     `json:"user_agent"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
 }

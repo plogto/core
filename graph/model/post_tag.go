@@ -9,7 +9,7 @@ type PostTag struct {
 	ID        string     `json:"id"`
 	TagID     string     `json:"tag_id"`
 	PostID    string     `json:"post_id"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
 }
