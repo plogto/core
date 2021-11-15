@@ -41,6 +41,7 @@ type ResolverRoot interface {
 	CommentLike() CommentLikeResolver
 	Connection() ConnectionResolver
 	Mutation() MutationResolver
+	Notification() NotificationResolver
 	Post() PostResolver
 	PostLike() PostLikeResolver
 	PostSave() PostSaveResolver
@@ -311,6 +312,13 @@ type MutationResolver interface {
 	UnlikePost(ctx context.Context, postID string) (*model.PostLike, error)
 	SavePost(ctx context.Context, postID string) (*model.PostSave, error)
 	UnsavePost(ctx context.Context, postID string) (*model.PostSave, error)
+}
+type NotificationResolver interface {
+	NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error)
+	Sender(ctx context.Context, obj *model.Notification) (*model.User, error)
+	Receiver(ctx context.Context, obj *model.Notification) (*model.User, error)
+	Post(ctx context.Context, obj *model.Notification) (*model.Post, error)
+	Comment(ctx context.Context, obj *model.Notification) (*model.Comment, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -4182,14 +4190,14 @@ func (ec *executionContext) _Notification_notificationType(ctx context.Context, 
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.NotificationType, nil
+		return ec.resolvers.Notification().NotificationType(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4217,14 +4225,14 @@ func (ec *executionContext) _Notification_sender(ctx context.Context, field grap
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Sender, nil
+		return ec.resolvers.Notification().Sender(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4252,14 +4260,14 @@ func (ec *executionContext) _Notification_receiver(ctx context.Context, field gr
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Receiver, nil
+		return ec.resolvers.Notification().Receiver(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4287,14 +4295,14 @@ func (ec *executionContext) _Notification_post(ctx context.Context, field graphq
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Post, nil
+		return ec.resolvers.Notification().Post(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4319,14 +4327,14 @@ func (ec *executionContext) _Notification_comment(ctx context.Context, field gra
 		Object:     "Notification",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Comment, nil
+		return ec.resolvers.Notification().Comment(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9411,43 +9419,88 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 		case "id":
 			out.Values[i] = ec._Notification_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "notificationType":
-			out.Values[i] = ec._Notification_notificationType(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_notificationType(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "sender":
-			out.Values[i] = ec._Notification_sender(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_sender(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "receiver":
-			out.Values[i] = ec._Notification_receiver(ctx, field, obj)
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_receiver(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		case "post":
-			out.Values[i] = ec._Notification_post(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_post(ctx, field, obj)
+				return res
+			})
 		case "comment":
-			out.Values[i] = ec._Notification_comment(ctx, field, obj)
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Notification_comment(ctx, field, obj)
+				return res
+			})
 		case "url":
 			out.Values[i] = ec._Notification_url(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "read":
 			out.Values[i] = ec._Notification_read(ctx, field, obj)
 		case "createdAt":
 			out.Values[i] = ec._Notification_createdAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
 			out.Values[i] = ec._Notification_updatedAt(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -10758,6 +10811,10 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
 	res, err := ec.unmarshalInputLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v model.NotificationType) graphql.Marshaler {
+	return ec._NotificationType(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *model.NotificationType) graphql.Marshaler {

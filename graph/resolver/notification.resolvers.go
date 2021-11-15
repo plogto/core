@@ -6,9 +6,35 @@ package graph
 import (
 	"context"
 
+	"github.com/favecode/plog-core/graph/generated"
 	"github.com/favecode/plog-core/graph/model"
 )
+
+func (r *notificationResolver) NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error) {
+	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID)
+}
+
+func (r *notificationResolver) Sender(ctx context.Context, obj *model.Notification) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.SenderID)
+}
+
+func (r *notificationResolver) Receiver(ctx context.Context, obj *model.Notification) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.ReceiverID)
+}
+
+func (r *notificationResolver) Post(ctx context.Context, obj *model.Notification) (*model.Post, error) {
+	return r.Service.GetPostsByID(ctx, *obj.PostID)
+}
+
+func (r *notificationResolver) Comment(ctx context.Context, obj *model.Notification) (*model.Comment, error) {
+	return r.Service.GetCommentByID(ctx, obj.CommentID)
+}
 
 func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
 	return r.Service.GetNotification(ctx)
 }
+
+// Notification returns generated.NotificationResolver implementation.
+func (r *Resolver) Notification() generated.NotificationResolver { return &notificationResolver{r} }
+
+type notificationResolver struct{ *Resolver }

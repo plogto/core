@@ -11,8 +11,8 @@ type Password struct {
 	ID        string     `json:"id"`
 	UserID    string     `json:"userId"`
 	Password  string     `json:"password"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
 }
 

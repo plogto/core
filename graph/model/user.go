@@ -15,8 +15,8 @@ type User struct {
 	Fullname  *string    `json:"fullname"`
 	Role      string     `json:"role"`
 	IsPrivate bool       `json:"is_private"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
 }
 
