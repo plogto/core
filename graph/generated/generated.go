@@ -113,6 +113,7 @@ type ComplexityRoot struct {
 		AddComment    func(childComplexity int, input model.CommentPostInput) int
 		AddPost       func(childComplexity int, input model.AddPostInput) int
 		DeleteComment func(childComplexity int, commentID string) int
+		EditUser      func(childComplexity int, input model.EditUserInput) int
 		FollowUser    func(childComplexity int, userID string) int
 		LikeComment   func(childComplexity int, commentID string) int
 		LikePost      func(childComplexity int, postID string) int
@@ -265,7 +266,7 @@ type ComplexityRoot struct {
 		FollowRequestsCount func(childComplexity int) int
 		FollowersCount      func(childComplexity int) int
 		FollowingCount      func(childComplexity int) int
-		Fullname            func(childComplexity int) int
+		FullName            func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IsPrivate           func(childComplexity int) int
 		PostsCount          func(childComplexity int) int
@@ -312,6 +313,7 @@ type MutationResolver interface {
 	UnlikePost(ctx context.Context, postID string) (*model.PostLike, error)
 	SavePost(ctx context.Context, postID string) (*model.PostSave, error)
 	UnsavePost(ctx context.Context, postID string) (*model.PostSave, error)
+	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -635,6 +637,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeleteComment(childComplexity, args["commentId"].(string)), true
+
+	case "Mutation.editUser":
+		if e.complexity.Mutation.EditUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditUser(childComplexity, args["input"].(model.EditUserInput)), true
 
 	case "Mutation.followUser":
 		if e.complexity.Mutation.FollowUser == nil {
@@ -1483,12 +1497,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.FollowingCount(childComplexity), true
 
-	case "User.fullname":
-		if e.complexity.User.Fullname == nil {
+	case "User.fullName":
+		if e.complexity.User.FullName == nil {
 			break
 		}
 
-		return e.complexity.User.Fullname(childComplexity), true
+		return e.complexity.User.FullName(childComplexity), true
 
 	case "User.id":
 		if e.complexity.User.ID == nil {
@@ -1633,7 +1647,7 @@ var sources = []*ast.Source{
 }
 
 input RegisterInput {
-  fullname: String
+  fullName: String
   email: String!
   password: String!
 }
@@ -1795,7 +1809,7 @@ type Notification {
 }
 
 extend type Subscription {
-  getNotification: Notification 
+  getNotification: Notification
 }`, BuiltIn: false},
 	{Name: "graph/schema/online_user.graphqls", Input: `type OnlineUser {
   id: ID!
@@ -1859,8 +1873,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): PostLike 
-  unlikePost(postId: ID!): PostLike 
+  likePost(postId: ID!): PostLike
+  unlikePost(postId: ID!): PostLike
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_save.graphqls", Input: `type PostSave {
@@ -1915,7 +1929,7 @@ extend type Query {
   id: ID!
   username: String!
   email: String!
-  fullname: String
+  fullName: String
   role: String!
   isPrivate: Boolean!
   connectionStatus: Int
@@ -1932,9 +1946,19 @@ type Users {
   pagination: Pagination
 }
 
+input EditUserInput {
+  fullName: String
+  email: String
+  isPrivate: Boolean
+}
+
 extend type Query {
   getUserInfo: User
   getUserByUsername(username: String!): User
+}
+
+extend type Mutation {
+  editUser(input: EditUserInput!): User
 }
 `, BuiltIn: false},
 }
@@ -2001,6 +2025,21 @@ func (ec *executionContext) field_Mutation_deleteComment_args(ctx context.Contex
 		}
 	}
 	args["commentId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.EditUserInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNEditUserInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -4143,6 +4182,45 @@ func (ec *executionContext) _Mutation_unsavePost(ctx context.Context, field grap
 	res := resTmp.(*model.PostSave)
 	fc.Result = res
 	return ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_editUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditUser(rctx, args["input"].(model.EditUserInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -7280,7 +7358,7 @@ func (ec *executionContext) _User_email(ctx context.Context, field graphql.Colle
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_fullname(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_fullName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -7298,7 +7376,7 @@ func (ec *executionContext) _User_fullname(ctx context.Context, field graphql.Co
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Fullname, nil
+		return obj.FullName, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8837,6 +8915,45 @@ func (ec *executionContext) unmarshalInputCommentPostInput(ctx context.Context, 
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj interface{}) (model.EditUserInput, error) {
+	var it model.EditUserInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "fullName":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			it.FullName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "email":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
+			it.Email, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "isPrivate":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPrivate"))
+			it.IsPrivate, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj interface{}) (model.LoginInput, error) {
 	var it model.LoginInput
 	asMap := map[string]interface{}{}
@@ -8908,11 +9025,11 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 
 	for k, v := range asMap {
 		switch k {
-		case "fullname":
+		case "fullName":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullname"))
-			it.Fullname, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
+			it.FullName, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -9430,6 +9547,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_savePost(ctx, field)
 		case "unsavePost":
 			out.Values[i] = ec._Mutation_unsavePost(ctx, field)
+		case "editUser":
+			out.Values[i] = ec._Mutation_editUser(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10366,8 +10485,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "fullname":
-			out.Values[i] = ec._User_fullname(ctx, field, obj)
+		case "fullName":
+			out.Values[i] = ec._User_fullName(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -10771,6 +10890,11 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 
 func (ec *executionContext) unmarshalNCommentPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx context.Context, v interface{}) (model.CommentPostInput, error) {
 	res, err := ec.unmarshalInputCommentPostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx context.Context, v interface{}) (model.EditUserInput, error) {
+	res, err := ec.unmarshalInputEditUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

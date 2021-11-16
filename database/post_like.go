@@ -5,7 +5,7 @@ import (
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/util"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 type PostLike struct {

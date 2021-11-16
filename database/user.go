@@ -6,7 +6,7 @@ import (
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/util"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 type User struct {
@@ -44,12 +44,12 @@ func (u *User) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	return &user, err
 }
 
-func (u *User) GetUsersByUsernameOrFullnameAndPagination(value string, limit int, page int) (*model.Users, error) {
+func (u *User) GetUsersByUsernameOrFullNameAndPagination(value string, limit int, page int) (*model.Users, error) {
 	var users []*model.User
 	var offset = (page - 1) * limit
 	value = strings.ToLower(value)
 
-	query := u.DB.Model(&users).Where("lower(username) LIKE lower(?)", value).WhereOr("lower(fullname) LIKE lower(?)", value).Where("deleted_at is ?", nil)
+	query := u.DB.Model(&users).Where("lower(username) LIKE lower(?)", value).WhereOr("lower(full_name) LIKE lower(?)", value).Where("deleted_at is ?", nil)
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -66,5 +66,10 @@ func (u *User) GetUsersByUsernameOrFullnameAndPagination(value string, limit int
 
 func (u *User) CreateUser(tx *pg.Tx, user *model.User) (*model.User, error) {
 	_, err := tx.Model(user).Returning("*").Insert()
+	return user, err
+}
+
+func (u *User) UpdateUser(user *model.User) (*model.User, error) {
+	_, err := u.DB.Model(user).Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
 	return user, err
 }
