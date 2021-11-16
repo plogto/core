@@ -37,6 +37,12 @@ type Connections struct {
 	Pagination  *Pagination   `json:"pagination"`
 }
 
+type EditUserInput struct {
+	FullName  *string `json:"fullName"`
+	Email     *string `json:"email"`
+	IsPrivate *bool   `json:"isPrivate"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -93,7 +99,7 @@ type Posts struct {
 }
 
 type RegisterInput struct {
-	Fullname *string `json:"fullname"`
+	FullName *string `json:"fullName"`
 	Email    string  `json:"email"`
 	Password string  `json:"password"`
 }

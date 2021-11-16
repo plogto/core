@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -27,7 +28,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	limit := 10
 	page := 1
-	users, _ := s.User.GetUsersByUsernameOrFullnameAndPagination(expression+"%", limit, page)
+	users, _ := s.User.GetUsersByUsernameOrFullNameAndPagination(expression+"%", limit, page)
 
 	return users, nil
 }
@@ -48,4 +49,37 @@ func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) b
 	}
 
 	return true
+}
+
+func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	didUpdate := false
+
+	if input.FullName != nil {
+		user.FullName = input.FullName
+		didUpdate = true
+	}
+
+	if input.Email != nil {
+		user.Email = *input.Email
+		didUpdate = true
+	}
+
+	if input.IsPrivate != nil {
+		user.IsPrivate = *input.IsPrivate
+		didUpdate = true
+	}
+
+	if didUpdate == bool(false) {
+		return nil, nil
+	}
+
+	updatedUser, _ := s.User.UpdateUser(user)
+
+	return updatedUser, nil
 }
