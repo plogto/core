@@ -10,6 +10,10 @@ import (
 	"github.com/favecode/plog-core/graph/model"
 )
 
+func (r *mutationResolver) EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error) {
+	return r.Service.EditUser(ctx, input)
+}
+
 func (r *queryResolver) GetUserInfo(ctx context.Context) (*model.User, error) {
 	return r.Service.GetUserInfo(ctx)
 }

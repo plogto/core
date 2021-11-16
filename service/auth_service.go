@@ -45,7 +45,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 	user := &model.User{
 		Email:    input.Email,
 		Username: util.RandomString(15),
-		Fullname: input.Fullname,
+		FullName: input.FullName,
 	}
 
 	userTx, err := s.User.DB.Begin()
