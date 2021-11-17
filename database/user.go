@@ -64,8 +64,8 @@ func (u *User) GetUsersByUsernameOrFullNameAndPagination(value string, limit int
 	}, err
 }
 
-func (u *User) CreateUser(tx *pg.Tx, user *model.User) (*model.User, error) {
-	_, err := tx.Model(user).Returning("*").Insert()
+func (u *User) CreateUser(user *model.User) (*model.User, error) {
+	_, err := u.DB.Model(user).Returning("*").Insert()
 	return user, err
 }
 

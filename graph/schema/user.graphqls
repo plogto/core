@@ -25,6 +25,11 @@ input EditUserInput {
   isPrivate: Boolean
 }
 
+input ChangePasswordInput {
+  oldPassword: String!
+  newPassword: String!
+}
+
 extend type Query {
   getUserInfo: User
   getUserByUsername(username: String!): User
@@ -32,4 +37,5 @@ extend type Query {
 
 extend type Mutation {
   editUser(input: EditUserInput!): User
+  changePassword(input: ChangePasswordInput!): AuthResponse
 }

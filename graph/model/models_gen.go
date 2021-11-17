@@ -16,6 +16,11 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
+type ChangePasswordInput struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type CommentLikes struct {
 	CommentLikes []*CommentLike `json:"commentLikes"`
 	Pagination   *Pagination    `json:"pagination"`

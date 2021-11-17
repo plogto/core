@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -82,4 +83,39 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 	updatedUser, _ := s.User.UpdateUser(user)
 
 	return updatedUser, nil
+}
+
+func (s *Service) ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	password, _ := s.Password.GetPasswordByUserID(user.ID)
+
+	if err = password.ComparePassword(input.OldPassword); err != nil {
+		return nil, errors.New("old password is not valid")
+	}
+
+	if err = password.HashPassword(input.NewPassword); err != nil {
+		log.Printf("error while hashing password: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	if _, err := s.Password.UpdatePassword(password); err != nil {
+		log.Printf("error white updating password: %v", err)
+		return nil, err
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		log.Printf("error while generating the token: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	return &model.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
 }
