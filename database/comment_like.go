@@ -55,6 +55,6 @@ func (p *CommentLike) DeleteCommentLikeByID(id string) (*model.CommentLike, erro
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := p.DB.Model(commentLike).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := p.DB.Model(commentLike).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return commentLike, err
 }
