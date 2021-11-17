@@ -84,7 +84,7 @@ func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return connection, err
 }
 
