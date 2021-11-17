@@ -37,8 +37,7 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 }
 
 func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
-	_, err := s.User.GetUserByUsernameOrEmail(input.Email)
-	if err == nil {
+	if _, err := s.User.GetUserByUsernameOrEmail(input.Email); err == nil {
 		return nil, errors.New("email has already been taken")
 	}
 
@@ -48,22 +47,9 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		FullName: input.FullName,
 	}
 
-	userTx, err := s.User.DB.Begin()
+	newUser, err := s.User.CreateUser(user)
 	if err != nil {
-		log.Printf("error creating a transaction: %v", err)
-		return nil, errors.New("something went wrong")
-	}
-	defer userTx.Rollback()
-
-	newUser, err := s.User.CreateUser(userTx, user)
-
-	if err != nil {
-		log.Printf("error creating a user: %v", err)
-		return nil, err
-	}
-
-	if err := userTx.Commit(); err != nil {
-		log.Printf("error while commiting: %v", err)
+		log.Printf("error while creating a user: %v", err)
 		return nil, err
 	}
 
@@ -71,26 +57,13 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		UserID: newUser.ID,
 	}
 
-	err = password.HashPassword(input.Password)
-	if err != nil {
+	if err = password.HashPassword(input.Password); err != nil {
 		log.Printf("error while hashing password: %v", err)
 		return nil, errors.New("something went wrong")
 	}
 
-	passwordTx, err := s.Password.DB.Begin()
-	if err != nil {
-		log.Printf("error creating a transaction: %v", err)
-		return nil, errors.New("something went wrong")
-	}
-	defer passwordTx.Rollback()
-
-	if _, err := s.Password.AddPassword(passwordTx, password); err != nil {
-		log.Printf("error creating a user: %v", err)
-		return nil, err
-	}
-
-	if err := passwordTx.Commit(); err != nil {
-		log.Printf("error while commiting: %v", err)
+	if _, err := s.Password.AddPassword(password); err != nil {
+		log.Printf("error white adding password: %v", err)
 		return nil, err
 	}
 

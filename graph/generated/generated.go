@@ -109,22 +109,23 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser    func(childComplexity int, userID string) int
-		AddComment    func(childComplexity int, input model.CommentPostInput) int
-		AddPost       func(childComplexity int, input model.AddPostInput) int
-		DeleteComment func(childComplexity int, commentID string) int
-		EditUser      func(childComplexity int, input model.EditUserInput) int
-		FollowUser    func(childComplexity int, userID string) int
-		LikeComment   func(childComplexity int, commentID string) int
-		LikePost      func(childComplexity int, postID string) int
-		Register      func(childComplexity int, input model.RegisterInput) int
-		RejectUser    func(childComplexity int, userID string) int
-		SavePost      func(childComplexity int, postID string) int
-		Test          func(childComplexity int, input model.TestInput) int
-		UnfollowUser  func(childComplexity int, userID string) int
-		UnlikeComment func(childComplexity int, commentID string) int
-		UnlikePost    func(childComplexity int, postID string) int
-		UnsavePost    func(childComplexity int, postID string) int
+		AcceptUser     func(childComplexity int, userID string) int
+		AddComment     func(childComplexity int, input model.CommentPostInput) int
+		AddPost        func(childComplexity int, input model.AddPostInput) int
+		ChangePassword func(childComplexity int, input model.ChangePasswordInput) int
+		DeleteComment  func(childComplexity int, commentID string) int
+		EditUser       func(childComplexity int, input model.EditUserInput) int
+		FollowUser     func(childComplexity int, userID string) int
+		LikeComment    func(childComplexity int, commentID string) int
+		LikePost       func(childComplexity int, postID string) int
+		Register       func(childComplexity int, input model.RegisterInput) int
+		RejectUser     func(childComplexity int, userID string) int
+		SavePost       func(childComplexity int, postID string) int
+		Test           func(childComplexity int, input model.TestInput) int
+		UnfollowUser   func(childComplexity int, userID string) int
+		UnlikeComment  func(childComplexity int, commentID string) int
+		UnlikePost     func(childComplexity int, postID string) int
+		UnsavePost     func(childComplexity int, postID string) int
 	}
 
 	Notification struct {
@@ -314,6 +315,7 @@ type MutationResolver interface {
 	SavePost(ctx context.Context, postID string) (*model.PostSave, error)
 	UnsavePost(ctx context.Context, postID string) (*model.PostSave, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
+	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -625,6 +627,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddPost(childComplexity, args["input"].(model.AddPostInput)), true
+
+	case "Mutation.changePassword":
+		if e.complexity.Mutation.ChangePassword == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changePassword_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(model.ChangePasswordInput)), true
 
 	case "Mutation.deleteComment":
 		if e.complexity.Mutation.DeleteComment == nil {
@@ -1952,6 +1966,11 @@ input EditUserInput {
   isPrivate: Boolean
 }
 
+input ChangePasswordInput {
+  oldPassword: String!
+  newPassword: String!
+}
+
 extend type Query {
   getUserInfo: User
   getUserByUsername(username: String!): User
@@ -1959,6 +1978,7 @@ extend type Query {
 
 extend type Mutation {
   editUser(input: EditUserInput!): User
+  changePassword(input: ChangePasswordInput!): AuthResponse
 }
 `, BuiltIn: false},
 }
@@ -2005,6 +2025,21 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.ChangePasswordInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNChangePasswordInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4221,6 +4256,45 @@ func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphq
 	res := resTmp.(*model.User)
 	fc.Result = res
 	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_changePassword_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ChangePassword(rctx, args["input"].(model.ChangePasswordInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthResponse)
+	fc.Result = res
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -8876,6 +8950,37 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Context, obj interface{}) (model.ChangePasswordInput, error) {
+	var it model.ChangePasswordInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "oldPassword":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oldPassword"))
+			it.OldPassword, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "newPassword":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newPassword"))
+			it.NewPassword, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCommentPostInput(ctx context.Context, obj interface{}) (model.CommentPostInput, error) {
 	var it model.CommentPostInput
 	asMap := map[string]interface{}{}
@@ -9549,6 +9654,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_unsavePost(ctx, field)
 		case "editUser":
 			out.Values[i] = ec._Mutation_editUser(ctx, field)
+		case "changePassword":
+			out.Values[i] = ec._Mutation_changePassword(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10872,6 +10979,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx context.Context, v interface{}) (model.ChangePasswordInput, error) {
+	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNComment2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {

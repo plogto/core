@@ -14,6 +14,10 @@ func (r *mutationResolver) EditUser(ctx context.Context, input model.EditUserInp
 	return r.Service.EditUser(ctx, input)
 }
 
+func (r *mutationResolver) ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error) {
+	return r.Service.ChangePassword(ctx, input)
+}
+
 func (r *queryResolver) GetUserInfo(ctx context.Context) (*model.User, error) {
 	return r.Service.GetUserInfo(ctx)
 }
