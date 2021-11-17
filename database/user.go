@@ -70,6 +70,6 @@ func (u *User) CreateUser(user *model.User) (*model.User, error) {
 }
 
 func (u *User) UpdateUser(user *model.User) (*model.User, error) {
-	_, err := u.DB.Model(user).Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := u.DB.Model(user).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return user, err
 }

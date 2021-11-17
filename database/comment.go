@@ -86,6 +86,6 @@ func (p *Comment) DeleteCommentByID(id string) (*model.Comment, error) {
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := p.DB.Model(comment).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := p.DB.Model(comment).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return comment, err
 }
