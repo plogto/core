@@ -113,6 +113,7 @@ type ComplexityRoot struct {
 		AddComment     func(childComplexity int, input model.CommentPostInput) int
 		AddPost        func(childComplexity int, input model.AddPostInput) int
 		ChangePassword func(childComplexity int, input model.ChangePasswordInput) int
+		ChangeUsername func(childComplexity int, username string) int
 		DeleteComment  func(childComplexity int, commentID string) int
 		EditUser       func(childComplexity int, input model.EditUserInput) int
 		FollowUser     func(childComplexity int, userID string) int
@@ -316,6 +317,7 @@ type MutationResolver interface {
 	UnsavePost(ctx context.Context, postID string) (*model.PostSave, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
+	ChangeUsername(ctx context.Context, username string) (*model.AuthResponse, error)
 }
 type PostResolver interface {
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -639,6 +641,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(model.ChangePasswordInput)), true
+
+	case "Mutation.changeUsername":
+		if e.complexity.Mutation.ChangeUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_changeUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ChangeUsername(childComplexity, args["username"].(string)), true
 
 	case "Mutation.deleteComment":
 		if e.complexity.Mutation.DeleteComment == nil {
@@ -1979,6 +1993,7 @@ extend type Query {
 extend type Mutation {
   editUser(input: EditUserInput!): User
   changePassword(input: ChangePasswordInput!): AuthResponse
+  changeUsername(username: String!): AuthResponse
 }
 `, BuiltIn: false},
 }
@@ -2045,6 +2060,21 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_changeUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
 	return args, nil
 }
 
@@ -4284,6 +4314,45 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().ChangePassword(rctx, args["input"].(model.ChangePasswordInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthResponse)
+	fc.Result = res
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_changeUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_changeUsername_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ChangeUsername(rctx, args["username"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9656,6 +9725,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_editUser(ctx, field)
 		case "changePassword":
 			out.Values[i] = ec._Mutation_changePassword(ctx, field)
+		case "changeUsername":
+			out.Values[i] = ec._Mutation_changeUsername(ctx, field)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

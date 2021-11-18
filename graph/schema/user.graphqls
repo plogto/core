@@ -38,4 +38,5 @@ extend type Query {
 extend type Mutation {
   editUser(input: EditUserInput!): User
   changePassword(input: ChangePasswordInput!): AuthResponse
+  changeUsername(username: String!): AuthResponse
 }
