@@ -119,3 +119,33 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		User:      user,
 	}, nil
 }
+
+func (s *Service) ChangeUsername(ctx context.Context, username string) (*model.AuthResponse, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	if user, _ := s.User.GetUserByUsername(username); user != nil {
+		return nil, nil
+	}
+
+	user.Username = username
+
+	if _, err := s.User.UpdateUser(user); err != nil {
+		log.Printf("error while updating the username: %v", err)
+		return nil, errors.New(err.Error())
+	}
+
+	token, err := user.GenToken()
+	if err != nil {
+		log.Printf("error while generating the token: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	return &model.AuthResponse{
+		AuthToken: token,
+		User:      user,
+	}, nil
+}
