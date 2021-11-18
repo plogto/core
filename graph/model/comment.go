@@ -5,13 +5,13 @@ import (
 )
 
 type Comment struct {
-	tableName struct{}   `sql:"comment"`
-	ID        string     `json:"id"`
-	ParentID  *string    `json:"parent_id"`
-	UserID    string     `json:"user_id"`
-	PostID    string     `json:"post_id"`
-	Content   string     `json:"content"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
+	tableName struct{} `pg:"comment"`
+	ID        string
+	ParentID  *string
+	UserID    string
+	PostID    string
+	Content   string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `pg:"-,soft_delete"`
 }
