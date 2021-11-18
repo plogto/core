@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/favecode/plog-core/graph/model"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 type NotificationType struct {
