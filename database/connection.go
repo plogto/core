@@ -6,7 +6,7 @@ import (
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/util"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 type Connection struct {
@@ -84,7 +84,7 @@ func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").Where("id = ?id").Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return connection, err
 }
 
