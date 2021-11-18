@@ -118,3 +118,18 @@ models:
     fields:
       user:
         resolver: true
+  Notification:
+    model: github.com/favecode/plog-core/graph/model.Notification
+    fields:
+      notificationType:
+        resolver: true
+      sender:
+        resolver: true
+      receiver:
+        resolver: true
+      post:
+        resolver: true
+      comment:
+        resolver: true
+  NotificationType:
+    model: github.com/favecode/plog-core/graph/model.NotificationType

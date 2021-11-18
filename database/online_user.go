@@ -21,3 +21,12 @@ func (o *OnlineUser) DeleteOnlineUserBySocketId(socketId string) (*model.OnlineU
 	_, err := o.DB.Model(onlineUser).Where("socket_id = ?socket_id").Where("deleted_at is ?", nil).Returning("*").Delete()
 	return onlineUser, err
 }
+
+func (o *OnlineUser) GetOnlineUserByUserId(userId string) (*model.OnlineUser, error) {
+	var onlineUser model.OnlineUser
+	err := o.DB.Model(&onlineUser).Where("user_id = ?", userId).Where("deleted_at is ?", nil).First()
+	if len(onlineUser.ID) < 1 {
+		return nil, nil
+	}
+	return &onlineUser, err
+}
