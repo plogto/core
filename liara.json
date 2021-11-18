@@ -1,0 +1,5 @@
+{
+  "app": "plog-core",
+  "platform": "docker",
+  "port": 8080
+}
