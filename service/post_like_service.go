@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/favecode/plog-core/config"
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
 )
@@ -27,6 +28,16 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.PostLike,
 	}
 
 	s.PostLike.CreatePostLike(postLike)
+
+	if len(postLike.ID) > 0 {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_LIKE_POST,
+			SenderId:   user.ID,
+			ReceiverId: post.UserID,
+			Url:        "p/" + post.Url,
+			PostId:     &post.ID,
+		})
+	}
 
 	return postLike, nil
 }
