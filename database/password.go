@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/favecode/plog-core/graph/model"
-	"github.com/go-pg/pg"
+	"github.com/go-pg/pg/v10"
 )
 
 type Password struct {
@@ -21,7 +21,12 @@ func (p *Password) GetPasswordByUserID(id string) (*model.Password, error) {
 	return p.GetPasswordByField("user_id", id)
 }
 
-func (p *Password) AddPassword(tx *pg.Tx, password *model.Password) (*model.Password, error) {
-	_, err := tx.Model(password).Returning("*").Insert()
+func (p *Password) AddPassword(password *model.Password) (*model.Password, error) {
+	_, err := p.DB.Model(password).Returning("*").Insert()
+	return password, err
+}
+
+func (p *Password) UpdatePassword(password *model.Password) (*model.Password, error) {
+	_, err := p.DB.Model(password).WherePK().Returning("*").Update()
 	return password, err
 }

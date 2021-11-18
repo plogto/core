@@ -7,13 +7,13 @@ import (
 )
 
 type Password struct {
-	tableName struct{}   `sql:"password"`
-	ID        string     `json:"id"`
-	UserID    string     `json:"userId"`
-	Password  string     `json:"password"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
+	tableName struct{} `pg:"password"`
+	ID        string
+	UserID    string
+	Password  string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `pg:"-,soft_delete"`
 }
 
 func (p *Password) HashPassword(password string) error {
