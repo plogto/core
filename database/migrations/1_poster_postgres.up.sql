@@ -10,7 +10,7 @@ CREATE TABLE "user" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
 	"username" VARCHAR(32) NOT NULL UNIQUE,
 	"email" VARCHAR(100) NOT NULL UNIQUE,
-	"fullname" VARCHAR(64) NOT NULL,
+	"full_name" VARCHAR(64) NOT NULL,
 	"role" user_roles DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
   "created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),

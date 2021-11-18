@@ -5,11 +5,11 @@ import (
 )
 
 type PostSave struct {
-	tableName struct{}   `sql:"post_save"`
-	ID        string     `json:"id"`
-	UserID    string     `json:"user_id"`
-	PostID    string     `json:"post_id"`
-	CreatedAt time.Time  `json:"createdAt"`
-	UpdatedAt time.Time  `json:"updatedAt"`
-	DeletedAt *time.Time `json:"-" sql:",soft_delete"`
+	tableName struct{} `pg:"post_save"`
+	ID        string
+	UserID    string
+	PostID    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time `pg:"-,soft_delete"`
 }

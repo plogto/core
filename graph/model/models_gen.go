@@ -16,6 +16,11 @@ type AuthToken struct {
 	ExpiredAt time.Time `json:"expiredAt"`
 }
 
+type ChangePasswordInput struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 type CommentLikes struct {
 	CommentLikes []*CommentLike `json:"commentLikes"`
 	Pagination   *Pagination    `json:"pagination"`
@@ -35,6 +40,12 @@ type Comments struct {
 type Connections struct {
 	Connections []*Connection `json:"connections"`
 	Pagination  *Pagination   `json:"pagination"`
+}
+
+type EditUserInput struct {
+	FullName  *string `json:"fullName"`
+	Email     *string `json:"email"`
+	IsPrivate *bool   `json:"isPrivate"`
 }
 
 type LoginInput struct {
@@ -93,7 +104,7 @@ type Posts struct {
 }
 
 type RegisterInput struct {
-	Fullname *string `json:"fullname"`
+	FullName *string `json:"fullName"`
 	Email    string  `json:"email"`
 	Password string  `json:"password"`
 }
