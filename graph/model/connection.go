@@ -5,12 +5,12 @@ import (
 )
 
 type Connection struct {
-	tableName   struct{}   `sql:"connection"`
-	ID          string     `json:"id"`
-	FollowingID string     `json:"following_id"`
-	FollowerID  string     `json:"follower_id"`
-	Status      *int       `json:"status"`
-	CreatedAt   time.Time  `json:"created_at"`
-	UpdatedAt   time.Time  `json:"updated_at"`
-	DeletedAt   *time.Time `json:"-" sql:",soft_delete"`
+	tableName   struct{} `pg:"connection"`
+	ID          string
+	FollowingID string
+	FollowerID  string
+	Status      *int
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   *time.Time `pg:"-,soft_delete"`
 }
