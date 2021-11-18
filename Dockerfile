@@ -6,6 +6,8 @@ WORKDIR /app
 
 COPY . ./
 
+ENV https-proxy http://fodev.org:8118
+
 # Install dependencies
 RUN go mod download && \
   # Build the app
