@@ -62,7 +62,12 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 	didUpdate := false
 
 	if input.FullName != nil {
-		user.FullName = input.FullName
+		user.FullName = *input.FullName
+		didUpdate = true
+	}
+
+	if input.Bio != nil {
+		user.Bio = input.Bio
 		didUpdate = true
 	}
 

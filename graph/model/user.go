@@ -12,7 +12,8 @@ type User struct {
 	ID        string
 	Username  string
 	Email     string
-	FullName  *string
+	FullName  string
+	Bio       *string
 	Role      string
 	IsPrivate bool `pg:",use_zero"`
 	CreatedAt time.Time
