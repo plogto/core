@@ -262,6 +262,7 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
+		Bio                 func(childComplexity int) int
 		ConnectionStatus    func(childComplexity int) int
 		CreatedAt           func(childComplexity int) int
 		Email               func(childComplexity int) int
@@ -1483,6 +1484,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Test.Content(childComplexity), true
 
+	case "User.bio":
+		if e.complexity.User.Bio == nil {
+			break
+		}
+
+		return e.complexity.User.Bio(childComplexity), true
+
 	case "User.connectionStatus":
 		if e.complexity.User.ConnectionStatus == nil {
 			break
@@ -1675,7 +1683,7 @@ var sources = []*ast.Source{
 }
 
 input RegisterInput {
-  fullName: String
+  fullName: String!
   email: String!
   password: String!
 }
@@ -1956,7 +1964,8 @@ extend type Query {
   id: ID!
   username: String!
   email: String!
-  fullName: String
+  fullName: String!
+  bio: String
   role: String!
   isPrivate: Boolean!
   connectionStatus: Int
@@ -1976,6 +1985,7 @@ type Users {
 input EditUserInput {
   fullName: String
   email: String
+  bio: String
   isPrivate: Boolean
 }
 
@@ -7490,6 +7500,41 @@ func (ec *executionContext) _User_fullName(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Bio, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
 		return graphql.Null
 	}
 	res := resTmp.(*string)
@@ -9078,6 +9123,14 @@ func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
+		case "bio":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
+			it.Bio, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "isPrivate":
 			var err error
 
@@ -9167,7 +9220,7 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			it.FullName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.FullName, err = ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -10669,6 +10722,11 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "fullName":
 			out.Values[i] = ec._User_fullName(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "bio":
+			out.Values[i] = ec._User_bio(ctx, field, obj)
 		case "role":
 			out.Values[i] = ec._User_role(ctx, field, obj)
 			if out.Values[i] == graphql.Null {

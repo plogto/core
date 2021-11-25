@@ -45,6 +45,7 @@ type Connections struct {
 type EditUserInput struct {
 	FullName  *string `json:"fullName"`
 	Email     *string `json:"email"`
+	Bio       *string `json:"bio"`
 	IsPrivate *bool   `json:"isPrivate"`
 }
 
@@ -82,9 +83,9 @@ type Posts struct {
 }
 
 type RegisterInput struct {
-	FullName *string `json:"fullName"`
-	Email    string  `json:"email"`
-	Password string  `json:"password"`
+	FullName string `json:"fullName"`
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 type Search struct {
