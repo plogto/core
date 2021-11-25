@@ -11,6 +11,7 @@ CREATE TABLE "user" (
 	"username" VARCHAR(32) NOT NULL UNIQUE,
 	"email" VARCHAR(100) NOT NULL UNIQUE,
 	"full_name" VARCHAR(64) NOT NULL,
+	"bio" TEXT DEFAULT NULL,
 	"role" user_roles DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
   "created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
