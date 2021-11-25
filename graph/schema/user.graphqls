@@ -2,7 +2,8 @@ type User {
   id: ID!
   username: String!
   email: String!
-  fullName: String
+  fullName: String!
+  bio: String
   role: String!
   isPrivate: Boolean!
   connectionStatus: Int
@@ -22,6 +23,7 @@ type Users {
 input EditUserInput {
   fullName: String
   email: String
+  bio: String
   isPrivate: Boolean
 }
 
