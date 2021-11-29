@@ -129,3 +129,27 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		User:      user,
 	}, nil
 }
+
+func (s *Service) CheckUsername(ctx context.Context, username string) (*model.User, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	user, _ := s.User.GetUserByUsername(username)
+
+	return user, nil
+}
+
+func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	user, _ := s.User.GetUserByEmail(email)
+
+	return user, nil
+}
