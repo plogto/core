@@ -21,6 +21,7 @@ type Users {
 }
 
 input EditUserInput {
+  username: String
   fullName: String
   email: String
   bio: String
@@ -40,5 +41,4 @@ extend type Query {
 extend type Mutation {
   editUser(input: EditUserInput!): User
   changePassword(input: ChangePasswordInput!): AuthResponse
-  changeUsername(username: String!): AuthResponse
 }
