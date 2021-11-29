@@ -36,6 +36,8 @@ input ChangePasswordInput {
 extend type Query {
   getUserInfo: User
   getUserByUsername(username: String!): User
+  checkUsername(username: String!): User
+  checkEmail(email: String!): User
 }
 
 extend type Mutation {
