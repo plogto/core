@@ -26,6 +26,14 @@ func (r *queryResolver) GetUserByUsername(ctx context.Context, username string) 
 	return r.Service.GetUserByUsername(ctx, username)
 }
 
+func (r *queryResolver) CheckUsername(ctx context.Context, username string) (*model.User, error) {
+	return r.Service.CheckUsername(ctx, username)
+}
+
+func (r *queryResolver) CheckEmail(ctx context.Context, email string) (*model.User, error) {
+	return r.Service.CheckEmail(ctx, email)
+}
+
 func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*int, error) {
 	return r.Service.GetConnectionStatus(ctx, obj.ID)
 }
