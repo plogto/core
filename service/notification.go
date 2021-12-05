@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -42,25 +43,53 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
+	if args.SenderId != args.ReceiverId {
+		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+		notification := &model.Notification{
+			NotificationTypeID: notificationType.ID,
+			SenderID:           args.SenderId,
+			ReceiverID:         args.ReceiverId,
+			URL:                args.Url,
+			PostID:             args.PostId,
+			CommentID:          args.CommentId,
+		}
+
+		s.Notification.CreateNotification(notification)
+
+		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+
+		if onlineUser != nil {
+			s.mu.Lock()
+			s.Notifications[onlineUser.SocketID] <- notification
+			s.mu.Unlock()
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 	notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+	DeletedAt := time.Now()
 	notification := &model.Notification{
 		NotificationTypeID: notificationType.ID,
 		SenderID:           args.SenderId,
 		ReceiverID:         args.ReceiverId,
-		URL:                args.Url,
 		PostID:             args.PostId,
 		CommentID:          args.CommentId,
+		DeletedAt:          &DeletedAt,
 	}
 
-	s.Notification.CreateNotification(notification)
+	s.Notification.RemoveNotification(notification)
 
-	onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+	// TODO: add revmoved type for Notification
+	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
 
-	if onlineUser != nil {
-		s.mu.Lock()
-		s.Notifications[onlineUser.SocketID] <- notification
-		s.mu.Unlock()
-	}
+	// if onlineUser != nil {
+	// 	s.mu.Lock()
+	// 	s.Notifications[onlineUser.SocketID] <- notification
+	// 	s.mu.Unlock()
+	// }
 
 	return nil
 }

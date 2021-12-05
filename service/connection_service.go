@@ -42,6 +42,15 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 
 	s.Connection.CreateConnection(newConnection)
 
+	if len(newConnection.ID) > 0 {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_FOLLOW_USER,
+			SenderId:   user.ID,
+			ReceiverId: userID,
+			Url:        "/" + user.Username,
+		})
+	}
+
 	return newConnection, nil
 }
 
@@ -63,6 +72,15 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 	}
 
 	deletedConnection, _ := s.Connection.DeleteConnection(connection.ID)
+
+	if len(deletedConnection.ID) > 0 {
+		s.RemoveNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_FOLLOW_USER,
+			SenderId:   user.ID,
+			ReceiverId: userID,
+			Url:        "/" + user.Username,
+		})
+	}
 
 	return &model.Connection{
 		ID:          deletedConnection.ID,
@@ -98,6 +116,15 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 	*connection.Status = 2
 
 	updatedConnection, _ := s.Connection.UpdateConnection(connection)
+
+	if len(updatedConnection.ID) > 0 {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_ACCEPT_USER,
+			SenderId:   user.ID,
+			ReceiverId: userID,
+			Url:        "/" + user.Username,
+		})
+	}
 
 	return updatedConnection, nil
 }
