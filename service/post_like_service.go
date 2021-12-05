@@ -57,7 +57,15 @@ func (s *Service) UnlikePost(ctx context.Context, postID string) (*model.PostLik
 
 	postLike, _ := s.PostLike.GetPostLikeByUserIdAndPostId(user.ID, postID)
 
-	if len(postLike.ID) < 1 {
+	if postLike != nil {
+		s.RemoveNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_LIKE_POST,
+			SenderId:   user.ID,
+			ReceiverId: post.UserID,
+			Url:        "p/" + post.Url,
+			PostId:     &post.ID,
+		})
+	} else {
 		return nil, errors.New("like not found")
 	}
 
