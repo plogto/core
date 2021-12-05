@@ -43,24 +43,26 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
-	notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
-	notification := &model.Notification{
-		NotificationTypeID: notificationType.ID,
-		SenderID:           args.SenderId,
-		ReceiverID:         args.ReceiverId,
-		URL:                args.Url,
-		PostID:             args.PostId,
-		CommentID:          args.CommentId,
-	}
+	if args.SenderId != args.ReceiverId {
+		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+		notification := &model.Notification{
+			NotificationTypeID: notificationType.ID,
+			SenderID:           args.SenderId,
+			ReceiverID:         args.ReceiverId,
+			URL:                args.Url,
+			PostID:             args.PostId,
+			CommentID:          args.CommentId,
+		}
 
-	s.Notification.CreateNotification(notification)
+		s.Notification.CreateNotification(notification)
 
-	onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
 
-	if onlineUser != nil {
-		s.mu.Lock()
-		s.Notifications[onlineUser.SocketID] <- notification
-		s.mu.Unlock()
+		if onlineUser != nil {
+			s.mu.Lock()
+			s.Notifications[onlineUser.SocketID] <- notification
+			s.mu.Unlock()
+		}
 	}
 
 	return nil
