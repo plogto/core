@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/favecode/plog-core/config"
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
 )
@@ -34,6 +35,17 @@ func (s *Service) AddComment(ctx context.Context, input model.CommentPostInput) 
 
 	s.Comment.CreateComment(comment)
 
+	if len(comment.ID) > 0 {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_COMMENT_POST,
+			SenderId:   user.ID,
+			ReceiverId: post.UserID,
+			Url:        "p/" + post.Url + "#" + comment.ID,
+			PostId:     &post.ID,
+			CommentId:  &comment.ID,
+		})
+	}
+
 	return comment, nil
 }
 
@@ -49,10 +61,24 @@ func (s *Service) DeleteComment(ctx context.Context, commentID string) (*model.C
 		return nil, errors.New("access denied")
 	}
 
+	post, _ := s.Post.GetPostByID(comment.PostID)
+	if post == nil || post.ID != comment.PostID {
+		return nil, errors.New("access denied")
+	}
+
 	followingUser, _ := s.User.GetUserByID(comment.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
+
+	s.RemoveNotification(CreateNotificationArgs{
+		Name:       config.NOTIFICATION_COMMENT_POST,
+		SenderId:   user.ID,
+		ReceiverId: post.UserID,
+		Url:        "p/" + post.Url + "#" + comment.ID,
+		PostId:     &post.ID,
+		CommentId:  &comment.ID,
+	})
 
 	return s.Comment.DeleteCommentByID(commentID)
 }
