@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
@@ -61,6 +62,32 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 		s.Notifications[onlineUser.SocketID] <- notification
 		s.mu.Unlock()
 	}
+
+	return nil
+}
+
+func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
+	notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+	DeletedAt := time.Now()
+	notification := &model.Notification{
+		NotificationTypeID: notificationType.ID,
+		SenderID:           args.SenderId,
+		ReceiverID:         args.ReceiverId,
+		PostID:             args.PostId,
+		CommentID:          args.CommentId,
+		DeletedAt:          &DeletedAt,
+	}
+
+	s.Notification.RemoveNotification(notification)
+
+	// TODO: add revmoved type for Notification
+	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+
+	// if onlineUser != nil {
+	// 	s.mu.Lock()
+	// 	s.Notifications[onlineUser.SocketID] <- notification
+	// 	s.mu.Unlock()
+	// }
 
 	return nil
 }

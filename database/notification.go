@@ -27,3 +27,21 @@ func (n *Notification) CreateNotification(notification *model.Notification) (*mo
 	_, err := query.Returning("*").SelectOrInsert()
 	return notification, err
 }
+
+func (n *Notification) RemoveNotification(notification *model.Notification) (*model.Notification, error) {
+	query := n.DB.Model(notification).
+		Where("notification_type_id = ?notification_type_id").
+		Where("sender_id = ?sender_id").
+		Where("receiver_id = ?receiver_id")
+
+	if notification.PostID != nil {
+		query.Where("post_id = ?post_id")
+	}
+
+	if notification.CommentID != nil {
+		query.Where("comment_id = ?comment_id")
+	}
+
+	_, err := query.Set("deleted_at = ?deleted_at").Returning("*").Update()
+	return notification, err
+}
