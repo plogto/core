@@ -40,7 +40,7 @@ func (s *Service) AddComment(ctx context.Context, input model.CommentPostInput) 
 			Name:       config.NOTIFICATION_COMMENT_POST,
 			SenderId:   user.ID,
 			ReceiverId: post.UserID,
-			Url:        "p/" + post.Url + "/#" + comment.ID,
+			Url:        "p/" + post.Url + "#" + comment.ID,
 			PostId:     &post.ID,
 			CommentId:  &comment.ID,
 		})
@@ -75,7 +75,7 @@ func (s *Service) DeleteComment(ctx context.Context, commentID string) (*model.C
 		Name:       config.NOTIFICATION_COMMENT_POST,
 		SenderId:   user.ID,
 		ReceiverId: post.UserID,
-		Url:        "p/" + post.Url + "/#" + comment.ID,
+		Url:        "p/" + post.Url + "#" + comment.ID,
 		PostId:     &post.ID,
 		CommentId:  &comment.ID,
 	})

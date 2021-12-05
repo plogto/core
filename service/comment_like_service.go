@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/favecode/plog-core/config"
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
 )
@@ -21,12 +22,28 @@ func (s *Service) LikeComment(ctx context.Context, commentID string) (*model.Com
 		return nil, errors.New("access denied")
 	}
 
+	post, _ := s.Post.GetPostByID(comment.PostID)
+	if post == nil || post.ID != comment.PostID {
+		return nil, errors.New("access denied")
+	}
+
 	commentLike := &model.CommentLike{
 		UserID:    user.ID,
 		CommentID: commentID,
 	}
 
 	s.CommentLike.CreateCommentLike(commentLike)
+
+	if len(commentLike.ID) > 0 {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_LIKE_COMMENT,
+			SenderId:   user.ID,
+			ReceiverId: comment.UserID,
+			Url:        "p/" + post.Url + "#" + comment.ID,
+			PostId:     &post.ID,
+			CommentId:  &comment.ID,
+		})
+	}
 
 	return commentLike, nil
 }
@@ -44,9 +61,23 @@ func (s *Service) UnlikeComment(ctx context.Context, commentID string) (*model.C
 		return nil, errors.New("access denied")
 	}
 
+	post, _ := s.Post.GetPostByID(comment.PostID)
+	if post == nil || post.ID != comment.PostID {
+		return nil, errors.New("access denied")
+	}
+
 	commentLike, _ := s.CommentLike.GetCommentLikeByUserIdAndCommentId(user.ID, commentID)
 
-	if len(commentLike.ID) < 1 {
+	if commentLike != nil {
+		s.RemoveNotification(CreateNotificationArgs{
+			Name:       config.NOTIFICATION_LIKE_COMMENT,
+			SenderId:   user.ID,
+			ReceiverId: comment.UserID,
+			Url:        "p/" + post.Url + "#" + comment.ID,
+			PostId:     &post.ID,
+			CommentId:  &comment.ID,
+		})
+	} else {
 		return nil, errors.New("like not found")
 	}
 
