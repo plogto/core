@@ -30,6 +30,10 @@ func (r *notificationResolver) Comment(ctx context.Context, obj *model.Notificat
 	return r.Service.GetCommentByID(ctx, obj.CommentID)
 }
 
+func (r *queryResolver) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
+	return r.Service.GetNotifications(ctx, input)
+}
+
 func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
 	return r.Service.GetNotification(ctx)
 }
