@@ -42,7 +42,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 
 	s.Connection.CreateConnection(newConnection)
 
-	if len(newConnection.ID) > 0 {
+	if len(newConnection.ID) > 0 && status == 2 {
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_FOLLOW_USER,
 			SenderId:   user.ID,
