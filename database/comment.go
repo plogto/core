@@ -31,7 +31,7 @@ func (p *Comment) GetCommentByID(id string) (*model.Comment, error) {
 	return p.GetCommentByField("id", id)
 }
 
-func (p *Comment) GetCommentsByPostIdAndPagination(postId string, limit int, page int) (*model.Comments, error) {
+func (p *Comment) GetCommentsByPostIdAndPagination(postId string, limit, page int) (*model.Comments, error) {
 	var comments []*model.Comment
 	var offset = (page - 1) * limit
 
@@ -56,7 +56,7 @@ func (p *Comment) GetCommentsByPostIdAndPagination(postId string, limit int, pag
 	}, err
 }
 
-func (p *Comment) GetCommentsByParentIdAndPagination(parentId string, limit int, page int) (*model.Comments, error) {
+func (p *Comment) GetCommentsByParentIdAndPagination(parentId string, limit, page int) (*model.Comments, error) {
 	var comments []*model.Comment
 	var offset = (page - 1) * limit
 

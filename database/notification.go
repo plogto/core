@@ -2,11 +2,36 @@ package database
 
 import (
 	"github.com/favecode/plog-core/graph/model"
+	"github.com/favecode/plog-core/util"
 	"github.com/go-pg/pg/v10"
 )
 
 type Notification struct {
 	DB *pg.DB
+}
+
+func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId string, limit, page int) (*model.Notifications, error) {
+	var notifications []*model.Notification
+	var offset = (page - 1) * limit
+
+	query := p.DB.Model(&notifications).
+		Where("receiver_id = ?", receiverId).
+		Where("deleted_at is ?", nil).
+		Order("created_at DESC").
+		Returning("*")
+
+	query.Offset(offset).Limit(limit)
+
+	totalDocs, err := query.SelectAndCount()
+
+	return &model.Notifications{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
+			Limit:     limit,
+			Page:      page,
+			TotalDocs: totalDocs,
+		}),
+		Notifications: notifications,
+	}, err
 }
 
 func (n *Notification) CreateNotification(notification *model.Notification) (*model.Notification, error) {
