@@ -23,7 +23,7 @@ func (r *notificationResolver) Receiver(ctx context.Context, obj *model.Notifica
 }
 
 func (r *notificationResolver) Post(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	return r.Service.GetPostsByID(ctx, *obj.PostID)
+	return r.Service.GetPostByID(ctx, obj.PostID)
 }
 
 func (r *notificationResolver) Comment(ctx context.Context, obj *model.Notification) (*model.Comment, error) {

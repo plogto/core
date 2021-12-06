@@ -101,11 +101,15 @@ func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error
 	return count, nil
 }
 
-func (s *Service) GetPostsByID(ctx context.Context, postId string) (*model.Post, error) {
-	post, _ := s.Post.GetPostByID(postId)
+func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
+	if id == nil {
+		return nil, nil
+	}
+	post, _ := s.Post.GetPostByID(*id)
 
 	return post, nil
 }
+
 func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
 	post, _ := s.Post.GetPostByURL(url)
 
