@@ -55,6 +55,11 @@ type LoginInput struct {
 	Password string `json:"password"`
 }
 
+type Notifications struct {
+	Notifications []*Notification `json:"notifications"`
+	Pagination    *Pagination     `json:"pagination"`
+}
+
 type Pagination struct {
 	TotalDocs  int  `json:"totalDocs"`
 	TotalPages int  `json:"totalPages"`
