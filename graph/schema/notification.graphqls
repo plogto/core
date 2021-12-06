@@ -19,6 +19,15 @@ type Notification {
   updatedAt: Time!
 }
 
+type Notifications {
+  notifications: [Notification]
+  pagination: Pagination
+}
+
+extend type Query {
+  getNotifications(input: PaginationInput): Notifications
+}
+
 extend type Subscription {
   getNotification: Notification
 }

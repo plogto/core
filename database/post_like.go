@@ -21,7 +21,7 @@ func (p *PostLike) CreatePostLike(postLike *model.PostLike) (*model.PostLike, er
 	return postLike, err
 }
 
-func (p *PostLike) GetPostLikesByPostIdAndPagination(postId string, limit int, page int) (*model.PostLikes, error) {
+func (p *PostLike) GetPostLikesByPostIdAndPagination(postId string, limit, page int) (*model.PostLikes, error) {
 	var postLikes []*model.PostLike
 	var offset = (page - 1) * limit
 
@@ -40,7 +40,7 @@ func (p *PostLike) GetPostLikesByPostIdAndPagination(postId string, limit int, p
 	}, err
 }
 
-func (p *PostLike) GetPostLikeByUserIdAndPostId(userId string, postId string) (*model.PostLike, error) {
+func (p *PostLike) GetPostLikeByUserIdAndPostId(userId, postId string) (*model.PostLike, error) {
 	var postLike model.PostLike
 	err := p.DB.Model(&postLike).Where("user_id = ?", userId).Where("post_id = ?", postId).Where("deleted_at is ?", nil).First()
 	if len(postLike.ID) < 1 {

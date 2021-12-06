@@ -13,7 +13,7 @@ type Tag struct {
 	DB *pg.DB
 }
 
-func (t *Tag) GetTagsByTagNameAndPagination(value string, limit int, page int) (*model.Tags, error) {
+func (t *Tag) GetTagsByTagNameAndPagination(value string, limit, page int) (*model.Tags, error) {
 	var tags []*model.Tag
 	var offset = (page - 1) * limit
 	value = strings.ToLower(value)

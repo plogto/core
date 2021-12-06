@@ -19,7 +19,7 @@ type ConnectionFilter struct {
 	Status *int
 }
 
-func (c *Connection) GetConnectionsByFieldAndPagination(field string, value string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connection) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
 	var offset = (filter.Page - 1) * filter.Limit
 
@@ -66,7 +66,7 @@ func (c *Connection) GetConnectionByField(field, value string) (*model.Connectio
 	return &connection, err
 }
 
-func (c *Connection) GetConnection(followingId string, followerId string) (*model.Connection, error) {
+func (c *Connection) GetConnection(followingId, followerId string) (*model.Connection, error) {
 	var connection model.Connection
 	err := c.DB.Model(&connection).Where("following_id = ?", followingId).Where("follower_id = ?", followerId).Where("deleted_at is ?", nil).First()
 	return &connection, err
@@ -88,7 +88,7 @@ func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	return connection, err
 }
 
-func (c *Connection) CountConnectionByUserId(field string, userId string, status int) (*int, error) {
+func (c *Connection) CountConnectionByUserId(field, userId string, status int) (*int, error) {
 	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userId).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
 	return &count, err
 }

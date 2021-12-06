@@ -18,7 +18,7 @@ func (p *Post) GetPostByField(field, value string) (*model.Post, error) {
 	return &post, err
 }
 
-func (p *Post) GetPostsByUserIdAndPagination(userId string, limit int, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByUserIdAndPagination(userId string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
@@ -37,7 +37,7 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, limit int, page int)
 	}, err
 }
 
-func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit int, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/favecode/plog-core/config"
 	"github.com/favecode/plog-core/graph/model"
 	"github.com/favecode/plog-core/middleware"
 )
@@ -16,6 +17,27 @@ type CreateNotificationArgs struct {
 	Url        string
 	PostId     *string
 	CommentId  *string
+}
+
+func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	var limit int = config.POSTS_PAGE_LIMIT
+	var page int = 1
+
+	if input != nil {
+		if input.Limit != nil {
+			limit = *input.Limit
+		}
+
+		if input.Page != nil && *input.Page > 0 {
+			page = *input.Page
+		}
+	}
+
+	posts, _ := s.Notification.GetNotificationsByReceiverIdAndPagination(user.ID, limit, page)
+
+	return posts, nil
 }
 
 func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
