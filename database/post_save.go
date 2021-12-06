@@ -21,7 +21,7 @@ func (p *PostSave) CreatePostSave(postSave *model.PostSave) (*model.PostSave, er
 	return postSave, err
 }
 
-func (p *PostSave) GetPostSaveByUserIdAndPostId(userId string, postId string) (*model.PostSave, error) {
+func (p *PostSave) GetPostSaveByUserIdAndPostId(userId, postId string) (*model.PostSave, error) {
 	var postSave model.PostSave
 	err := p.DB.Model(&postSave).Where("user_id = ?", userId).Where("post_id = ?", postId).Where("deleted_at is ?", nil).First()
 	if len(postSave.ID) < 1 {
@@ -30,7 +30,7 @@ func (p *PostSave) GetPostSaveByUserIdAndPostId(userId string, postId string) (*
 	return &postSave, err
 }
 
-func (p *PostSave) GetPostSavesByUserIdAndPagination(userId string, limit int, page int) (*model.PostSaves, error) {
+func (p *PostSave) GetPostSavesByUserIdAndPagination(userId string, limit, page int) (*model.PostSaves, error) {
 	var postSaves []*model.PostSave
 	var offset = (page - 1) * limit
 
