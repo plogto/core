@@ -12,9 +12,12 @@ type Post struct {
 	DB *pg.DB
 }
 
-func (p *Post) GetPostByField(field, value string) (*model.Post, error) {
+func (p *Post) GetPostByField(field string, value string) (*model.Post, error) {
 	var post model.Post
 	err := p.DB.Model(&post).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
+	if len(post.ID) < 1 {
+		return nil, nil
+	}
 	return &post, err
 }
 
@@ -66,8 +69,8 @@ func (p *Post) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }
 
-func (p *Post) GetPostByURL(id string) (*model.Post, error) {
-	return p.GetPostByField("url", id)
+func (p *Post) GetPostByURL(url string) (*model.Post, error) {
+	return p.GetPostByField("url", url)
 }
 
 func (p *Post) CountPostsByUserId(userId string) (*int, error) {

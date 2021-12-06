@@ -23,7 +23,7 @@ func (r *commentResolver) User(ctx context.Context, obj *model.Comment) (*model.
 }
 
 func (r *commentResolver) Post(ctx context.Context, obj *model.Comment) (*model.Post, error) {
-	return r.Service.GetPostsByID(ctx, obj.PostID)
+	return r.Service.GetPostByID(ctx, &obj.PostID)
 }
 
 func (r *commentResolver) IsLiked(ctx context.Context, obj *model.Comment) (*model.CommentLike, error) {
