@@ -24,7 +24,7 @@ func (p *PostTag) CountPostTagsByTagId(tagId string) (*int, error) {
 	return &count, err
 }
 
-func (p *PostTag) GetTagsOrderByCountTags(limit int, page int) (*model.Tags, error) {
+func (p *PostTag) GetTagsOrderByCountTags(limit, page int) (*model.Tags, error) {
 	var tags []*model.Tag
 	var offset = (page - 1) * limit
 

@@ -21,7 +21,7 @@ func (p *CommentLike) CreateCommentLike(commentLike *model.CommentLike) (*model.
 	return commentLike, err
 }
 
-func (p *CommentLike) GetCommentLikesByCommentIdAndPagination(commentId string, limit int, page int) (*model.CommentLikes, error) {
+func (p *CommentLike) GetCommentLikesByCommentIdAndPagination(commentId string, limit, page int) (*model.CommentLikes, error) {
 	var commentLikes []*model.CommentLike
 	var offset = (page - 1) * limit
 
@@ -40,7 +40,7 @@ func (p *CommentLike) GetCommentLikesByCommentIdAndPagination(commentId string, 
 	}, err
 }
 
-func (p *CommentLike) GetCommentLikeByUserIdAndCommentId(userId string, commentId string) (*model.CommentLike, error) {
+func (p *CommentLike) GetCommentLikeByUserIdAndCommentId(userId, commentId string) (*model.CommentLike, error) {
 	var commentLike model.CommentLike
 	err := p.DB.Model(&commentLike).Where("user_id = ?", userId).Where("comment_id = ?", commentId).Where("deleted_at is ?", nil).First()
 	if len(commentLike.ID) < 1 {
