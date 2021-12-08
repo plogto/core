@@ -24,7 +24,7 @@ func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId stri
 
 	totalDocs, err := query.SelectAndCount()
 
-	unreadNotificationCount, _ := p.CountUnreadNotificationsByReceiverId(receiverId)
+	unreadNotificationsCount, _ := p.CountUnreadNotificationsByReceiverId(receiverId)
 
 	return &model.Notifications{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
@@ -32,8 +32,8 @@ func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId stri
 			Page:      page,
 			TotalDocs: totalDocs,
 		}),
-		UnreadNotificationCount: unreadNotificationCount,
-		Notifications:           notifications,
+		UnreadNotificationsCount: unreadNotificationsCount,
+		Notifications:            notifications,
 	}, err
 }
 
