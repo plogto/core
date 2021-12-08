@@ -56,8 +56,9 @@ type LoginInput struct {
 }
 
 type Notifications struct {
-	Notifications []*Notification `json:"notifications"`
-	Pagination    *Pagination     `json:"pagination"`
+	Notifications           []*Notification `json:"notifications"`
+	UnreadNotificationCount *int            `json:"unreadNotificationCount"`
+	Pagination              *Pagination     `json:"pagination"`
 }
 
 type Pagination struct {
