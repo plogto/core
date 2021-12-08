@@ -151,9 +151,9 @@ type ComplexityRoot struct {
 	}
 
 	Notifications struct {
-		Notifications           func(childComplexity int) int
-		Pagination              func(childComplexity int) int
-		UnreadNotificationCount func(childComplexity int) int
+		Notifications            func(childComplexity int) int
+		Pagination               func(childComplexity int) int
+		UnreadNotificationsCount func(childComplexity int) int
 	}
 
 	OnlineUser struct {
@@ -935,12 +935,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Notifications.Pagination(childComplexity), true
 
-	case "Notifications.unreadNotificationCount":
-		if e.complexity.Notifications.UnreadNotificationCount == nil {
+	case "Notifications.unreadNotificationsCount":
+		if e.complexity.Notifications.UnreadNotificationsCount == nil {
 			break
 		}
 
-		return e.complexity.Notifications.UnreadNotificationCount(childComplexity), true
+		return e.complexity.Notifications.UnreadNotificationsCount(childComplexity), true
 
 	case "OnlineUser.createdAt":
 		if e.complexity.OnlineUser.CreatedAt == nil {
@@ -1900,7 +1900,7 @@ type Notification {
 
 type Notifications {
   notifications: [Notification]
-  unreadNotificationCount: Int
+  unreadNotificationsCount: Int
   pagination: Pagination
 }
 
@@ -4981,7 +4981,7 @@ func (ec *executionContext) _Notifications_notifications(ctx context.Context, fi
 	return ec.marshalONotification2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Notifications_unreadNotificationCount(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notifications_unreadNotificationsCount(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
 			ec.Error(ctx, ec.Recover(ctx, r))
@@ -4999,7 +4999,7 @@ func (ec *executionContext) _Notifications_unreadNotificationCount(ctx context.C
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.UnreadNotificationCount, nil
+		return obj.UnreadNotificationsCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10200,8 +10200,8 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("Notifications")
 		case "notifications":
 			out.Values[i] = ec._Notifications_notifications(ctx, field, obj)
-		case "unreadNotificationCount":
-			out.Values[i] = ec._Notifications_unreadNotificationCount(ctx, field, obj)
+		case "unreadNotificationsCount":
+			out.Values[i] = ec._Notifications_unreadNotificationsCount(ctx, field, obj)
 		case "pagination":
 			out.Values[i] = ec._Notifications_pagination(ctx, field, obj)
 		default:
