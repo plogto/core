@@ -24,14 +24,28 @@ func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId stri
 
 	totalDocs, err := query.SelectAndCount()
 
+	unreadNotificationCount, _ := p.CountUnreadNotificationsByReceiverId(receiverId)
+
 	return &model.Notifications{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
 		}),
-		Notifications: notifications,
+		UnreadNotificationCount: unreadNotificationCount,
+		Notifications:           notifications,
 	}, err
+}
+
+func (p *Notification) CountUnreadNotificationsByReceiverId(receiverId string) (*int, error) {
+	count, err := p.DB.Model((*model.Notification)(nil)).
+		Where("receiver_id = ?", receiverId).
+		Where("read = ?", false).
+		Where("deleted_at is ?", nil).
+		Returning("*").
+		Count()
+
+	return &count, err
 }
 
 func (n *Notification) CreateNotification(notification *model.Notification) (*model.Notification, error) {
