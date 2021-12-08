@@ -151,8 +151,9 @@ type ComplexityRoot struct {
 	}
 
 	Notifications struct {
-		Notifications func(childComplexity int) int
-		Pagination    func(childComplexity int) int
+		Notifications           func(childComplexity int) int
+		Pagination              func(childComplexity int) int
+		UnreadNotificationCount func(childComplexity int) int
 	}
 
 	OnlineUser struct {
@@ -933,6 +934,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Notifications.Pagination(childComplexity), true
+
+	case "Notifications.unreadNotificationCount":
+		if e.complexity.Notifications.UnreadNotificationCount == nil {
+			break
+		}
+
+		return e.complexity.Notifications.UnreadNotificationCount(childComplexity), true
 
 	case "OnlineUser.createdAt":
 		if e.complexity.OnlineUser.CreatedAt == nil {
@@ -1892,6 +1900,7 @@ type Notification {
 
 type Notifications {
   notifications: [Notification]
+  unreadNotificationCount: Int
   pagination: Pagination
 }
 
@@ -4970,6 +4979,38 @@ func (ec *executionContext) _Notifications_notifications(ctx context.Context, fi
 	res := resTmp.([]*model.Notification)
 	fc.Result = res
 	return ec.marshalONotification2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Notifications_unreadNotificationCount(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Notifications",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UnreadNotificationCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notifications_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
@@ -10159,6 +10200,8 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 			out.Values[i] = graphql.MarshalString("Notifications")
 		case "notifications":
 			out.Values[i] = ec._Notifications_notifications(ctx, field, obj)
+		case "unreadNotificationCount":
+			out.Values[i] = ec._Notifications_unreadNotificationCount(ctx, field, obj)
 		case "pagination":
 			out.Values[i] = ec._Notifications_pagination(ctx, field, obj)
 		default:
