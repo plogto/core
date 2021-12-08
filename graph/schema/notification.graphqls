@@ -21,6 +21,7 @@ type Notification {
 
 type Notifications {
   notifications: [Notification]
+  unreadNotificationCount: Int
   pagination: Pagination
 }
 
