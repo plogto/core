@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/favecode/plog-core/database"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/database"
+	"github.com/plogto/core/graph/model"
 )
 
 type Service struct {

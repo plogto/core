@@ -1,4 +1,4 @@
-module github.com/favecode/plog-core
+module github.com/plogto/core
 
 go 1.16
 

@@ -18,13 +18,13 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
-	"github.com/favecode/plog-core/config"
-	"github.com/favecode/plog-core/database"
-	"github.com/favecode/plog-core/graph/generated"
-	graph "github.com/favecode/plog-core/graph/resolver"
-	customMiddleware "github.com/favecode/plog-core/middleware"
-	"github.com/favecode/plog-core/service"
-	"github.com/favecode/plog-core/util"
+	"github.com/plogto/core/config"
+	"github.com/plogto/core/database"
+	"github.com/plogto/core/graph/generated"
+	graph "github.com/plogto/core/graph/resolver"
+	customMiddleware "github.com/plogto/core/middleware"
+	"github.com/plogto/core/service"
+	"github.com/plogto/core/util"
 )
 
 const defaultPort = "8080"
