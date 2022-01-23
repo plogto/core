@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/plog-core/graph/generated"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/generated"
+	"github.com/plogto/core/graph/model"
 )
 
 func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error) {

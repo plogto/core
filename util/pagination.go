@@ -1,7 +1,7 @@
 package util
 
 import (
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/model"
 )
 
 type GetPaginationParams struct {

@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/plog-core/graph/generated"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/generated"
+	"github.com/plogto/core/graph/model"
 )
 
 func (r *commentResolver) Parent(ctx context.Context, obj *model.Comment) (*model.Comment, error) {
