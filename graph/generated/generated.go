@@ -14,7 +14,7 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -2100,7 +2100,7 @@ func (ec *executionContext) field_Mutation_addComment_args(ctx context.Context, 
 	var arg0 model.CommentPostInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCommentPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNCommentPostInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2115,7 +2115,7 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 	var arg0 model.AddPostInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2130,7 +2130,7 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 	var arg0 model.ChangePasswordInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNChangePasswordInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx, tmp)
+		arg0, err = ec.unmarshalNChangePasswordInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2160,7 +2160,7 @@ func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, ra
 	var arg0 model.EditUserInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNEditUserInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx, tmp)
+		arg0, err = ec.unmarshalNEditUserInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2220,7 +2220,7 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 	var arg0 model.RegisterInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNRegisterInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
+		arg0, err = ec.unmarshalNRegisterInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐRegisterInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2265,7 +2265,7 @@ func (ec *executionContext) field_Mutation_test_args(ctx context.Context, rawArg
 	var arg0 model.TestInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
+		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2394,7 +2394,7 @@ func (ec *executionContext) field_Query_getCommentLikesByCommentId_args(ctx cont
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2418,7 +2418,7 @@ func (ec *executionContext) field_Query_getComments_args(ctx context.Context, ra
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2433,7 +2433,7 @@ func (ec *executionContext) field_Query_getFollowRequests_args(ctx context.Conte
 	var arg0 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2457,7 +2457,7 @@ func (ec *executionContext) field_Query_getFollowersByUsername_args(ctx context.
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2481,7 +2481,7 @@ func (ec *executionContext) field_Query_getFollowingByUsername_args(ctx context.
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2496,7 +2496,7 @@ func (ec *executionContext) field_Query_getNotifications_args(ctx context.Contex
 	var arg0 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2535,7 +2535,7 @@ func (ec *executionContext) field_Query_getPostLikesByPostId_args(ctx context.Co
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2559,7 +2559,7 @@ func (ec *executionContext) field_Query_getPostsByTagName_args(ctx context.Conte
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2583,7 +2583,7 @@ func (ec *executionContext) field_Query_getPostsByUsername_args(ctx context.Cont
 	var arg1 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2598,7 +2598,7 @@ func (ec *executionContext) field_Query_getSavedPosts_args(ctx context.Context, 
 	var arg0 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2628,7 +2628,7 @@ func (ec *executionContext) field_Query_getTrends_args(ctx context.Context, rawA
 	var arg0 *model.PaginationInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2658,7 +2658,7 @@ func (ec *executionContext) field_Query_login_args(ctx context.Context, rawArgs 
 	var arg0 model.LoginInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
+		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2688,7 +2688,7 @@ func (ec *executionContext) field_Query_test_args(ctx context.Context, rawArgs m
 	var arg0 model.TestInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
+		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2703,7 +2703,7 @@ func (ec *executionContext) field_Subscription_test_args(ctx context.Context, ra
 	var arg0 model.TestInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
+		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2782,7 +2782,7 @@ func (ec *executionContext) _AuthResponse_authToken(ctx context.Context, field g
 	}
 	res := resTmp.(*model.AuthToken)
 	fc.Result = res
-	return ec.marshalNAuthToken2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthToken(ctx, field.Selections, res)
+	return ec.marshalNAuthToken2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthToken(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AuthResponse_user(ctx context.Context, field graphql.CollectedField, obj *model.AuthResponse) (ret graphql.Marshaler) {
@@ -2817,7 +2817,7 @@ func (ec *executionContext) _AuthResponse_user(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _AuthToken_token(ctx context.Context, field graphql.CollectedField, obj *model.AuthToken) (ret graphql.Marshaler) {
@@ -2954,7 +2954,7 @@ func (ec *executionContext) _Comment_parent(ctx context.Context, field graphql.C
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_children(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -2986,7 +2986,7 @@ func (ec *executionContext) _Comment_children(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Comments)
 	fc.Result = res
-	return ec.marshalOComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
+	return ec.marshalOComments2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_user(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -3021,7 +3021,7 @@ func (ec *executionContext) _Comment_user(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_post(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -3056,7 +3056,7 @@ func (ec *executionContext) _Comment_post(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_content(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -3123,7 +3123,7 @@ func (ec *executionContext) _Comment_isLiked(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comment_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Comment) (ret graphql.Marshaler) {
@@ -3263,7 +3263,7 @@ func (ec *executionContext) _CommentLike_user(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentLike_comment(ctx context.Context, field graphql.CollectedField, obj *model.CommentLike) (ret graphql.Marshaler) {
@@ -3298,7 +3298,7 @@ func (ec *executionContext) _CommentLike_comment(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalNComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalNComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentLike_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CommentLike) (ret graphql.Marshaler) {
@@ -3400,7 +3400,7 @@ func (ec *executionContext) _CommentLikes_commentLikes(ctx context.Context, fiel
 	}
 	res := resTmp.([]*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _CommentLikes_pagination(ctx context.Context, field graphql.CollectedField, obj *model.CommentLikes) (ret graphql.Marshaler) {
@@ -3432,7 +3432,7 @@ func (ec *executionContext) _CommentLikes_pagination(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comments_comments(ctx context.Context, field graphql.CollectedField, obj *model.Comments) (ret graphql.Marshaler) {
@@ -3464,7 +3464,7 @@ func (ec *executionContext) _Comments_comments(ctx context.Context, field graphq
 	}
 	res := resTmp.([]*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Comments_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Comments) (ret graphql.Marshaler) {
@@ -3496,7 +3496,7 @@ func (ec *executionContext) _Comments_pagination(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connection_id(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
@@ -3566,7 +3566,7 @@ func (ec *executionContext) _Connection_following(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connection_follower(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
@@ -3601,7 +3601,7 @@ func (ec *executionContext) _Connection_follower(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connection_status(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
@@ -3735,7 +3735,7 @@ func (ec *executionContext) _Connections_connections(ctx context.Context, field 
 	}
 	res := resTmp.([]*model.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Connections_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Connections) (ret graphql.Marshaler) {
@@ -3767,7 +3767,7 @@ func (ec *executionContext) _Connections_pagination(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3806,7 +3806,7 @@ func (ec *executionContext) _Mutation_test(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Test)
 	fc.Result = res
-	return ec.marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res)
+	return ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_register(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3845,7 +3845,7 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3884,7 +3884,7 @@ func (ec *executionContext) _Mutation_addComment(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3923,7 +3923,7 @@ func (ec *executionContext) _Mutation_deleteComment(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_likeComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3962,7 +3962,7 @@ func (ec *executionContext) _Mutation_likeComment(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_unlikeComment(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4001,7 +4001,7 @@ func (ec *executionContext) _Mutation_unlikeComment(ctx context.Context, field g
 	}
 	res := resTmp.(*model.CommentLike)
 	fc.Result = res
-	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
+	return ec.marshalOCommentLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_followUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4040,7 +4040,7 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4079,7 +4079,7 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4118,7 +4118,7 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4157,7 +4157,7 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4196,7 +4196,7 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4235,7 +4235,7 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_unlikePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4274,7 +4274,7 @@ func (ec *executionContext) _Mutation_unlikePost(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4313,7 +4313,7 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.PostSave)
 	fc.Result = res
-	return ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+	return ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_unsavePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4352,7 +4352,7 @@ func (ec *executionContext) _Mutation_unsavePost(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.PostSave)
 	fc.Result = res
-	return ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+	return ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4391,7 +4391,7 @@ func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -4430,7 +4430,7 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	}
 	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4500,7 +4500,7 @@ func (ec *executionContext) _Notification_notificationType(ctx context.Context, 
 	}
 	res := resTmp.(*model.NotificationType)
 	fc.Result = res
-	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx, field.Selections, res)
+	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_sender(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4535,7 +4535,7 @@ func (ec *executionContext) _Notification_sender(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_receiver(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4570,7 +4570,7 @@ func (ec *executionContext) _Notification_receiver(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_post(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4602,7 +4602,7 @@ func (ec *executionContext) _Notification_post(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_comment(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4634,7 +4634,7 @@ func (ec *executionContext) _Notification_comment(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Comment)
 	fc.Result = res
-	return ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
+	return ec.marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notification_url(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
@@ -4978,7 +4978,7 @@ func (ec *executionContext) _Notifications_notifications(ctx context.Context, fi
 	}
 	res := resTmp.([]*model.Notification)
 	fc.Result = res
-	return ec.marshalONotification2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Notifications_unreadNotificationsCount(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
@@ -5042,7 +5042,7 @@ func (ec *executionContext) _Notifications_pagination(ctx context.Context, field
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _OnlineUser_id(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
@@ -5529,7 +5529,7 @@ func (ec *executionContext) _Post_user(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_content(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -5663,7 +5663,7 @@ func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.PostLikes)
 	fc.Result = res
-	return ec.marshalOPostLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx, field.Selections, res)
+	return ec.marshalOPostLikes2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -5695,7 +5695,7 @@ func (ec *executionContext) _Post_comments(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Comments)
 	fc.Result = res
-	return ec.marshalOComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
+	return ec.marshalOComments2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -5727,7 +5727,7 @@ func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -5759,7 +5759,7 @@ func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.PostSave)
 	fc.Result = res
-	return ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+	return ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
@@ -5899,7 +5899,7 @@ func (ec *executionContext) _PostLike_user(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostLike_post(ctx context.Context, field graphql.CollectedField, obj *model.PostLike) (ret graphql.Marshaler) {
@@ -5934,7 +5934,7 @@ func (ec *executionContext) _PostLike_post(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostLike_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PostLike) (ret graphql.Marshaler) {
@@ -6036,7 +6036,7 @@ func (ec *executionContext) _PostLikes_postLikes(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.PostLike)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPostLike2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostLikes_pagination(ctx context.Context, field graphql.CollectedField, obj *model.PostLikes) (ret graphql.Marshaler) {
@@ -6068,7 +6068,7 @@ func (ec *executionContext) _PostLikes_pagination(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostSave_id(ctx context.Context, field graphql.CollectedField, obj *model.PostSave) (ret graphql.Marshaler) {
@@ -6138,7 +6138,7 @@ func (ec *executionContext) _PostSave_user(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostSave_post(ctx context.Context, field graphql.CollectedField, obj *model.PostSave) (ret graphql.Marshaler) {
@@ -6173,7 +6173,7 @@ func (ec *executionContext) _PostSave_post(ctx context.Context, field graphql.Co
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostSave_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.PostSave) (ret graphql.Marshaler) {
@@ -6275,7 +6275,7 @@ func (ec *executionContext) _PostSaves_postSaves(ctx context.Context, field grap
 	}
 	res := resTmp.([]*model.PostSave)
 	fc.Result = res
-	return ec.marshalOPostSave2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+	return ec.marshalOPostSave2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _PostSaves_pagination(ctx context.Context, field graphql.CollectedField, obj *model.PostSaves) (ret graphql.Marshaler) {
@@ -6307,7 +6307,7 @@ func (ec *executionContext) _PostSaves_pagination(ctx context.Context, field gra
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
@@ -6339,7 +6339,7 @@ func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Posts_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
@@ -6371,7 +6371,7 @@ func (ec *executionContext) _Posts_pagination(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6410,7 +6410,7 @@ func (ec *executionContext) _Query_test(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Test)
 	fc.Result = res
-	return ec.marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res)
+	return ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_login(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6449,7 +6449,7 @@ func (ec *executionContext) _Query_login(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.AuthResponse)
 	fc.Result = res
-	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getComments(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6488,7 +6488,7 @@ func (ec *executionContext) _Query_getComments(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.Comments)
 	fc.Result = res
-	return ec.marshalOComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
+	return ec.marshalOComments2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getCommentLikesByCommentId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6527,7 +6527,7 @@ func (ec *executionContext) _Query_getCommentLikesByCommentId(ctx context.Contex
 	}
 	res := resTmp.(*model.CommentLikes)
 	fc.Result = res
-	return ec.marshalOCommentLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLikes(ctx, field.Selections, res)
+	return ec.marshalOCommentLikes2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLikes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getFollowersByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6566,7 +6566,7 @@ func (ec *executionContext) _Query_getFollowersByUsername(ctx context.Context, f
 	}
 	res := resTmp.(*model.Connections)
 	fc.Result = res
-	return ec.marshalOConnections2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
+	return ec.marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getFollowingByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6605,7 +6605,7 @@ func (ec *executionContext) _Query_getFollowingByUsername(ctx context.Context, f
 	}
 	res := resTmp.(*model.Connections)
 	fc.Result = res
-	return ec.marshalOConnections2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
+	return ec.marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getFollowRequests(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6644,7 +6644,7 @@ func (ec *executionContext) _Query_getFollowRequests(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Connections)
 	fc.Result = res
-	return ec.marshalOConnections2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
+	return ec.marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getNotifications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6683,7 +6683,7 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 	}
 	res := resTmp.(*model.Notifications)
 	fc.Result = res
-	return ec.marshalONotifications2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotifications(ctx, field.Selections, res)
+	return ec.marshalONotifications2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotifications(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostsByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6722,7 +6722,7 @@ func (ec *executionContext) _Query_getPostsByUsername(ctx context.Context, field
 	}
 	res := resTmp.(*model.Posts)
 	fc.Result = res
-	return ec.marshalOPosts2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6761,7 +6761,7 @@ func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field 
 	}
 	res := resTmp.(*model.Posts)
 	fc.Result = res
-	return ec.marshalOPosts2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6800,7 +6800,7 @@ func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graph
 	}
 	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getPostLikesByPostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6839,7 +6839,7 @@ func (ec *executionContext) _Query_getPostLikesByPostId(ctx context.Context, fie
 	}
 	res := resTmp.(*model.PostLikes)
 	fc.Result = res
-	return ec.marshalOPostLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx, field.Selections, res)
+	return ec.marshalOPostLikes2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6878,7 +6878,7 @@ func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.PostSaves)
 	fc.Result = res
-	return ec.marshalOPostSaves2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSaves(ctx, field.Selections, res)
+	return ec.marshalOPostSaves2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSaves(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_search(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6917,7 +6917,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}
 	res := resTmp.(*model.Search)
 	fc.Result = res
-	return ec.marshalOSearch2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐSearch(ctx, field.Selections, res)
+	return ec.marshalOSearch2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐSearch(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getTagByTagName(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6956,7 +6956,7 @@ func (ec *executionContext) _Query_getTagByTagName(ctx context.Context, field gr
 	}
 	res := resTmp.(*model.Tag)
 	fc.Result = res
-	return ec.marshalOTag2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
+	return ec.marshalOTag2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getTrends(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -6995,7 +6995,7 @@ func (ec *executionContext) _Query_getTrends(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.Tags)
 	fc.Result = res
-	return ec.marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
+	return ec.marshalOTags2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7027,7 +7027,7 @@ func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphq
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7066,7 +7066,7 @@ func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field 
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_checkUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7105,7 +7105,7 @@ func (ec *executionContext) _Query_checkUsername(ctx context.Context, field grap
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_checkEmail(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7144,7 +7144,7 @@ func (ec *executionContext) _Query_checkEmail(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7247,7 +7247,7 @@ func (ec *executionContext) _Search_user(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.(*model.Users)
 	fc.Result = res
-	return ec.marshalOUsers2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUsers(ctx, field.Selections, res)
+	return ec.marshalOUsers2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUsers(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Search_tag(ctx context.Context, field graphql.CollectedField, obj *model.Search) (ret graphql.Marshaler) {
@@ -7279,7 +7279,7 @@ func (ec *executionContext) _Search_tag(ctx context.Context, field graphql.Colle
 	}
 	res := resTmp.(*model.Tags)
 	fc.Result = res
-	return ec.marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
+	return ec.marshalOTags2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Subscription_test(ctx context.Context, field graphql.CollectedField) (ret func() graphql.Marshaler) {
@@ -7325,7 +7325,7 @@ func (ec *executionContext) _Subscription_test(ctx context.Context, field graphq
 			w.Write([]byte{'{'})
 			graphql.MarshalString(field.Alias).MarshalGQL(w)
 			w.Write([]byte{':'})
-			ec.marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
+			ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
 			w.Write([]byte{'}'})
 		})
 	}
@@ -7367,7 +7367,7 @@ func (ec *executionContext) _Subscription_getNotification(ctx context.Context, f
 			w.Write([]byte{'{'})
 			graphql.MarshalString(field.Alias).MarshalGQL(w)
 			w.Write([]byte{':'})
-			ec.marshalONotification2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+			ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
 			w.Write([]byte{'}'})
 		})
 	}
@@ -7574,7 +7574,7 @@ func (ec *executionContext) _Tags_tags(ctx context.Context, field graphql.Collec
 	}
 	res := resTmp.([]*model.Tag)
 	fc.Result = res
-	return ec.marshalOTag2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
+	return ec.marshalOTag2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tags_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Tags) (ret graphql.Marshaler) {
@@ -7606,7 +7606,7 @@ func (ec *executionContext) _Tags_pagination(ctx context.Context, field graphql.
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Test_content(ctx context.Context, field graphql.CollectedField, obj *model.Test) (ret graphql.Marshaler) {
@@ -8142,7 +8142,7 @@ func (ec *executionContext) _Users_users(ctx context.Context, field graphql.Coll
 	}
 	res := resTmp.([]*model.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Users_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Users) (ret graphql.Marshaler) {
@@ -8174,7 +8174,7 @@ func (ec *executionContext) _Users_pagination(ctx context.Context, field graphql
 	}
 	res := resTmp.(*model.Pagination)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -11427,7 +11427,7 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
-func (ec *executionContext) marshalNAuthToken2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthToken(ctx context.Context, sel ast.SelectionSet, v *model.AuthToken) graphql.Marshaler {
+func (ec *executionContext) marshalNAuthToken2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthToken(ctx context.Context, sel ast.SelectionSet, v *model.AuthToken) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11452,16 +11452,16 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
-func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx context.Context, v interface{}) (model.ChangePasswordInput, error) {
+func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx context.Context, v interface{}) (model.ChangePasswordInput, error) {
 	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNComment2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalNComment2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v model.Comment) graphql.Marshaler {
 	return ec._Comment(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11471,12 +11471,12 @@ func (ec *executionContext) marshalNComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 	return ec._Comment(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNCommentPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx context.Context, v interface{}) (model.CommentPostInput, error) {
+func (ec *executionContext) unmarshalNCommentPostInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentPostInput(ctx context.Context, v interface{}) (model.CommentPostInput, error) {
 	res, err := ec.unmarshalInputCommentPostInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx context.Context, v interface{}) (model.EditUserInput, error) {
+func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐEditUserInput(ctx context.Context, v interface{}) (model.EditUserInput, error) {
 	res, err := ec.unmarshalInputEditUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -11511,16 +11511,16 @@ func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.Selecti
 	return res
 }
 
-func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
+func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
 	res, err := ec.unmarshalInputLoginInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v model.NotificationType) graphql.Marshaler {
 	return ec._NotificationType(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *model.NotificationType) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11530,11 +11530,11 @@ func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋfavecode�
 	return ec._NotificationType(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPost2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11544,7 +11544,7 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcor
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v interface{}) (model.RegisterInput, error) {
+func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐRegisterInput(ctx context.Context, v interface{}) (model.RegisterInput, error) {
 	res, err := ec.unmarshalInputRegisterInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -11564,7 +11564,7 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
-func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
+func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
 	res, err := ec.unmarshalInputTestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
@@ -11584,11 +11584,11 @@ func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel as
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11855,12 +11855,12 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
-func (ec *executionContext) unmarshalNaddPostInput2githubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAddPostInput(ctx context.Context, v interface{}) (model.AddPostInput, error) {
+func (ec *executionContext) unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAddPostInput(ctx context.Context, v interface{}) (model.AddPostInput, error) {
 	res, err := ec.unmarshalInputaddPostInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOAuthResponse2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
+func (ec *executionContext) marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -11891,7 +11891,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return graphql.MarshalBoolean(*v)
 }
 
-func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v []*model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -11918,7 +11918,7 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplog
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
+			ret[i] = ec.marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -11932,14 +11932,14 @@ func (ec *executionContext) marshalOComment2ᚕᚖgithubᚗcomᚋfavecodeᚋplog
 	return ret
 }
 
-func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
+func (ec *executionContext) marshalOComment2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComment(ctx context.Context, sel ast.SelectionSet, v *model.Comment) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Comment(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.CommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v []*model.CommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -11966,7 +11966,7 @@ func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋfavecodeᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOCommentLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -11980,28 +11980,28 @@ func (ec *executionContext) marshalOCommentLike2ᚕᚖgithubᚗcomᚋfavecodeᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOCommentLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.CommentLike) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLike(ctx context.Context, sel ast.SelectionSet, v *model.CommentLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommentLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCommentLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLikes(ctx context.Context, sel ast.SelectionSet, v *model.CommentLikes) graphql.Marshaler {
+func (ec *executionContext) marshalOCommentLikes2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐCommentLikes(ctx context.Context, sel ast.SelectionSet, v *model.CommentLikes) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CommentLikes(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOComments2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx context.Context, sel ast.SelectionSet, v *model.Comments) graphql.Marshaler {
+func (ec *executionContext) marshalOComments2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐComments(ctx context.Context, sel ast.SelectionSet, v *model.Comments) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Comments(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
+func (ec *executionContext) marshalOConnection2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v []*model.Connection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12028,7 +12028,7 @@ func (ec *executionContext) marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋp
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
+			ret[i] = ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12042,14 +12042,14 @@ func (ec *executionContext) marshalOConnection2ᚕᚖgithubᚗcomᚋfavecodeᚋp
 	return ret
 }
 
-func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
+func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Connection(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOConnections2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx context.Context, sel ast.SelectionSet, v *model.Connections) graphql.Marshaler {
+func (ec *executionContext) marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐConnections(ctx context.Context, sel ast.SelectionSet, v *model.Connections) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12086,7 +12086,7 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	return graphql.MarshalInt(*v)
 }
 
-func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12113,7 +12113,7 @@ func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋfavecode�
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotification2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12127,28 +12127,28 @@ func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋfavecode�
 	return ret
 }
 
-func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Notification(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotifications2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐNotifications(ctx context.Context, sel ast.SelectionSet, v *model.Notifications) graphql.Marshaler {
+func (ec *executionContext) marshalONotifications2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐNotifications(ctx context.Context, sel ast.SelectionSet, v *model.Notifications) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Notifications(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPagination2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx context.Context, sel ast.SelectionSet, v *model.Pagination) graphql.Marshaler {
+func (ec *executionContext) marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPagination(ctx context.Context, sel ast.SelectionSet, v *model.Pagination) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Pagination(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx context.Context, v interface{}) (*model.PaginationInput, error) {
+func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPaginationInput(ctx context.Context, v interface{}) (*model.PaginationInput, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -12156,7 +12156,7 @@ func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋfavecode
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12183,7 +12183,7 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12197,14 +12197,14 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v []*model.PostLike) graphql.Marshaler {
+func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v []*model.PostLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12231,7 +12231,7 @@ func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPostLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12245,21 +12245,21 @@ func (ec *executionContext) marshalOPostLike2ᚕᚖgithubᚗcomᚋfavecodeᚋplo
 	return ret
 }
 
-func (ec *executionContext) marshalOPostLike2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v *model.PostLike) graphql.Marshaler {
+func (ec *executionContext) marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLike(ctx context.Context, sel ast.SelectionSet, v *model.PostLike) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostLike(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostLikes2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx context.Context, sel ast.SelectionSet, v *model.PostLikes) graphql.Marshaler {
+func (ec *executionContext) marshalOPostLikes2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostLikes(ctx context.Context, sel ast.SelectionSet, v *model.PostLikes) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostLikes(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostSave2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v []*model.PostSave) graphql.Marshaler {
+func (ec *executionContext) marshalOPostSave2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v []*model.PostSave) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12286,7 +12286,7 @@ func (ec *executionContext) marshalOPostSave2ᚕᚖgithubᚗcomᚋfavecodeᚋplo
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12300,28 +12300,28 @@ func (ec *executionContext) marshalOPostSave2ᚕᚖgithubᚗcomᚋfavecodeᚋplo
 	return ret
 }
 
-func (ec *executionContext) marshalOPostSave2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v *model.PostSave) graphql.Marshaler {
+func (ec *executionContext) marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v *model.PostSave) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostSave(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostSaves2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPostSaves(ctx context.Context, sel ast.SelectionSet, v *model.PostSaves) graphql.Marshaler {
+func (ec *executionContext) marshalOPostSaves2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPostSaves(ctx context.Context, sel ast.SelectionSet, v *model.PostSaves) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostSaves(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {
+func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Posts(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOSearch2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐSearch(ctx context.Context, sel ast.SelectionSet, v *model.Search) graphql.Marshaler {
+func (ec *executionContext) marshalOSearch2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐSearch(ctx context.Context, sel ast.SelectionSet, v *model.Search) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12352,7 +12352,7 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return graphql.MarshalString(*v)
 }
 
-func (ec *executionContext) marshalOTag2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
+func (ec *executionContext) marshalOTag2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v []*model.Tag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12379,7 +12379,7 @@ func (ec *executionContext) marshalOTag2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTag2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
+			ret[i] = ec.marshalOTag2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12393,28 +12393,28 @@ func (ec *executionContext) marshalOTag2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑc
 	return ret
 }
 
-func (ec *executionContext) marshalOTag2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
+func (ec *executionContext) marshalOTag2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTag(ctx context.Context, sel ast.SelectionSet, v *model.Tag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Tag(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTags2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx context.Context, sel ast.SelectionSet, v *model.Tags) graphql.Marshaler {
+func (ec *executionContext) marshalOTags2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTags(ctx context.Context, sel ast.SelectionSet, v *model.Tags) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Tags(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx context.Context, sel ast.SelectionSet, v *model.Test) graphql.Marshaler {
+func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐTest(ctx context.Context, sel ast.SelectionSet, v *model.Test) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Test(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -12441,7 +12441,7 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
+			ret[i] = ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -12455,14 +12455,14 @@ func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋfavecodeᚋplogᚑ
 	return ret
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._User(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOUsers2ᚖgithubᚗcomᚋfavecodeᚋplogᚑcoreᚋgraphᚋmodelᚐUsers(ctx context.Context, sel ast.SelectionSet, v *model.Users) graphql.Marshaler {
+func (ec *executionContext) marshalOUsers2ᚖgithubᚗcomᚋplogtoᚋplogᚑcoreᚋgraphᚋmodelᚐUsers(ctx context.Context, sel ast.SelectionSet, v *model.Users) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
