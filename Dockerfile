@@ -2,8 +2,6 @@ FROM golang:1.17-alpine AS build
 
 LABEL maintainer="Mohammad Mahdi <mahdineer@pm.me>"
 
-ENV HTTPS_PROXY=http://fodev.org:8118
-
 WORKDIR /app
 
 COPY . ./
