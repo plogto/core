@@ -7,7 +7,7 @@ import (
 )
 
 func New() *pg.DB {
-	opt, err := pg.ParseURL(os.Getenv("DATABASE_URI"))
+	opt, err := pg.ParseURL(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic(err)
 	}
