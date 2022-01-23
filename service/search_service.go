@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/model"
 )
 
 func (s *Service) Search(ctx context.Context, expression string) (*model.Search, error) {
