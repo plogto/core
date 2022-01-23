@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/favecode/plog-core/config"
-	"github.com/favecode/plog-core/graph/model"
-	"github.com/favecode/plog-core/middleware"
+	"github.com/plogto/core/config"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/middleware"
 )
 
 type CreateNotificationArgs struct {

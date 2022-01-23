@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/favecode/plog-core/config"
-	"github.com/favecode/plog-core/graph/model"
-	"github.com/favecode/plog-core/middleware"
+	"github.com/plogto/core/config"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/middleware"
 )
 
 func (s *Service) AddComment(ctx context.Context, input model.CommentPostInput) (*model.Comment, error) {

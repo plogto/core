@@ -8,10 +8,10 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	"github.com/favecode/plog-core/config"
-	"github.com/favecode/plog-core/database"
-	"github.com/favecode/plog-core/graph/model"
 	"github.com/pkg/errors"
+	"github.com/plogto/core/config"
+	"github.com/plogto/core/database"
+	"github.com/plogto/core/graph/model"
 )
 
 type OnlineUserContext struct {
