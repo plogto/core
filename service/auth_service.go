@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/favecode/plog-core/graph/model"
-	"github.com/favecode/plog-core/util"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
