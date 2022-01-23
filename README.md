@@ -1,1 +1,1 @@
-# plog-core
+# core

@@ -6,8 +6,8 @@ package graph
 import (
 	"context"
 
-	"github.com/favecode/plog-core/graph/generated"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/generated"
+	"github.com/plogto/core/graph/model"
 )
 
 func (r *notificationResolver) NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error) {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 
-	"github.com/favecode/plog-core/graph/model"
-	"github.com/favecode/plog-core/middleware"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/middleware"
 )
 
 func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {

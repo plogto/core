@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/favecode/plog-core/config"
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/config"
+	"github.com/plogto/core/graph/model"
 )
 
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
