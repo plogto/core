@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/favecode/plog-core/graph/model"
-	"github.com/favecode/plog-core/util"
 	"github.com/go-pg/pg/v10"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 type Connection struct {

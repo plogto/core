@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 
-	"github.com/favecode/plog-core/graph/model"
+	"github.com/plogto/core/graph/model"
 )
 
 func (s *Service) GetNotificationType(ctx context.Context, id string) (*model.NotificationType, error) {
