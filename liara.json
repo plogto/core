@@ -1,5 +1,0 @@
-{
-  "app": "core",
-  "platform": "docker",
-  "port": 8080
-}
