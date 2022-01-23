@@ -3,8 +3,8 @@ package database
 import (
 	"fmt"
 
-	"github.com/favecode/plog-core/graph/model"
 	"github.com/go-pg/pg/v10"
+	"github.com/plogto/core/graph/model"
 )
 
 type NotificationType struct {
