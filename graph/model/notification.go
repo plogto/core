@@ -11,7 +11,7 @@ type Notification struct {
 	SenderID           string
 	ReceiverID         string
 	PostID             *string
-	CommentID          *string
+	ReplyID            *string
 	URL                string
 	Read               *bool
 	CreatedAt          time.Time

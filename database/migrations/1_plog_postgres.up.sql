@@ -1,7 +1,7 @@
 -- Extentions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Enums 
+-- Enums
 DROP TYPE IF EXISTS "user_roles";
 CREATE TYPE user_roles AS ENUM ('USER', 'ADMIN');
 
@@ -143,7 +143,7 @@ CREATE TABLE "notification" (
 	"sender_id" uuid NOT NULL,
 	"receiver_id" uuid NOT NULL,
 	"post_id" uuid DEFAULT NULL,
-	"comment_id" uuid DEFAULT NULL,
+	"reply_id" uuid DEFAULT NULL,
 	"url" TEXT NOT NULL,
 	"read" BOOLEAN NOT NULL DEFAULT FALSE,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -193,4 +193,4 @@ ALTER TABLE "notification" ADD CONSTRAINT "notification_fk0" FOREIGN KEY ("notif
 ALTER TABLE "notification" ADD CONSTRAINT "notification_fk1" FOREIGN KEY ("sender_id") REFERENCES "user"("id");
 ALTER TABLE "notification" ADD CONSTRAINT "notification_fk2" FOREIGN KEY ("receiver_id") REFERENCES "user"("id");
 ALTER TABLE "notification" ADD CONSTRAINT "notification_fk3" FOREIGN KEY ("post_id") REFERENCES "post"("id");
-ALTER TABLE "notification" ADD CONSTRAINT "notification_fk4" FOREIGN KEY ("comment_id") REFERENCES "comment"("id");
+ALTER TABLE "notification" ADD CONSTRAINT "notification_fk4" FOREIGN KEY ("reply_id") REFERENCES "post"("id");

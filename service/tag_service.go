@@ -2,9 +2,12 @@ package service
 
 import (
 	"context"
+	"regexp"
+	"strings"
 
 	"github.com/plogto/core/config"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
@@ -47,4 +50,24 @@ func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag,
 	}
 
 	return tag, nil
+}
+
+func (s *Service) SaveTagsPost(postID, content string) {
+	r := regexp.MustCompile("#(\\w|_)+")
+	tags := r.FindAllString(content, -1)
+	for i, tag := range tags {
+		tags[i] = strings.TrimLeft(tag, "#")
+	}
+	for _, tagName := range util.UniqueSliceElement(tags) {
+		tag := &model.Tag{
+			Name: tagName,
+		}
+		s.Tag.CreateTag(tag)
+
+		postTag := &model.PostTag{
+			TagID:  tag.ID,
+			PostID: postID,
+		}
+		s.PostTag.CreatePostTag(postTag)
+	}
 }
