@@ -16,7 +16,12 @@ type CreateNotificationArgs struct {
 	ReceiverId string
 	Url        string
 	PostId     *string
-	CommentId  *string
+	ReplyId    *string
+}
+
+type RemovePostNotificationsArgs struct {
+	ReceiverId string
+	PostId     string
 }
 
 func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
@@ -65,6 +70,7 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
+
 	if args.SenderId != args.ReceiverId {
 		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
 		notification := &model.Notification{
@@ -73,7 +79,7 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 			ReceiverID:         args.ReceiverId,
 			URL:                args.Url,
 			PostID:             args.PostId,
-			CommentID:          args.CommentId,
+			ReplyID:            args.ReplyId,
 		}
 
 		s.Notification.CreateNotification(notification)
@@ -98,7 +104,7 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 		SenderID:           args.SenderId,
 		ReceiverID:         args.ReceiverId,
 		PostID:             args.PostId,
-		CommentID:          args.CommentId,
+		ReplyID:            args.ReplyId,
 		DeletedAt:          &DeletedAt,
 	}
 
@@ -112,6 +118,19 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 	// 	s.Notifications[onlineUser.SocketID] <- notification
 	// 	s.mu.Unlock()
 	// }
+
+	return nil
+}
+
+func (s *Service) RemoveNotifications(args RemovePostNotificationsArgs) error {
+	DeletedAt := time.Now()
+	notification := &model.Notification{
+		ReceiverID: args.ReceiverId,
+		PostID:     &args.PostId,
+		DeletedAt:  &DeletedAt,
+	}
+
+	s.Notification.RemovePostNotifications(notification)
 
 	return nil
 }
