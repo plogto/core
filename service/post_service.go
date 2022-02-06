@@ -37,6 +37,11 @@ func (s *Service) ReplyPost(ctx context.Context, postID string, input model.AddP
 	}
 
 	post, _ := s.Post.GetPostByID(postID)
+
+	if post == nil {
+		return nil, errors.New("access denied")
+	}
+
 	followingUser, _ := s.User.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
