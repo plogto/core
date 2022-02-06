@@ -70,6 +70,7 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
+
 	if args.SenderId != args.ReceiverId {
 		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
 		notification := &model.Notification{
