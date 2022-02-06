@@ -5,6 +5,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -12,6 +13,22 @@ import (
 
 func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
 	return r.Service.AddPost(ctx, input)
+}
+
+func (r *mutationResolver) ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error) {
+	return r.Service.ReplyPost(ctx, postID, input)
+}
+
+func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
+	return r.Service.DeletePost(ctx, postID)
+}
+
+func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
+	return r.Service.GetPostByID(ctx, obj.ParentID)
+}
+
+func (r *postResolver) Child(ctx context.Context, obj *model.Post) (*model.Post, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
@@ -22,8 +39,8 @@ func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostL
 	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
 }
 
-func (r *postResolver) Comments(ctx context.Context, obj *model.Post) (*model.Comments, error) {
-	return r.Service.GetComments(ctx, obj.ID)
+func (r *postResolver) Replies(ctx context.Context, obj *model.Post) (*model.Posts, error) {
+	return r.Service.GetPostsByParentId(ctx, obj.ID)
 }
 
 func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
