@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/plogto/core/graph/model"
@@ -26,6 +27,25 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, limit, page int) (*m
 	var offset = (page - 1) * limit
 
 	query := p.DB.Model(&posts).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	query.Offset(offset).Limit(limit)
+
+	totalDocs, err := query.SelectAndCount()
+
+	return &model.Posts{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
+			Limit:     limit,
+			Page:      page,
+			TotalDocs: totalDocs,
+		}),
+		Posts: posts,
+	}, err
+}
+
+func (p *Post) GetPostsByParentIdAndPagination(parentID string, limit, page int) (*model.Posts, error) {
+	var posts []*model.Post
+	var offset = (page - 1) * limit
+
+	query := p.DB.Model(&posts).Where("parent_id= ?", parentID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -80,5 +100,15 @@ func (p *Post) CountPostsByUserId(userId string) (*int, error) {
 
 func (p *Post) CreatePost(post *model.Post) (*model.Post, error) {
 	_, err := p.DB.Model(post).Returning("*").Insert()
+	return post, err
+}
+
+func (p *Post) DeletePostByID(id string) (*model.Post, error) {
+	DeletedAt := time.Now()
+	var post = &model.Post{
+		ID:        id,
+		DeletedAt: &DeletedAt,
+	}
+	_, err := p.DB.Model(post).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return post, err
 }
