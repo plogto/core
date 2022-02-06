@@ -30,8 +30,14 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.PostLike,
 	s.PostLike.CreatePostLike(postLike)
 
 	if len(postLike.ID) > 0 {
+		var name string = config.NOTIFICATION_LIKE_POST
+
+		if post.ParentID != nil {
+			name = config.NOTIFICATION_LIKE_REPLY
+		}
+
 		s.CreateNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_LIKE_POST,
+			Name:       name,
 			SenderId:   user.ID,
 			ReceiverId: post.UserID,
 			Url:        "p/" + post.Url,

@@ -12,7 +12,7 @@ type Notification {
   sender: User!
   receiver: User!
   post: Post
-  comment: Comment
+  reply: Post
   url: String!
   read: Boolean
   createdAt: Time!
