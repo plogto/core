@@ -59,8 +59,8 @@ func (n *Notification) CreateNotification(notification *model.Notification) (*mo
 		query.Where("post_id = ?post_id")
 	}
 
-	if notification.CommentID != nil {
-		query.Where("comment_id = ?comment_id")
+	if notification.ReplyID != nil {
+		query.Where("reply_id = ?reply_id")
 	}
 
 	_, err := query.Returning("*").SelectOrInsert()
@@ -77,9 +77,18 @@ func (n *Notification) RemoveNotification(notification *model.Notification) (*mo
 		query.Where("post_id = ?post_id")
 	}
 
-	if notification.CommentID != nil {
-		query.Where("comment_id = ?comment_id")
+	if notification.ReplyID != nil {
+		query.Where("reply_id = ?reply_id")
 	}
+
+	_, err := query.Set("deleted_at = ?deleted_at").Returning("*").Update()
+	return notification, err
+}
+
+func (n *Notification) RemovePostNotifications(notification *model.Notification) (*model.Notification, error) {
+	query := n.DB.Model(notification).
+		Where("receiver_id = ?receiver_id").
+		Where("post_id = ?post_id")
 
 	_, err := query.Set("deleted_at = ?deleted_at").Returning("*").Update()
 	return notification, err
