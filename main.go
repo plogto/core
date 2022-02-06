@@ -66,8 +66,6 @@ func main() {
 		PostTag:          database.PostTag{DB: DB},
 		PostLike:         database.PostLike{DB: DB},
 		PostSave:         database.PostSave{DB: DB},
-		Comment:          database.Comment{DB: DB},
-		CommentLike:      database.CommentLike{DB: DB},
 		OnlineUser:       database.OnlineUser{DB: DB},
 		Notification:     database.Notification{DB: DB},
 		NotificationType: database.NotificationType{DB: DB},
