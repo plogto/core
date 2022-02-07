@@ -22,12 +22,19 @@ func (p *Post) GetPostByField(field string, value string) (*model.Post, error) {
 	return &post, err
 }
 
-func (p *Post) GetPostsByUserIdAndPagination(userId string, limit, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByUserIdAndPagination(userId string, parentId *string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&posts).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
-	query.Offset(offset).Limit(limit)
+	query := p.DB.Model(&posts).Where("user_id = ?", userId).Where("deleted_at is ?", nil)
+
+	if parentId != nil {
+		query.Where("parent_id = ?", parentId)
+	} else {
+		query.Where("parent_id is ?", parentId)
+	}
+
+	query.Offset(offset).Limit(limit).Order("created_at ASC").Returning("*")
 
 	totalDocs, err := query.SelectAndCount()
 
@@ -45,7 +52,7 @@ func (p *Post) GetPostsByParentIdAndPagination(parentID string, limit, page int)
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&posts).Where("parent_id= ?", parentID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	query := p.DB.Model(&posts).Where("parent_id= ?", parentID).Where("deleted_at is ?", nil).Order("created_at ASC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
