@@ -145,7 +145,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByUserIdAndPagination(followingUser.ID, limit, page)
+	posts, _ := s.Post.GetPostsByUserIdAndPagination(followingUser.ID, nil, limit, page)
 
 	return posts, nil
 }
