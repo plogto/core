@@ -36,11 +36,11 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 }
 
 func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
-	return r.Service.GetPostLikesByPostId(ctx, obj.ID)
+	return r.Service.GetPostLikesByPostID(ctx, obj.ID)
 }
 
 func (r *postResolver) Replies(ctx context.Context, obj *model.Post) (*model.Posts, error) {
-	return r.Service.GetPostsByParentId(ctx, obj.ID)
+	return r.Service.GetPostsByParentID(ctx, obj.ID)
 }
 
 func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
