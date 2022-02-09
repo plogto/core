@@ -21,20 +21,20 @@ func (p *PostSave) CreatePostSave(postSave *model.PostSave) (*model.PostSave, er
 	return postSave, err
 }
 
-func (p *PostSave) GetPostSaveByUserIdAndPostId(userId, postId string) (*model.PostSave, error) {
+func (p *PostSave) GetPostSaveByUserIDAndPostID(userID, postID string) (*model.PostSave, error) {
 	var postSave model.PostSave
-	err := p.DB.Model(&postSave).Where("user_id = ?", userId).Where("post_id = ?", postId).Where("deleted_at is ?", nil).First()
+	err := p.DB.Model(&postSave).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
 	if len(postSave.ID) < 1 {
 		return nil, nil
 	}
 	return &postSave, err
 }
 
-func (p *PostSave) GetPostSavesByUserIdAndPagination(userId string, limit, page int) (*model.PostSaves, error) {
+func (p *PostSave) GetPostSavesByUserIDAndPagination(userID string, limit, page int) (*model.PostSaves, error) {
 	var postSaves []*model.PostSave
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&postSaves).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	query := p.DB.Model(&postSaves).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()

@@ -38,10 +38,10 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.PostLike,
 
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       name,
-			SenderId:   user.ID,
-			ReceiverId: post.UserID,
+			SenderID:   user.ID,
+			ReceiverID: post.UserID,
 			Url:        "p/" + post.Url,
-			PostId:     &post.ID,
+			PostID:     &post.ID,
 		})
 	}
 
@@ -61,15 +61,15 @@ func (s *Service) UnlikePost(ctx context.Context, postID string) (*model.PostLik
 		return nil, errors.New("access denied")
 	}
 
-	postLike, _ := s.PostLike.GetPostLikeByUserIdAndPostId(user.ID, postID)
+	postLike, _ := s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
 
 	if postLike != nil {
 		s.RemoveNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_LIKE_POST,
-			SenderId:   user.ID,
-			ReceiverId: post.UserID,
+			SenderID:   user.ID,
+			ReceiverID: post.UserID,
 			Url:        "p/" + post.Url,
-			PostId:     &post.ID,
+			PostID:     &post.ID,
 		})
 	} else {
 		return nil, errors.New("like not found")
@@ -78,7 +78,7 @@ func (s *Service) UnlikePost(ctx context.Context, postID string) (*model.PostLik
 	return s.PostLike.DeletePostLikeByID(postLike.ID)
 }
 
-func (s *Service) GetPostLikesByPostId(ctx context.Context, postID string) (*model.PostLikes, error) {
+func (s *Service) GetPostLikesByPostID(ctx context.Context, postID string) (*model.PostLikes, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := s.Post.GetPostByID(postID)
@@ -88,7 +88,7 @@ func (s *Service) GetPostLikesByPostId(ctx context.Context, postID string) (*mod
 	}
 
 	// TODO: add inputPagination
-	postLikes, _ := s.PostLike.GetPostLikesByPostIdAndPagination(postID, 10, 1)
+	postLikes, _ := s.PostLike.GetPostLikesByPostIDAndPagination(postID, 10, 1)
 
 	return postLikes, nil
 }
@@ -106,7 +106,7 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLi
 		return nil, errors.New("access denied")
 	}
 
-	postLike, _ := s.PostLike.GetPostLikeByUserIdAndPostId(user.ID, postID)
+	postLike, _ := s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
 
 	return postLike, nil
 }

@@ -45,7 +45,7 @@ func (s *Service) UnsavePost(ctx context.Context, postID string) (*model.PostSav
 		return nil, errors.New("access denied")
 	}
 
-	postSave, _ := s.PostSave.GetPostSaveByUserIdAndPostId(user.ID, postID)
+	postSave, _ := s.PostSave.GetPostSaveByUserIDAndPostID(user.ID, postID)
 
 	if len(postSave.ID) < 1 {
 		return nil, errors.New("save not found")
@@ -74,7 +74,7 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInpu
 		}
 	}
 
-	postSaves, _ := s.PostSave.GetPostSavesByUserIdAndPagination(user.ID, limit, page)
+	postSaves, _ := s.PostSave.GetPostSavesByUserIDAndPagination(user.ID, limit, page)
 
 	return postSaves, nil
 }
@@ -92,7 +92,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.PostSa
 		return nil, errors.New("access denied")
 	}
 
-	postSave, _ := s.PostSave.GetPostSaveByUserIdAndPostId(user.ID, postID)
+	postSave, _ := s.PostSave.GetPostSaveByUserIDAndPostID(user.ID, postID)
 
 	return postSave, nil
 }

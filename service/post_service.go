@@ -61,11 +61,11 @@ func (s *Service) ReplyPost(ctx context.Context, postID string, input model.AddP
 
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_REPLY_POST,
-			SenderId:   user.ID,
-			ReceiverId: post.UserID,
+			SenderID:   user.ID,
+			ReceiverID: post.UserID,
 			Url:        "p/" + post.Url + "#" + reply.ID,
-			PostId:     &postID,
-			ReplyId:    &reply.ID,
+			PostID:     &postID,
+			ReplyID:    &reply.ID,
 		})
 	}
 
@@ -91,24 +91,24 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 			// remove notification for reply
 			s.RemoveNotification(CreateNotificationArgs{
 				Name:       config.NOTIFICATION_REPLY_POST,
-				SenderId:   user.ID,
-				ReceiverId: parentPost.UserID,
+				SenderID:   user.ID,
+				ReceiverID: parentPost.UserID,
 				Url:        "p/" + parentPost.Url + "#" + post.ID,
-				PostId:     &parentPost.ID,
-				ReplyId:    &post.ID,
+				PostID:     &parentPost.ID,
+				ReplyID:    &post.ID,
 			})
 		}
 	}
 
 	s.RemoveNotifications(RemovePostNotificationsArgs{
-		ReceiverId: post.UserID,
-		PostId:     post.ID,
+		ReceiverID: post.UserID,
+		PostID:     post.ID,
 	})
 
 	return s.Post.DeletePostByID(postID)
 }
 
-func (s *Service) GetPostsByParentId(ctx context.Context, parentID string) (*model.Posts, error) {
+func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	parentPost, _ := s.Post.GetPostByID(parentID)
@@ -118,7 +118,7 @@ func (s *Service) GetPostsByParentId(ctx context.Context, parentID string) (*mod
 	}
 
 	// 	// TODO: add inputPagination
-	posts, _ := s.Post.GetPostsByParentIdAndPagination(parentPost.ID, 50, 1)
+	posts, _ := s.Post.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
 
 	return posts, nil
 }
@@ -145,7 +145,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByUserIdAndPagination(followingUser.ID, nil, limit, page)
+	posts, _ := s.Post.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
 
 	return posts, nil
 }
@@ -166,13 +166,13 @@ func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByTagIdAndPagination(tag.ID, limit, page)
+	posts, _ := s.Post.GetPostsByTagIDAndPagination(tag.ID, limit, page)
 
 	return posts, nil
 }
 
-func (s *Service) GetPostsCount(ctx context.Context, userId string) (*int, error) {
-	count, _ := s.Post.CountPostsByUserId(userId)
+func (s *Service) GetPostsCount(ctx context.Context, userID string) (*int, error) {
+	count, _ := s.Post.CountPostsByUserID(userID)
 
 	return count, nil
 }

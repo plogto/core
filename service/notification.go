@@ -12,16 +12,16 @@ import (
 
 type CreateNotificationArgs struct {
 	Name       string
-	SenderId   string
-	ReceiverId string
+	SenderID   string
+	ReceiverID string
 	Url        string
-	PostId     *string
-	ReplyId    *string
+	PostID     *string
+	ReplyID    *string
 }
 
 type RemovePostNotificationsArgs struct {
-	ReceiverId string
-	PostId     string
+	ReceiverID string
+	PostID     string
 }
 
 func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
@@ -40,7 +40,7 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationI
 		}
 	}
 
-	posts, _ := s.Notification.GetNotificationsByReceiverIdAndPagination(user.ID, limit, page)
+	posts, _ := s.Notification.GetNotificationsByReceiverIDAndPagination(user.ID, limit, page)
 
 	return posts, nil
 }
@@ -55,7 +55,7 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 	go func() {
 		<-ctx.Done()
 		s.mu.Lock()
-		s.OnlineUser.DeleteOnlineUserBySocketId(onlineUserContext.SocketID)
+		s.OnlineUser.DeleteOnlineUserBySocketID(onlineUserContext.SocketID)
 		delete(s.Notifications, onlineUserContext.SocketID)
 		s.mu.Unlock()
 	}()
@@ -71,20 +71,20 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 
-	if args.SenderId != args.ReceiverId {
+	if args.SenderID != args.ReceiverID {
 		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
 		notification := &model.Notification{
 			NotificationTypeID: notificationType.ID,
-			SenderID:           args.SenderId,
-			ReceiverID:         args.ReceiverId,
+			SenderID:           args.SenderID,
+			ReceiverID:         args.ReceiverID,
 			URL:                args.Url,
-			PostID:             args.PostId,
-			ReplyID:            args.ReplyId,
+			PostID:             args.PostID,
+			ReplyID:            args.ReplyID,
 		}
 
 		s.Notification.CreateNotification(notification)
 
-		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
 
 		if onlineUser != nil {
 			s.mu.Lock()
@@ -101,17 +101,17 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 	DeletedAt := time.Now()
 	notification := &model.Notification{
 		NotificationTypeID: notificationType.ID,
-		SenderID:           args.SenderId,
-		ReceiverID:         args.ReceiverId,
-		PostID:             args.PostId,
-		ReplyID:            args.ReplyId,
+		SenderID:           args.SenderID,
+		ReceiverID:         args.ReceiverID,
+		PostID:             args.PostID,
+		ReplyID:            args.ReplyID,
 		DeletedAt:          &DeletedAt,
 	}
 
 	s.Notification.RemoveNotification(notification)
 
 	// TODO: add revmoved type for Notification
-	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserId(args.ReceiverId)
+	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
 
 	// if onlineUser != nil {
 	// 	s.mu.Lock()
@@ -125,8 +125,8 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 func (s *Service) RemoveNotifications(args RemovePostNotificationsArgs) error {
 	DeletedAt := time.Now()
 	notification := &model.Notification{
-		ReceiverID: args.ReceiverId,
-		PostID:     &args.PostId,
+		ReceiverID: args.ReceiverID,
+		PostID:     &args.PostID,
 		DeletedAt:  &DeletedAt,
 	}
 
