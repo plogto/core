@@ -22,16 +22,16 @@ func (p *Post) GetPostByField(field string, value string) (*model.Post, error) {
 	return &post, err
 }
 
-func (p *Post) GetPostsByUserIdAndPagination(userId string, parentId *string, limit, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByUserIDAndPagination(userID string, parentID *string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&posts).Where("user_id = ?", userId).Where("deleted_at is ?", nil)
+	query := p.DB.Model(&posts).Where("user_id = ?", userID).Where("deleted_at is ?", nil)
 
-	if parentId != nil {
-		query.Where("parent_id = ?", parentId)
+	if parentID != nil {
+		query.Where("parent_id = ?", parentID)
 	} else {
-		query.Where("parent_id is ?", parentId)
+		query.Where("parent_id is ?", parentID)
 	}
 
 	query.Offset(offset).Limit(limit).Order("created_at ASC").Returning("*")
@@ -48,7 +48,7 @@ func (p *Post) GetPostsByUserIdAndPagination(userId string, parentId *string, li
 	}, err
 }
 
-func (p *Post) GetPostsByParentIdAndPagination(parentID string, limit, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByParentIDAndPagination(parentID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
@@ -67,7 +67,7 @@ func (p *Post) GetPostsByParentIdAndPagination(parentID string, limit, page int)
 	}, err
 }
 
-func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit, page int) (*model.Posts, error) {
+func (p *Post) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
@@ -75,7 +75,7 @@ func (p *Post) GetPostsByTagIdAndPagination(tagId string, limit, page int) (*mod
 	query := p.DB.Model(&posts).
 		ColumnExpr("post_tag.post_id, post_tag.tag_id").
 		ColumnExpr("post.*").
-		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagId).
+		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagID).
 		Where("post_tag.post_id = post.id").
 		Where("post.deleted_at is ?", nil).
 		Order("post.created_at DESC").Returning("*")
@@ -100,8 +100,8 @@ func (p *Post) GetPostByURL(url string) (*model.Post, error) {
 	return p.GetPostByField("url", url)
 }
 
-func (p *Post) CountPostsByUserId(userId string) (*int, error) {
-	count, err := p.DB.Model((*model.Post)(nil)).Where("user_id = ?", userId).Where("deleted_at is ?", nil).Count()
+func (p *Post) CountPostsByUserID(userID string) (*int, error) {
+	count, err := p.DB.Model((*model.Post)(nil)).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Count()
 	return &count, err
 }
 

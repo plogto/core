@@ -15,10 +15,10 @@ func (p *PostTag) CreatePostTag(postTag *model.PostTag) (*model.PostTag, error) 
 	return postTag, err
 }
 
-func (p *PostTag) CountPostTagsByTagId(tagId string) (*int, error) {
+func (p *PostTag) CountPostTagsByTagID(tagID string) (*int, error) {
 	var postTags []*model.PostTag
 	count, err := p.DB.Model(&postTags).
-		Where("tag_id = ?", tagId).
+		Where("tag_id = ?", tagID).
 		Where("deleted_at is ?", nil).
 		Returning("*").Count()
 	return &count, err
