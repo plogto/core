@@ -45,8 +45,8 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 	if len(newConnection.ID) > 0 && status == 2 {
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_FOLLOW_USER,
-			SenderId:   user.ID,
-			ReceiverId: userID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -76,8 +76,8 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 	if len(deletedConnection.ID) > 0 {
 		s.RemoveNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_FOLLOW_USER,
-			SenderId:   user.ID,
-			ReceiverId: userID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -120,8 +120,8 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 	if len(updatedConnection.ID) > 0 {
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       config.NOTIFICATION_ACCEPT_USER,
-			SenderId:   user.ID,
-			ReceiverId: userID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -185,14 +185,14 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	switch resultType {
 	case "followers":
-		connections, _ := s.Connection.GetFollowersByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+		connections, _ := s.Connection.GetFollowersByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &connectedStatus,
 		})
 		return connections, nil
 	case "following":
-		connections, _ := s.Connection.GetFollowingByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+		connections, _ := s.Connection.GetFollowingByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &connectedStatus,
@@ -200,7 +200,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 		return connections, nil
 	case "requests":
 		status := 1
-		connections, _ := s.Connection.GetFollowRequestsByUserIdAndPagination(followingUser.ID, database.ConnectionFilter{
+		connections, _ := s.Connection.GetFollowRequestsByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &status,
@@ -221,33 +221,33 @@ func (s *Service) GetFollowRequests(ctx context.Context, input *model.Pagination
 	return s.GetConnectionsByUsername(ctx, user.Username, input, "requests")
 }
 
-func (s *Service) GetConnectionStatus(ctx context.Context, userId string) (*int, error) {
+func (s *Service) GetConnectionStatus(ctx context.Context, userID string) (*int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
 		return nil, nil
 	}
 
-	connection, _ := s.Connection.GetConnection(userId, user.ID)
+	connection, _ := s.Connection.GetConnection(userID, user.ID)
 
 	return connection.Status, nil
 }
 
-func (s *Service) GetConnectionCount(ctx context.Context, userId string, resultType string) (*int, error) {
+func (s *Service) GetConnectionCount(ctx context.Context, userID string, resultType string) (*int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	switch resultType {
 	case "followers":
-		count, _ := s.Connection.CountConnectionByUserId("following_id", userId, 2)
+		count, _ := s.Connection.CountConnectionByUserID("following_id", userID, 2)
 		return count, nil
 	case "following":
-		count, _ := s.Connection.CountConnectionByUserId("follower_id", userId, 2)
+		count, _ := s.Connection.CountConnectionByUserID("follower_id", userID, 2)
 		return count, nil
 	case "requests":
-		if user == nil || user.ID != userId {
+		if user == nil || user.ID != userID {
 			return nil, nil
 		}
-		count, _ := s.Connection.CountConnectionByUserId("following_id", userId, 1)
+		count, _ := s.Connection.CountConnectionByUserID("following_id", userID, 1)
 		return count, nil
 	}
 

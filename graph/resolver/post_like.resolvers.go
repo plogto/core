@@ -27,7 +27,7 @@ func (r *postLikeResolver) Post(ctx context.Context, obj *model.PostLike) (*mode
 }
 
 func (r *queryResolver) GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error) {
-	return r.Service.GetPostLikesByPostId(ctx, postID)
+	return r.Service.GetPostLikesByPostID(ctx, postID)
 }
 
 // PostLike returns generated.PostLikeResolver implementation.

@@ -19,7 +19,7 @@ func (r *queryResolver) GetTrends(ctx context.Context, input *model.PaginationIn
 }
 
 func (r *tagResolver) Count(ctx context.Context, obj *model.Tag) (*int, error) {
-	return r.Service.CountTagByTagId(ctx, obj.ID)
+	return r.Service.CountTagByTagID(ctx, obj.ID)
 }
 
 // Tag returns generated.TagResolver implementation.
