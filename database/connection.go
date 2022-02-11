@@ -43,16 +43,16 @@ func (c *Connection) GetConnectionsByFieldAndPagination(field, value string, fil
 	}, err
 }
 
-func (c *Connection) GetFollowersByUserIdAndPagination(followerId string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followerId, filter)
+func (c *Connection) GetFollowersByUserIDAndPagination(followerID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("following_id", followerID, filter)
 }
 
-func (c *Connection) GetFollowingByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("follower_id", followingId, filter)
+func (c *Connection) GetFollowingByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("follower_id", followingID, filter)
 }
 
-func (c *Connection) GetFollowRequestsByUserIdAndPagination(followingId string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followingId, filter)
+func (c *Connection) GetFollowRequestsByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPagination("following_id", followingID, filter)
 }
 
 func (c *Connection) CreateConnection(connection *model.Connection) (*model.Connection, error) {
@@ -66,9 +66,9 @@ func (c *Connection) GetConnectionByField(field, value string) (*model.Connectio
 	return &connection, err
 }
 
-func (c *Connection) GetConnection(followingId, followerId string) (*model.Connection, error) {
+func (c *Connection) GetConnection(followingID, followerID string) (*model.Connection, error) {
 	var connection model.Connection
-	err := c.DB.Model(&connection).Where("following_id = ?", followingId).Where("follower_id = ?", followerId).Where("deleted_at is ?", nil).First()
+	err := c.DB.Model(&connection).Where("following_id = ?", followingID).Where("follower_id = ?", followerID).Where("deleted_at is ?", nil).First()
 	return &connection, err
 }
 
@@ -88,7 +88,7 @@ func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	return connection, err
 }
 
-func (c *Connection) CountConnectionByUserId(field, userId string, status int) (*int, error) {
-	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userId).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
+func (c *Connection) CountConnectionByUserID(field, userID string, status int) (*int, error) {
+	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
 	return &count, err
 }

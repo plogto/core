@@ -10,12 +10,12 @@ type Notification struct {
 	DB *pg.DB
 }
 
-func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId string, limit, page int) (*model.Notifications, error) {
+func (p *Notification) GetNotificationsByReceiverIDAndPagination(receiverID string, limit, page int) (*model.Notifications, error) {
 	var notifications []*model.Notification
 	var offset = (page - 1) * limit
 
 	query := p.DB.Model(&notifications).
-		Where("receiver_id = ?", receiverId).
+		Where("receiver_id = ?", receiverID).
 		Where("deleted_at is ?", nil).
 		Order("created_at DESC").
 		Returning("*")
@@ -24,7 +24,7 @@ func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId stri
 
 	totalDocs, err := query.SelectAndCount()
 
-	unreadNotificationsCount, _ := p.CountUnreadNotificationsByReceiverId(receiverId)
+	unreadNotificationsCount, _ := p.CountUnreadNotificationsByReceiverID(receiverID)
 
 	return &model.Notifications{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
@@ -37,9 +37,9 @@ func (p *Notification) GetNotificationsByReceiverIdAndPagination(receiverId stri
 	}, err
 }
 
-func (p *Notification) CountUnreadNotificationsByReceiverId(receiverId string) (*int, error) {
+func (p *Notification) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
 	count, err := p.DB.Model((*model.Notification)(nil)).
-		Where("receiver_id = ?", receiverId).
+		Where("receiver_id = ?", receiverID).
 		Where("read = ?", false).
 		Where("deleted_at is ?", nil).
 		Returning("*").
