@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -28,7 +27,7 @@ func (r *notificationResolver) Post(ctx context.Context, obj *model.Notification
 }
 
 func (r *notificationResolver) Reply(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.GetPostByID(ctx, obj.ReplyID)
 }
 
 func (r *queryResolver) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
