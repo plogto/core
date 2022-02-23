@@ -10,12 +10,8 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-func (r *mutationResolver) SavePost(ctx context.Context, postID string) (*model.PostSave, error) {
+func (r *mutationResolver) SavePost(ctx context.Context, postID string) (*model.Post, error) {
 	return r.Service.SavePost(ctx, postID)
-}
-
-func (r *mutationResolver) UnsavePost(ctx context.Context, postID string) (*model.PostSave, error) {
-	return r.Service.UnsavePost(ctx, postID)
 }
 
 func (r *postSaveResolver) User(ctx context.Context, obj *model.PostSave) (*model.User, error) {
