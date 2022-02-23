@@ -10,12 +10,8 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.PostLike, error) {
+func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.Post, error) {
 	return r.Service.LikePost(ctx, postID)
-}
-
-func (r *mutationResolver) UnlikePost(ctx context.Context, postID string) (*model.PostLike, error) {
-	return r.Service.UnlikePost(ctx, postID)
 }
 
 func (r *postLikeResolver) User(ctx context.Context, obj *model.PostLike) (*model.User, error) {
