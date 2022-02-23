@@ -16,6 +16,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): PostLike
-  unlikePost(postId: ID!): PostLike
+  likePost(postId: ID!): Post
 }
