@@ -9,30 +9,7 @@ import (
 	"github.com/plogto/core/middleware"
 )
 
-func (s *Service) SavePost(ctx context.Context, postID string) (*model.PostSave, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	post, _ := s.Post.GetPostByID(postID)
-	followingUser, _ := s.User.GetUserByID(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
-	}
-
-	postSave := &model.PostSave{
-		UserID: user.ID,
-		PostID: postID,
-	}
-
-	s.PostSave.CreatePostSave(postSave)
-
-	return postSave, nil
-}
-
-func (s *Service) UnsavePost(ctx context.Context, postID string) (*model.PostSave, error) {
+func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -47,11 +24,18 @@ func (s *Service) UnsavePost(ctx context.Context, postID string) (*model.PostSav
 
 	postSave, _ := s.PostSave.GetPostSaveByUserIDAndPostID(user.ID, postID)
 
-	if len(postSave.ID) < 1 {
-		return nil, errors.New("save not found")
+	if postSave != nil {
+		s.PostSave.DeletePostSaveByID(postSave.ID)
+	} else {
+		postSave := &model.PostSave{
+			UserID: user.ID,
+			PostID: postID,
+		}
+
+		s.PostSave.CreatePostSave(postSave)
 	}
 
-	return s.PostSave.DeletePostSaveByID(postSave.ID)
+	return post, nil
 }
 
 func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error) {

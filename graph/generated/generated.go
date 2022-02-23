@@ -91,8 +91,6 @@ type ComplexityRoot struct {
 		SavePost       func(childComplexity int, postID string) int
 		Test           func(childComplexity int, input model.TestInput) int
 		UnfollowUser   func(childComplexity int, userID string) int
-		UnlikePost     func(childComplexity int, postID string) int
-		UnsavePost     func(childComplexity int, postID string) int
 	}
 
 	Notification struct {
@@ -272,10 +270,8 @@ type MutationResolver interface {
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
 	ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
-	LikePost(ctx context.Context, postID string) (*model.PostLike, error)
-	UnlikePost(ctx context.Context, postID string) (*model.PostLike, error)
-	SavePost(ctx context.Context, postID string) (*model.PostSave, error)
-	UnsavePost(ctx context.Context, postID string) (*model.PostSave, error)
+	LikePost(ctx context.Context, postID string) (*model.Post, error)
+	SavePost(ctx context.Context, postID string) (*model.Post, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
@@ -593,30 +589,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(string)), true
-
-	case "Mutation.unlikePost":
-		if e.complexity.Mutation.UnlikePost == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_unlikePost_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UnlikePost(childComplexity, args["postId"].(string)), true
-
-	case "Mutation.unsavePost":
-		if e.complexity.Mutation.UnsavePost == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_unsavePost_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.UnsavePost(childComplexity, args["postId"].(string)), true
 
 	case "Notification.createdAt":
 		if e.complexity.Notification.CreatedAt == nil {
@@ -1715,8 +1687,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): PostLike
-  unlikePost(postId: ID!): PostLike
+  likePost(postId: ID!): Post
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/post_save.graphqls", Input: `type PostSave {
@@ -1737,8 +1708,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: ID!): PostSave
-  unsavePost(postId: ID!): PostSave
+  savePost(postId: ID!): Post
 }
 `, BuiltIn: false},
 	{Name: "graph/schema/search.graphqls", Input: `type Search {
@@ -2022,36 +1992,6 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 		}
 	}
 	args["userId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_unlikePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["postId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["postId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_unsavePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["postId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["postId"] = arg0
 	return args, nil
 }
 
@@ -3219,48 +3159,9 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostLike)
+	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_unlikePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_unlikePost_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UnlikePost(rctx, args["postId"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PostLike)
-	fc.Result = res
-	return ec.marshalOPostLike2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -3297,48 +3198,9 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostSave)
+	res := resTmp.(*model.Post)
 	fc.Result = res
-	return ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_unsavePost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_unsavePost_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UnsavePost(rctx, args["postId"].(string))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.PostSave)
-	fc.Result = res
-	return ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -8832,23 +8694,9 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
-		case "unlikePost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_unlikePost(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
 		case "savePost":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_savePost(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
-		case "unsavePost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_unsavePost(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
