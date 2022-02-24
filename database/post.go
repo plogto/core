@@ -101,7 +101,11 @@ func (p *Post) GetPostByURL(url string) (*model.Post, error) {
 }
 
 func (p *Post) CountPostsByUserID(userID string) (*int, error) {
-	count, err := p.DB.Model((*model.Post)(nil)).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Count()
+	count, err := p.DB.Model((*model.Post)(nil)).
+		Where("user_id = ?", userID).
+		Where("parent_id is ?", nil).
+		Where("deleted_at is ?", nil).
+		Count()
 	return &count, err
 }
 
