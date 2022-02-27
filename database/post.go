@@ -29,12 +29,12 @@ func (p *Post) GetPostsByUserIDAndPagination(userID string, parentID *string, li
 	query := p.DB.Model(&posts).Where("user_id = ?", userID).Where("deleted_at is ?", nil)
 
 	if parentID != nil {
-		query.Where("parent_id = ?", parentID)
+		query.Where("parent_id = ?", parentID).Order("created_at ASC")
 	} else {
-		query.Where("parent_id is ?", parentID)
+		query.Where("parent_id is ?", parentID).Order("created_at DESC")
 	}
 
-	query.Offset(offset).Limit(limit).Order("created_at ASC").Returning("*")
+	query.Offset(offset).Limit(limit).Returning("*")
 
 	totalDocs, err := query.SelectAndCount()
 
