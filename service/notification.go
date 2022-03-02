@@ -61,7 +61,7 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 	}()
 
 	notification := make(chan *model.Notification, 1)
-	// TODO: uncomment this lines
+	// TODO: uncomment these lines
 	// s.mu.Lock()
 	// // Keep a reference of the channel so that we can push changes into it when new messages are posted.
 	// s.Notifications[onlineUserContext.SocketID] = notification
@@ -85,6 +85,7 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 
 		s.Notification.CreateNotification(notification)
 
+		// TODO: uncomment these lines
 		// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
 
 		// if onlineUser != nil {
