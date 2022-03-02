@@ -77,20 +77,25 @@ type ComplexityRoot struct {
 		Pagination  func(childComplexity int) int
 	}
 
+	File struct {
+		Name func(childComplexity int) int
+	}
+
 	Mutation struct {
-		AcceptUser     func(childComplexity int, userID string) int
-		AddPost        func(childComplexity int, input model.AddPostInput) int
-		ChangePassword func(childComplexity int, input model.ChangePasswordInput) int
-		DeletePost     func(childComplexity int, postID string) int
-		EditUser       func(childComplexity int, input model.EditUserInput) int
-		FollowUser     func(childComplexity int, userID string) int
-		LikePost       func(childComplexity int, postID string) int
-		Register       func(childComplexity int, input model.RegisterInput) int
-		RejectUser     func(childComplexity int, userID string) int
-		ReplyPost      func(childComplexity int, postID string, input model.AddPostInput) int
-		SavePost       func(childComplexity int, postID string) int
-		Test           func(childComplexity int, input model.TestInput) int
-		UnfollowUser   func(childComplexity int, userID string) int
+		AcceptUser       func(childComplexity int, userID string) int
+		AddPost          func(childComplexity int, input model.AddPostInput) int
+		ChangePassword   func(childComplexity int, input model.ChangePasswordInput) int
+		DeletePost       func(childComplexity int, postID string) int
+		EditUser         func(childComplexity int, input model.EditUserInput) int
+		FollowUser       func(childComplexity int, userID string) int
+		LikePost         func(childComplexity int, postID string) int
+		Register         func(childComplexity int, input model.RegisterInput) int
+		RejectUser       func(childComplexity int, userID string) int
+		ReplyPost        func(childComplexity int, postID string, input model.AddPostInput) int
+		SavePost         func(childComplexity int, postID string) int
+		SingleUploadFile func(childComplexity int, file graphql.Upload) int
+		Test             func(childComplexity int, input model.TestInput) int
+		UnfollowUser     func(childComplexity int, userID string) int
 	}
 
 	Notification struct {
@@ -272,6 +277,7 @@ type MutationResolver interface {
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
 	LikePost(ctx context.Context, postID string) (*model.Post, error)
 	SavePost(ctx context.Context, postID string) (*model.Post, error)
+	SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
@@ -434,6 +440,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Connections.Pagination(childComplexity), true
 
+	case "File.name":
+		if e.complexity.File.Name == nil {
+			break
+		}
+
+		return e.complexity.File.Name(childComplexity), true
+
 	case "Mutation.acceptUser":
 		if e.complexity.Mutation.AcceptUser == nil {
 			break
@@ -565,6 +578,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(string)), true
+
+	case "Mutation.singleUploadFile":
+		if e.complexity.Mutation.SingleUploadFile == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_singleUploadFile_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SingleUploadFile(childComplexity, args["file"].(graphql.Upload)), true
 
 	case "Mutation.test":
 		if e.complexity.Mutation.Test == nil {
@@ -1737,6 +1762,16 @@ extend type Query {
   getTrends(input: PaginationInput): Tags
 }
 `, BuiltIn: false},
+	{Name: "graph/schema/uploadFile.graphqls", Input: `scalar Upload
+
+type File {
+  name: String
+}
+
+extend type Mutation {
+  singleUploadFile(file: Upload!): File
+}
+`, BuiltIn: false},
 	{Name: "graph/schema/user.graphqls", Input: `type User {
   id: ID!
   username: String!
@@ -1962,6 +1997,21 @@ func (ec *executionContext) field_Mutation_savePost_args(ctx context.Context, ra
 		}
 	}
 	args["postId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_singleUploadFile_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 graphql.Upload
+	if tmp, ok := rawArgs["file"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("file"))
+		arg0, err = ec.unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["file"] = arg0
 	return args, nil
 }
 
@@ -2774,6 +2824,38 @@ func (ec *executionContext) _Connections_pagination(ctx context.Context, field g
 	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "File",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   false,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_test(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -3201,6 +3283,45 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	res := resTmp.(*model.Post)
 	fc.Result = res
 	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_singleUploadFile(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: true,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_singleUploadFile_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	fc.Args = args
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SingleUploadFile(rctx, args["file"].(graphql.Upload))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.File)
+	fc.Result = res
+	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -7057,14 +7178,14 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 		Object:     "__Directive",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return obj.Description(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7073,9 +7194,9 @@ func (ec *executionContext) ___Directive_description(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_locations(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -7229,14 +7350,14 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 		Object:     "__EnumValue",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return obj.Description(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7245,9 +7366,9 @@ func (ec *executionContext) ___EnumValue_description(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___EnumValue_isDeprecated(ctx context.Context, field graphql.CollectedField, obj *introspection.EnumValue) (ret graphql.Marshaler) {
@@ -7363,14 +7484,14 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 		Object:     "__Field",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return obj.Description(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7379,9 +7500,9 @@ func (ec *executionContext) ___Field_description(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Field_args(ctx context.Context, field graphql.CollectedField, obj *introspection.Field) (ret graphql.Marshaler) {
@@ -7567,14 +7688,14 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 		Object:     "__InputValue",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   false,
+		IsMethod:   true,
 		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return obj.Description(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7583,9 +7704,9 @@ func (ec *executionContext) ___InputValue_description(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___InputValue_type(ctx context.Context, field graphql.CollectedField, obj *introspection.InputValue) (ret graphql.Marshaler) {
@@ -7642,6 +7763,38 @@ func (ec *executionContext) ___InputValue_defaultValue(ctx context.Context, fiel
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.DefaultValue, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) ___Schema_description(ctx context.Context, field graphql.CollectedField, obj *introspection.Schema) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "__Schema",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Description(), nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7918,9 +8071,9 @@ func (ec *executionContext) ___Type_description(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Type_fields(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
@@ -8127,6 +8280,38 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 	res := resTmp.(*introspection.Type)
 	fc.Result = res
 	return ec.marshalO__Type2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐType(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) ___Type_specifiedByURL(ctx context.Context, field graphql.CollectedField, obj *introspection.Type) (ret graphql.Marshaler) {
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	fc := &graphql.FieldContext{
+		Object:     "__Type",
+		Field:      field,
+		Args:       nil,
+		IsMethod:   true,
+		IsResolver: false,
+	}
+
+	ctx = graphql.WithFieldContext(ctx, fc)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.SpecifiedByURL(), nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 // endregion **************************** field.gotpl *****************************
@@ -8605,6 +8790,34 @@ func (ec *executionContext) _Connections(ctx context.Context, sel ast.SelectionS
 	return out
 }
 
+var fileImplementors = []string{"File"}
+
+func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *model.File) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, fileImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("File")
+		case "name":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._File_name(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var mutationImplementors = []string{"Mutation"}
 
 func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -8697,6 +8910,13 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "savePost":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_savePost(ctx, field)
+			}
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+
+		case "singleUploadFile":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_singleUploadFile(ctx, field)
 			}
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
@@ -10740,6 +10960,13 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Schema")
+		case "description":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec.___Schema_description(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
 		case "types":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec.___Schema_types(ctx, field, obj)
@@ -10867,6 +11094,13 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		case "ofType":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec.___Type_ofType(ctx, field, obj)
+			}
+
+			out.Values[i] = innerFunc(ctx)
+
+		case "specifiedByURL":
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				return ec.___Type_specifiedByURL(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -11016,6 +11250,21 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, v interface{}) (graphql.Upload, error) {
+	res, err := graphql.UnmarshalUpload(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUpload2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚐUpload(ctx context.Context, sel ast.SelectionSet, v graphql.Upload) graphql.Marshaler {
+	res := graphql.MarshalUpload(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "must not be null")
@@ -11382,6 +11631,13 @@ func (ec *executionContext) marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋcore�
 		return graphql.Null
 	}
 	return ec._Connections(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v *model.File) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._File(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
