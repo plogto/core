@@ -67,6 +67,8 @@ models:
         resolver: true
       isSaved:
         resolver: true
+  File:
+    model: github.com/plogto/core/graph/model.File
   Connection:
     model: github.com/plogto/core/graph/model.Connection
     fields:

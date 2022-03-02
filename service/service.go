@@ -13,6 +13,7 @@ type Service struct {
 	User             database.User
 	Password         database.Password
 	Post             database.Post
+	File             database.File
 	Connection       database.Connection
 	Tag              database.Tag
 	PostTag          database.PostTag
@@ -30,6 +31,7 @@ func New(service Service) *Service {
 		User:             service.User,
 		Password:         service.Password,
 		Post:             service.Post,
+		File:             service.File,
 		Connection:       service.Connection,
 		Tag:              service.Tag,
 		PostTag:          service.PostTag,
