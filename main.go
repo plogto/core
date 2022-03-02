@@ -61,6 +61,7 @@ func main() {
 		User:             user,
 		Password:         database.Password{DB: DB},
 		Post:             database.Post{DB: DB},
+		File:             database.File{DB: DB},
 		Connection:       database.Connection{DB: DB},
 		Tag:              database.Tag{DB: DB},
 		PostTag:          database.PostTag{DB: DB},
@@ -74,6 +75,10 @@ func main() {
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
 	queryHandler.AddTransport(transport.POST{})
+	queryHandler.AddTransport(transport.MultipartForm{
+		MaxMemory:     32 * config.MB,
+		MaxUploadSize: 50 * config.MB,
+	})
 	queryHandler.AddTransport(transport.Websocket{
 		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
 			claims := jwt.MapClaims{}

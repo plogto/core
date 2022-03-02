@@ -30,6 +30,7 @@ DROP TABLE IF EXISTS "post_save";
 DROP TABLE IF EXISTS "online_user";
 DROP TABLE IF EXISTS "notification_type";
 DROP TABLE IF EXISTS "notification";
+DROP TABLE IF EXISTS "file";
 
 -- Types
 DROP TYPE IF EXISTS "user_roles";
