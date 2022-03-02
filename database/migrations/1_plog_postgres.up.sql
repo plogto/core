@@ -11,6 +11,7 @@ CREATE TABLE "user" (
 	"username" VARCHAR(32) NOT NULL UNIQUE,
 	"email" VARCHAR(100) NOT NULL UNIQUE,
 	"full_name" VARCHAR(64) NOT NULL,
+	"avatar" TEXT DEFAULT NULL,
 	"bio" TEXT DEFAULT NULL,
 	"role" user_roles DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
@@ -41,7 +42,7 @@ CREATE TABLE "post" (
 	"child_id" uuid DEFAULT NULL,
 	"content" TEXT NOT NULL,
 	"attachment" TEXT DEFAULT NULL,
-	"url" VARCHAR(20) NOT NULL,
+	"url" VARCHAR(20) NOT NULL UNIQUE,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -154,6 +155,18 @@ CREATE TABLE "notification" (
   OIDS=FALSE
 );
 
+CREATE TABLE "file" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"hash" TEXT NOT NULL UNIQUE,
+	"name" TEXT NOT NULL UNIQUE,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "file_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
 -- Triggers
 CREATE OR REPLACE FUNCTION trigger_set_updated_at()
 RETURNS TRIGGER AS $$
@@ -174,6 +187,7 @@ CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUT
 CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_notification_type BEFORE UPDATE ON "notification_type" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_notification BEFORE UPDATE ON "notification" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_file BEFORE UPDATE ON "file" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
