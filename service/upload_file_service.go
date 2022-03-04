@@ -47,6 +47,29 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		fmt.Printf("file err %v", fileErr)
 	}
 
+	// calculate hash file
+	tempFile, openErr := os.Open(fileName)
+	if openErr != nil {
+		fmt.Printf("Error opening file: %v", openErr)
+	}
+
+	encryption := sha256.New()
+	if _, err := io.Copy(encryption, tempFile); err != nil {
+		log.Fatal(err)
+	}
+	hash := fmt.Sprintf("%x\n", encryption.Sum(nil))
+
+	defer tempFile.Close()
+
+	isFile, _ := s.File.GetFileByHash(hash)
+
+	if isFile != nil && len(isFile.ID) > 0 {
+		_ = os.Remove(fileName)
+
+		return isFile, nil
+	}
+
+	// store file
 	f, openErr := os.Open(fileName)
 	if openErr != nil {
 		fmt.Printf("Error opening file: %v", openErr)
@@ -65,21 +88,6 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		Key:    aws.String(fileName),
 		Body:   fileBytes,
 		ACL:    aws.String("public-read"),
-	}
-
-	// calculate hash file
-	encryption := sha256.New()
-	if _, err := io.Copy(encryption, f); err != nil {
-		log.Fatal(err)
-	}
-	hash := fmt.Sprintf("%x\n", encryption.Sum(nil))
-
-	isFile, _ := s.File.GetFileByHash(hash)
-
-	if isFile != nil {
-		_ = os.Remove(fileName)
-
-		return isFile, nil
 	}
 
 	if _, uploadErr := s3Client.PutObject(&object); uploadErr != nil {
