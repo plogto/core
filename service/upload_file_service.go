@@ -22,10 +22,10 @@ import (
 )
 
 func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error) {
-	SpaceRegion := os.Getenv("DO_SPACE_REGION")
-	SpaceName := os.Getenv("DO_SPACE_NAME")
-	accessKey := os.Getenv("ACCESS_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
+	SpaceRegion := os.Getenv("SPACE_REGION")
+	SpaceName := os.Getenv("SPACE_NAME")
+	accessKey := os.Getenv("SPACE_ACCESS_KEY")
+	secretKey := os.Getenv("SPACE_SECRET_KEY")
 
 	s3Config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
@@ -47,6 +47,29 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		fmt.Printf("file err %v", fileErr)
 	}
 
+	// calculate hash file
+	tempFile, openErr := os.Open(fileName)
+	if openErr != nil {
+		fmt.Printf("Error opening file: %v", openErr)
+	}
+
+	encryption := sha256.New()
+	if _, err := io.Copy(encryption, tempFile); err != nil {
+		log.Fatal(err)
+	}
+	hash := fmt.Sprintf("%x\n", encryption.Sum(nil))
+
+	defer tempFile.Close()
+
+	isFile, _ := s.File.GetFileByHash(hash)
+
+	if isFile != nil && len(isFile.ID) > 0 {
+		_ = os.Remove(fileName)
+
+		return isFile, nil
+	}
+
+	// store file
 	f, openErr := os.Open(fileName)
 	if openErr != nil {
 		fmt.Printf("Error opening file: %v", openErr)
@@ -65,21 +88,6 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		Key:    aws.String(fileName),
 		Body:   fileBytes,
 		ACL:    aws.String("public-read"),
-	}
-
-	// calculate hash file
-	encryption := sha256.New()
-	if _, err := io.Copy(encryption, f); err != nil {
-		log.Fatal(err)
-	}
-	hash := fmt.Sprintf("%x\n", encryption.Sum(nil))
-
-	isFile, _ := s.File.GetFileByHash(hash)
-
-	if isFile != nil {
-		_ = os.Remove(fileName)
-
-		return isFile, nil
 	}
 
 	if _, uploadErr := s3Client.PutObject(&object); uploadErr != nil {
