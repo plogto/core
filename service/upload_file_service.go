@@ -22,10 +22,10 @@ import (
 )
 
 func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error) {
-	SpaceRegion := os.Getenv("DO_SPACE_REGION")
-	SpaceName := os.Getenv("DO_SPACE_NAME")
-	accessKey := os.Getenv("ACCESS_KEY")
-	secretKey := os.Getenv("SECRET_KEY")
+	SpaceRegion := os.Getenv("SPACE_REGION")
+	SpaceName := os.Getenv("SPACE_NAME")
+	accessKey := os.Getenv("SPACE_ACCESS_KEY")
+	secretKey := os.Getenv("SPACE_SECRET_KEY")
 
 	s3Config := &aws.Config{
 		Credentials: credentials.NewStaticCredentials(accessKey, secretKey, ""),
