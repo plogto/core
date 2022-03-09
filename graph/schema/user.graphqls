@@ -1,6 +1,8 @@
 type User {
   id: ID!
   username: String!
+  avatar: String
+  background: String
   email: String!
   fullName: String!
   bio: String
@@ -22,6 +24,8 @@ type Users {
 
 input EditUserInput {
   username: String
+  avatar: String
+  background: String
   fullName: String
   email: String
   bio: String
