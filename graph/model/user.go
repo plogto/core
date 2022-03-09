@@ -8,17 +8,19 @@ import (
 )
 
 type User struct {
-	tableName struct{} `pg:"user"`
-	ID        string
-	Username  string
-	Email     string
-	FullName  string
-	Bio       *string
-	Role      string
-	IsPrivate bool `pg:",use_zero"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	DeletedAt *time.Time `pg:"-,soft_delete"`
+	tableName  struct{} `pg:"user"`
+	ID         string
+	Username   string
+	Avatar     *string
+	Background *string
+	Email      string
+	FullName   string
+	Bio        *string
+	Role       string
+	IsPrivate  bool `pg:",use_zero"`
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	DeletedAt  *time.Time `pg:"-,soft_delete"`
 }
 
 func (u *User) GenToken() (*AuthToken, error) {

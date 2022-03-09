@@ -27,11 +27,13 @@ type Connections struct {
 }
 
 type EditUserInput struct {
-	Username  *string `json:"username"`
-	FullName  *string `json:"fullName"`
-	Email     *string `json:"email"`
-	Bio       *string `json:"bio"`
-	IsPrivate *bool   `json:"isPrivate"`
+	Username   *string `json:"username"`
+	Avatar     *string `json:"avatar"`
+	Background *string `json:"background"`
+	FullName   *string `json:"fullName"`
+	Email      *string `json:"email"`
+	Bio        *string `json:"bio"`
+	IsPrivate  *bool   `json:"isPrivate"`
 }
 
 type LoginInput struct {
