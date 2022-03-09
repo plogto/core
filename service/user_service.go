@@ -66,6 +66,22 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		didUpdate = true
 	}
 
+	if input.Avatar != nil {
+		user.Avatar = input.Avatar
+		if len(*input.Avatar) == 0 {
+			user.Avatar = nil
+		}
+		didUpdate = true
+	}
+
+	if input.Background != nil {
+		user.Background = input.Background
+		if len(*input.Background) == 0 {
+			user.Background = nil
+		}
+		didUpdate = true
+	}
+
 	if input.FullName != nil {
 		user.FullName = *input.FullName
 		didUpdate = true
