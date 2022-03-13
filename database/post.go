@@ -74,10 +74,13 @@ func (p *Post) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*mod
 	// TODO: fix this query
 	query := p.DB.Model(&posts).
 		ColumnExpr("post_tag.post_id, post_tag.tag_id").
+		ColumnExpr("u.id, u.is_private").
 		ColumnExpr("post.*").
 		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagID).
+		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
 		Where("post_tag.post_id = post.id").
 		Where("post.deleted_at is ?", nil).
+		Where("u.is_private is false").
 		Order("post.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
