@@ -12,7 +12,7 @@ type Post struct {
 	ChildID    *string
 	Content    string
 	Url        string
-	Stat       string
+	Status     string
 	Attachment *string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
