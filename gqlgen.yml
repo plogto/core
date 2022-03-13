@@ -78,9 +78,6 @@ models:
         resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag
-    fields:
-      count:
-        resolver: true
   PostLike:
     model: github.com/plogto/core/graph/model.PostLike
     fields:
