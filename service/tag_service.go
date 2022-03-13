@@ -18,12 +18,6 @@ func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags
 	return tags, nil
 }
 
-func (s *Service) CountTagByTagID(ctx context.Context, tagID string) (*int, error) {
-	tagCount, _ := s.PostTag.CountPostTagsByTagID(tagID)
-
-	return tagCount, nil
-}
-
 func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
 	var limit int = config.POSTS_PAGE_LIMIT
 	var page int = 1
