@@ -15,15 +15,6 @@ func (p *PostTag) CreatePostTag(postTag *model.PostTag) (*model.PostTag, error) 
 	return postTag, err
 }
 
-func (p *PostTag) CountPostTagsByTagID(tagID string) (*int, error) {
-	var postTags []*model.PostTag
-	count, err := p.DB.Model(&postTags).
-		Where("tag_id = ?", tagID).
-		Where("deleted_at is ?", nil).
-		Returning("*").Count()
-	return &count, err
-}
-
 func (p *PostTag) GetTagsOrderByCountTags(limit, page int) (*model.Tags, error) {
 	var tags []*model.Tag
 	var offset = (page - 1) * limit
@@ -32,8 +23,11 @@ func (p *PostTag) GetTagsOrderByCountTags(limit, page int) (*model.Tags, error) 
 		ColumnExpr("tag.*, count(tag.id)").
 		ColumnExpr("post_tag.tag_id").
 		Join("INNER JOIN post_tag ON post_tag.tag_id = tag.id").
+		Join("INNER JOIN post ON post_tag.post_id = post.id").
+		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
 		GroupExpr("post_tag.tag_id, tag.id").
 		Where("tag.deleted_at is ?", nil).
+		Where("u.is_private is false").
 		Order("count DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
