@@ -5,6 +5,9 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 DROP TYPE IF EXISTS "user_roles";
 CREATE TYPE user_roles AS ENUM ('USER', 'ADMIN');
 
+DROP TYPE IF EXISTS "post_status";
+CREATE TYPE post_status AS ENUM ('PUBLIC', 'PRIVATE');
+
 -- Tables
 CREATE TABLE "user" (
 	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -14,7 +17,7 @@ CREATE TABLE "user" (
 	"avatar" TEXT DEFAULT NULL,
 	"background" TEXT DEFAULT NULL,
 	"bio" TEXT DEFAULT NULL,
-	"role" user_roles DEFAULT 'USER',
+	"role" user_roles NOT NULL DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
   "created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -44,6 +47,7 @@ CREATE TABLE "post" (
 	"content" TEXT NOT NULL,
 	"attachment" TEXT DEFAULT NULL,
 	"url" VARCHAR(20) NOT NULL UNIQUE,
+	"status" post_status NOT NULL DEFAULT 'PUBLIC',
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
