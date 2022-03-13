@@ -23,10 +23,6 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*mode
 	return r.Service.DeletePost(ctx, postID)
 }
 
-func (r *postResolver) Status(ctx context.Context, obj *model.Post) (string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.ParentID)
 }
@@ -71,3 +67,13 @@ func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Po
 func (r *Resolver) Post() generated.PostResolver { return &postResolver{r} }
 
 type postResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//    it when you're done.
+//  - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *postResolver) Status(ctx context.Context, obj *model.Post) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
