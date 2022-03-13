@@ -23,6 +23,10 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*mode
 	return r.Service.DeletePost(ctx, postID)
 }
 
+func (r *postResolver) Status(ctx context.Context, obj *model.Post) (string, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.ParentID)
 }

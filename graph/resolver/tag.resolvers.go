@@ -6,7 +6,6 @@ package graph
 import (
 	"context"
 
-	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 )
 
@@ -17,12 +16,3 @@ func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*m
 func (r *queryResolver) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
 	return r.Service.GetTrends(ctx, input)
 }
-
-func (r *tagResolver) Count(ctx context.Context, obj *model.Tag) (*int, error) {
-	return r.Service.CountTagByTagID(ctx, obj.ID)
-}
-
-// Tag returns generated.TagResolver implementation.
-func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
-
-type tagResolver struct{ *Resolver }
