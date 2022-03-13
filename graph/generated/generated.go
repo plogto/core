@@ -291,7 +291,6 @@ type NotificationResolver interface {
 	Reply(ctx context.Context, obj *model.Notification) (*model.Post, error)
 }
 type PostResolver interface {
-	Status(ctx context.Context, obj *model.Post) (string, error)
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
 	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -4503,14 +4502,14 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		Object:     "Post",
 		Field:      field,
 		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 	}
 
 	ctx = graphql.WithFieldContext(ctx, fc)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Status(rctx, obj)
+		return obj.Status, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9542,25 +9541,15 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
-			field := field
-
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_status(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+				return ec._Post_status(ctx, field, obj)
 			}
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
+			out.Values[i] = innerFunc(ctx)
 
-			})
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "parent":
 			field := field
 
