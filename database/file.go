@@ -24,6 +24,10 @@ func (f *File) GetFileByHash(hash string) (*model.File, error) {
 	return f.GetFileByField("hash", hash)
 }
 
+func (f *File) GetFileByName(name string) (*model.File, error) {
+	return f.GetFileByField("name", name)
+}
+
 func (f *File) CreateFile(file *model.File) (*model.File, error) {
 	_, err := f.DB.Model(file).Returning("*").Insert()
 

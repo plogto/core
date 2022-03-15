@@ -12,11 +12,11 @@ import (
 )
 
 func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.AddPost(ctx, input)
+	return r.Service.AddPost(ctx, input, nil)
 }
 
 func (r *mutationResolver) ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.ReplyPost(ctx, postID, input)
+	return r.Service.AddPost(ctx, input, &postID)
 }
 
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
@@ -33,6 +33,10 @@ func (r *postResolver) Child(ctx context.Context, obj *model.Post) (*model.Post,
 
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
 	return r.Service.GetUserByID(ctx, obj.UserID)
+}
+
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]string, error) {
+	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)
 }
 
 func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
