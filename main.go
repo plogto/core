@@ -64,6 +64,7 @@ func main() {
 		File:             database.File{DB: DB},
 		Connection:       database.Connection{DB: DB},
 		Tag:              database.Tag{DB: DB},
+		PostAttachment:   database.PostAttachment{DB: DB},
 		PostTag:          database.PostTag{DB: DB},
 		PostLike:         database.PostLike{DB: DB},
 		PostSave:         database.PostSave{DB: DB},
