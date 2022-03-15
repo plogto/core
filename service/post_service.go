@@ -10,66 +10,78 @@ import (
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
+func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID *string) (*model.Post, error) {
+	// authentication
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
+	}
+
+	// check parent post
+	var parentPost *model.Post
+	if postID != nil {
+		parentPost, _ = s.Post.GetPostByID(*postID)
+
+		if parentPost == nil {
+			return nil, errors.New("access denied")
+		}
+
+		followingUser, _ := s.User.GetUserByID(parentPost.UserID)
+		if s.CheckUserAccess(user, followingUser) == bool(false) {
+			return nil, errors.New("access denied")
+		}
+	}
+
+	// check is empty
+	if (input.Attachment == nil || len(input.Attachment) < 1) &&
+		(input.Content == nil || len(*input.Content) < 1) {
+		return nil, errors.New("need to add attachment or content")
+	}
+
+	for _, name := range input.Attachment {
+		file, _ := s.File.GetFileByName(name)
+		if file == nil {
+			return nil, errors.New("attachment is not valid")
+		}
 	}
 
 	post := &model.Post{
-		UserID:  user.ID,
-		Content: input.Content,
-		Url:     util.RandomString(20),
-	}
-
-	s.Post.CreatePost(post)
-	s.SaveTagsPost(post.ID, input.Content)
-
-	return post, nil
-}
-
-func (s *Service) ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error) {
-	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	post, _ := s.Post.GetPostByID(postID)
-
-	if post == nil {
-		return nil, errors.New("access denied")
-	}
-
-	followingUser, _ := s.User.GetUserByID(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
-	}
-
-	reply := &model.Post{
-		ParentID: &postID,
+		ParentID: postID,
 		UserID:   user.ID,
 		Content:  input.Content,
 		Url:      util.RandomString(20),
 	}
 
-	s.Post.CreatePost(reply)
+	s.Post.CreatePost(post)
 
-	if len(reply.ID) > 0 {
-		s.SaveTagsPost(reply.ID, input.Content)
-
-		s.CreateNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_REPLY_POST,
-			SenderID:   user.ID,
-			ReceiverID: post.UserID,
-			Url:        "p/" + post.Url + "#" + reply.ID,
-			PostID:     &postID,
-			ReplyID:    &reply.ID,
-		})
+	// check attachment
+	if len(input.Attachment) > 0 {
+		for _, v := range input.Attachment {
+			s.PostAttachment.CreatePostAttachment(&model.PostAttachment{
+				PostID: post.ID,
+				Name:   v,
+			})
+		}
 	}
 
-	return reply, nil
+	if len(post.ID) > 0 {
+		if post.Content != nil && len(*post.Content) > 0 {
+			s.SaveTagsPost(post.ID, *post.Content)
+		}
+		// notification for reply
+		if postID != nil {
+			s.CreateNotification(CreateNotificationArgs{
+				Name:       config.NOTIFICATION_REPLY_POST,
+				SenderID:   user.ID,
+				ReceiverID: post.UserID,
+				Url:        "p/" + post.Url + "#" + post.ID,
+				PostID:     postID,
+				ReplyID:    &post.ID,
+			})
+		}
+	}
+
+	return post, nil
 }
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {

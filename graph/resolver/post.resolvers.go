@@ -12,11 +12,11 @@ import (
 )
 
 func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.AddPost(ctx, input)
+	return r.Service.AddPost(ctx, input, nil)
 }
 
 func (r *mutationResolver) ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.ReplyPost(ctx, postID, input)
+	return r.Service.AddPost(ctx, input, &postID)
 }
 
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
@@ -33,6 +33,10 @@ func (r *postResolver) Child(ctx context.Context, obj *model.Post) (*model.Post,
 
 func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, error) {
 	return r.Service.GetUserByID(ctx, obj.UserID)
+}
+
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]string, error) {
+	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)
 }
 
 func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
@@ -67,13 +71,3 @@ func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Po
 func (r *Resolver) Post() generated.PostResolver { return &postResolver{r} }
 
 type postResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *postResolver) Status(ctx context.Context, obj *model.Post) (string, error) {
-	panic(fmt.Errorf("not implemented"))
-}

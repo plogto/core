@@ -4,8 +4,8 @@ type Post {
   parent: Post
   child: Post
   user: User!
-  content: String!
-  attachment: String
+  content: String
+  attachment: [String!]
   url: String!
   likes: PostLikes
   replies: Posts
@@ -21,9 +21,9 @@ type Posts {
 }
 
 input addPostInput {
-  content: String!
+  content: String
   status: Int
-  attachment: String
+  attachment: [String!]
 }
 
 extend type Query {
