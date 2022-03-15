@@ -105,7 +105,7 @@ type Users struct {
 }
 
 type AddPostInput struct {
-	Content    string  `json:"content"`
-	Status     *int    `json:"status"`
-	Attachment *string `json:"attachment"`
+	Content    *string  `json:"content"`
+	Status     *int     `json:"status"`
+	Attachment []string `json:"attachment"`
 }
