@@ -16,6 +16,7 @@ type Service struct {
 	File             database.File
 	Connection       database.Connection
 	Tag              database.Tag
+	PostAttachment   database.PostAttachment
 	PostTag          database.PostTag
 	PostLike         database.PostLike
 	PostSave         database.PostSave
@@ -35,6 +36,7 @@ func New(service Service) *Service {
 		Connection:       service.Connection,
 		Tag:              service.Tag,
 		PostTag:          service.PostTag,
+		PostAttachment:   service.PostAttachment,
 		PostLike:         service.PostLike,
 		PostSave:         service.PostSave,
 		OnlineUser:       service.OnlineUser,
