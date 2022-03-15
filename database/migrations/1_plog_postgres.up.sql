@@ -44,8 +44,7 @@ CREATE TABLE "post" (
 	"user_id" uuid NOT NULL,
 	"parent_id" uuid DEFAULT NULL,
 	"child_id" uuid DEFAULT NULL,
-	"content" TEXT NOT NULL,
-	"attachment" TEXT DEFAULT NULL,
+	"content" TEXT DEFAULT NULL,
 	"url" VARCHAR(20) NOT NULL UNIQUE,
 	"status" post_status NOT NULL DEFAULT 'PUBLIC',
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -89,6 +88,18 @@ CREATE TABLE "post_tag" (
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
  CONSTRAINT "post_tag_pk" PRIMARY KEY ("id")
+) WITH (
+  OIDS=FALSE
+);
+
+CREATE TABLE "post_attachment" (
+	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"post_id" uuid NOT NULL,
+	"name" TEXT NOT NULL,
+	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
+	"deleted_at" TIMESTAMP,
+ CONSTRAINT "post_attachment_pk" PRIMARY KEY ("id")
 ) WITH (
   OIDS=FALSE
 );
@@ -187,6 +198,7 @@ CREATE TRIGGER update_post BEFORE UPDATE ON "post" FOR EACH ROW EXECUTE PROCEDUR
 CREATE TRIGGER update_connection BEFORE UPDATE ON "connection" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_tag BEFORE UPDATE ON "tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_tag BEFORE UPDATE ON "post_tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_post_attachment BEFORE UPDATE ON "post_attachment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
@@ -203,6 +215,7 @@ ALTER TABLE "connection" ADD CONSTRAINT "connection_fk1" FOREIGN KEY ("follower_
 ALTER TABLE "connection" ADD CONSTRAINT "connection_fk0" FOREIGN KEY ("following_id") REFERENCES "user"("id");
 ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk0" FOREIGN KEY ("tag_id") REFERENCES "tag"("id");
 ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "post_attachment" ADD CONSTRAINT "post_attachment_fk0" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "post_save" ADD CONSTRAINT "post_save_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
