@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -44,7 +44,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 
 	if len(newConnection.ID) > 0 && status == 2 {
 		s.CreateNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_FOLLOW_USER,
+			Name:       constants.NOTIFICATION_FOLLOW_USER,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -75,7 +75,7 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 
 	if len(deletedConnection.ID) > 0 {
 		s.RemoveNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_FOLLOW_USER,
+			Name:       constants.NOTIFICATION_FOLLOW_USER,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -119,7 +119,7 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 
 	if len(updatedConnection.ID) > 0 {
 		s.CreateNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_ACCEPT_USER,
+			Name:       constants.NOTIFICATION_ACCEPT_USER,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -164,7 +164,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	followingUser, _ := s.User.GetUserByUsername(username)
 
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {
