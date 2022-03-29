@@ -18,7 +18,7 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/generated"
 	graph "github.com/plogto/core/graph/resolver"
@@ -77,8 +77,8 @@ func main() {
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
 	queryHandler.AddTransport(transport.POST{})
 	queryHandler.AddTransport(transport.MultipartForm{
-		MaxMemory:     32 * config.MB,
-		MaxUploadSize: 50 * config.MB,
+		MaxMemory:     32 * constants.MB,
+		MaxUploadSize: 50 * constants.MB,
 	})
 	queryHandler.AddTransport(transport.Websocket{
 		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
@@ -100,7 +100,7 @@ func main() {
 				UserAgent: "UserAgent",
 			}
 
-			c := context.WithValue(ctx, config.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
+			c := context.WithValue(ctx, constants.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
 
 			s.AddOnlineUser(c, currentOnlineUser)
 

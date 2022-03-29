@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -71,7 +71,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 		// notification for reply
 		if postID != nil {
 			s.CreateNotification(CreateNotificationArgs{
-				Name:       config.NOTIFICATION_REPLY_POST,
+				Name:       constants.NOTIFICATION_REPLY_POST,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "p/" + post.Url + "#" + post.ID,
@@ -102,7 +102,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		if parentPost != nil && len(parentPost.ID) > 0 {
 			// remove notification for reply
 			s.RemoveNotification(CreateNotificationArgs{
-				Name:       config.NOTIFICATION_REPLY_POST,
+				Name:       constants.NOTIFICATION_REPLY_POST,
 				SenderID:   user.ID,
 				ReceiverID: parentPost.UserID,
 				Url:        "p/" + parentPost.Url + "#" + post.ID,
@@ -144,7 +144,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 		return nil, errors.New("access denied")
 	}
 
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {
@@ -165,7 +165,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
 	tag, _ := s.Tag.GetTagByName(tagName)
 
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {

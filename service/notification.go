@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 )
@@ -27,7 +27,7 @@ type RemovePostNotificationsArgs struct {
 func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {
