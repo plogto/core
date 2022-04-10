@@ -54,7 +54,7 @@ func (s *Service) SaveTagsPost(postID, content string) {
 	}
 	for _, tagName := range util.UniqueSliceElement(tags) {
 		tag := &model.Tag{
-			Name: tagName,
+			Name: strings.ToLower(tagName),
 		}
 		s.Tag.CreateTag(tag)
 
