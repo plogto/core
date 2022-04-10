@@ -26,7 +26,7 @@ func (p *PostTag) GetTagsOrderByCountTags(limit, page int) (*model.Tags, error) 
 		Join("INNER JOIN post ON post_tag.post_id = post.id").
 		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
 		GroupExpr("post_tag.tag_id, tag.id").
-		Where("tag.deleted_at is ?", nil).
+		Where("post.deleted_at is ?", nil).
 		Where("u.is_private is false").
 		Order("count DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
