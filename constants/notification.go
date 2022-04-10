@@ -1,4 +1,4 @@
-package config
+package constants
 
 const NOTIFICATION_LIKE_POST string = "LIKE_POST"
 const NOTIFICATION_REPLY_POST string = "REPLY_POST"

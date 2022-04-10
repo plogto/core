@@ -25,8 +25,8 @@ func (t *Tag) GetTagsByTagNameAndPagination(value string, limit, page int) (*mod
 		Join("INNER JOIN post ON post_tag.post_id = post.id").
 		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
 		GroupExpr("post_tag.tag_id, tag.id").
-		Where("lower(tag.name) LIKE lower(?)", value).
-		Where("tag.deleted_at is ?", nil).
+		Where("lower(tag.name) LIKE lower(?)", strings.ToLower(value)).
+		Where("post.deleted_at is ?", nil).
 		Where("u.is_private is false").
 		Order("count DESC").Returning("*")
 
@@ -54,7 +54,7 @@ func (t *Tag) GetTagByField(field, value string) (*model.Tag, error) {
 		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
 		GroupExpr("post_tag.tag_id, tag.id").
 		Where(fmt.Sprintf("lower(tag.%v) = lower(?)", field), value).
-		Where("tag.deleted_at is ?", nil).
+		Where("post.deleted_at is ?", nil).
 		Where("u.is_private is false").
 		Returning("*").First()
 
@@ -68,6 +68,6 @@ func (t *Tag) GetTagByName(name string) (*model.Tag, error) {
 }
 
 func (t *Tag) CreateTag(tag *model.Tag) (*model.Tag, error) {
-	_, err := t.DB.Model(tag).Where("name = ?name").Returning("*").SelectOrInsert()
+	_, err := t.DB.Model(tag).Where("name = ?name").Group("id").Returning("*").SelectOrInsert()
 	return tag, err
 }

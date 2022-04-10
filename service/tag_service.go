@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
@@ -19,7 +19,7 @@ func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags
 }
 
 func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {
@@ -54,7 +54,7 @@ func (s *Service) SaveTagsPost(postID, content string) {
 	}
 	for _, tagName := range util.UniqueSliceElement(tags) {
 		tag := &model.Tag{
-			Name: tagName,
+			Name: strings.ToLower(tagName),
 		}
 		s.Tag.CreateTag(tag)
 
