@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 )
@@ -27,7 +27,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 	if postLike != nil {
 		s.PostLike.DeletePostLikeByID(postLike.ID)
 		s.RemoveNotification(CreateNotificationArgs{
-			Name:       config.NOTIFICATION_LIKE_POST,
+			Name:       constants.NOTIFICATION_LIKE_POST,
 			SenderID:   user.ID,
 			ReceiverID: post.UserID,
 			Url:        "p/" + post.Url,
@@ -42,10 +42,10 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 		s.PostLike.CreatePostLike(postLike)
 
 		if len(postLike.ID) > 0 {
-			var name string = config.NOTIFICATION_LIKE_POST
+			var name string = constants.NOTIFICATION_LIKE_POST
 
 			if post.ParentID != nil {
-				name = config.NOTIFICATION_LIKE_REPLY
+				name = constants.NOTIFICATION_LIKE_REPLY
 			}
 
 			s.CreateNotification(CreateNotificationArgs{

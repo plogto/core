@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 )
@@ -45,7 +45,7 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInpu
 		return nil, nil
 	}
 
-	var limit int = config.POSTS_PAGE_LIMIT
+	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
 
 	if input != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
 	"github.com/pkg/errors"
-	"github.com/plogto/core/config"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
 )
@@ -45,7 +45,7 @@ func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 				return
 			}
 
-			ctx := context.WithValue(r.Context(), config.CURRENT_USER_KEY, user)
+			ctx := context.WithValue(r.Context(), constants.CURRENT_USER_KEY, user)
 
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
@@ -82,11 +82,11 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 }
 
 func GetCurrentUserFromCTX(ctx context.Context) (*model.User, error) {
-	if ctx.Value(config.CURRENT_USER_KEY) == nil {
+	if ctx.Value(constants.CURRENT_USER_KEY) == nil {
 		return nil, errAuthenticationFailed
 	}
 
-	user, ok := ctx.Value(config.CURRENT_USER_KEY).(*model.User)
+	user, ok := ctx.Value(constants.CURRENT_USER_KEY).(*model.User)
 
 	if !ok || user.ID == "" {
 		return nil, errAuthenticationFailed
@@ -96,11 +96,11 @@ func GetCurrentUserFromCTX(ctx context.Context) (*model.User, error) {
 }
 
 func GetCurrentOnlineUserFromCTX(ctx context.Context) (*OnlineUserContext, error) {
-	if ctx.Value(config.CURRENT_ONLINE_USER_KEY) == nil {
+	if ctx.Value(constants.CURRENT_ONLINE_USER_KEY) == nil {
 		return nil, errAuthenticationFailed
 	}
 
-	onlineUser, ok := ctx.Value(config.CURRENT_ONLINE_USER_KEY).(*OnlineUserContext)
+	onlineUser, ok := ctx.Value(constants.CURRENT_ONLINE_USER_KEY).(*OnlineUserContext)
 
 	if !ok || onlineUser == nil {
 		return nil, errAuthenticationFailed
