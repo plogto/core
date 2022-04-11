@@ -82,7 +82,7 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AcceptUser       func(childComplexity int, userID string) int
-		AddPost          func(childComplexity int, input model.AddPostInput) int
+		AddPost          func(childComplexity int, postID *string, input model.AddPostInput) int
 		ChangePassword   func(childComplexity int, input model.ChangePasswordInput) int
 		DeletePost       func(childComplexity int, postID string) int
 		EditUser         func(childComplexity int, input model.EditUserInput) int
@@ -90,7 +90,6 @@ type ComplexityRoot struct {
 		LikePost         func(childComplexity int, postID string) int
 		Register         func(childComplexity int, input model.RegisterInput) int
 		RejectUser       func(childComplexity int, userID string) int
-		ReplyPost        func(childComplexity int, postID string, input model.AddPostInput) int
 		SavePost         func(childComplexity int, postID string) int
 		SingleUploadFile func(childComplexity int, file graphql.Upload) int
 		Test             func(childComplexity int, input model.TestInput) int
@@ -274,8 +273,7 @@ type MutationResolver interface {
 	UnfollowUser(ctx context.Context, userID string) (*model.Connection, error)
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
-	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
-	ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error)
+	AddPost(ctx context.Context, postID *string, input model.AddPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
 	LikePost(ctx context.Context, postID string) (*model.Post, error)
 	SavePost(ctx context.Context, postID string) (*model.Post, error)
@@ -470,7 +468,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddPost(childComplexity, args["input"].(model.AddPostInput)), true
+		return e.complexity.Mutation.AddPost(childComplexity, args["postId"].(*string), args["input"].(model.AddPostInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -555,18 +553,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(string)), true
-
-	case "Mutation.replyPost":
-		if e.complexity.Mutation.ReplyPost == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_replyPost_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.ReplyPost(childComplexity, args["postId"].(string), args["input"].(model.AddPostInput)), true
 
 	case "Mutation.savePost":
 		if e.complexity.Mutation.SavePost == nil {
@@ -1712,8 +1698,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post
-  replyPost(postId: ID!, input: addPostInput!): Post
+  addPost(postId: ID, input: addPostInput!): Post
   deletePost(postId: ID!): Post
 }
 `, BuiltIn: false},
@@ -1871,15 +1856,24 @@ func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 model.AddPostInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+	var arg0 *string
+	if tmp, ok := rawArgs["postId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["postId"] = arg0
+	var arg1 model.AddPostInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -1985,30 +1979,6 @@ func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, 
 		}
 	}
 	args["userId"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_replyPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["postId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["postId"] = arg0
-	var arg1 model.AddPostInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg1
 	return args, nil
 }
 
@@ -3142,46 +3112,7 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	fc.Args = args
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddPost(rctx, args["input"].(model.AddPostInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Post)
-	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _Mutation_replyPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	fc := &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		Args:       nil,
-		IsMethod:   true,
-		IsResolver: true,
-	}
-
-	ctx = graphql.WithFieldContext(ctx, fc)
-	rawArgs := field.ArgumentMap(ec.Variables)
-	args, err := ec.field_Mutation_replyPost_args(ctx, rawArgs)
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	fc.Args = args
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ReplyPost(rctx, args["postId"].(string), args["input"].(model.AddPostInput))
+		return ec.resolvers.Mutation().AddPost(rctx, args["postId"].(*string), args["input"].(model.AddPostInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9025,13 +8956,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
 
-		case "replyPost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_replyPost(ctx, field)
-			}
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
-
 		case "deletePost":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deletePost(ctx, field)
@@ -11798,6 +11722,22 @@ func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 		return graphql.Null
 	}
 	return ec._File(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalID(*v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
