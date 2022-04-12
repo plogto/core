@@ -11,12 +11,8 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.AddPost(ctx, input, nil)
-}
-
-func (r *mutationResolver) ReplyPost(ctx context.Context, postID string, input model.AddPostInput) (*model.Post, error) {
-	return r.Service.AddPost(ctx, input, &postID)
+func (r *mutationResolver) AddPost(ctx context.Context, postID *string, input model.AddPostInput) (*model.Post, error) {
+	return r.Service.AddPost(ctx, input, postID)
 }
 
 func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*model.Post, error) {

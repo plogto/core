@@ -33,7 +33,6 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post
-  replyPost(postId: ID!, input: addPostInput!): Post
+  addPost(postId: ID, input: addPostInput!): Post
   deletePost(postId: ID!): Post
 }
