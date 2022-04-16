@@ -59,7 +59,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 		for _, v := range input.Attachment {
 			s.PostAttachment.CreatePostAttachment(&model.PostAttachment{
 				PostID: post.ID,
-				Name:   v,
+				FileID: v,
 			})
 		}
 	}
