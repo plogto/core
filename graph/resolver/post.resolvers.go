@@ -31,7 +31,7 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
-func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]string, error) {
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error) {
 	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)
 }
 

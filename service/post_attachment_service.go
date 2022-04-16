@@ -2,15 +2,12 @@ package service
 
 import (
 	"context"
+
+	"github.com/plogto/core/graph/model"
 )
 
-func (s *Service) GetPostAttachmentsByPostID(ctx context.Context, postID string) ([]string, error) {
-	postAttachments, _ := s.PostAttachment.GetPostAttachmentsByPostID(postID)
+func (s *Service) GetPostAttachmentsByPostID(ctx context.Context, postID string) ([]*model.File, error) {
+	postAttachments, _ := s.File.GetFilesByPostId(postID)
 
-	var attachments []string
-
-	for _, v := range postAttachments {
-		attachments = append(attachments, v.Name)
-	}
-	return attachments, nil
+	return postAttachments, nil
 }

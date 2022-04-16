@@ -44,6 +44,10 @@ models:
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
+      avatar:
+        resolver: true
+      background:
+        resolver: true
       connectionStatus:
         resolver: true
       followingCount:
@@ -58,6 +62,8 @@ models:
     model: github.com/plogto/core/graph/model.Post
     fields:
       user:
+        resolver: true
+      attachment:
         resolver: true
       likes:
         resolver: true

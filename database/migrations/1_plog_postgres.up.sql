@@ -1,5 +1,5 @@
 -- Extentions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "UUID-ossp";
 
 -- Enums
 DROP TYPE IF EXISTS "user_role";
@@ -10,12 +10,12 @@ CREATE TYPE post_status AS ENUM ('PUBLIC', 'PRIVATE');
 
 -- Tables
 CREATE TABLE "user" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
 	"username" VARCHAR(32) NOT NULL UNIQUE,
 	"email" VARCHAR(100) NOT NULL UNIQUE,
 	"full_name" VARCHAR(64) NOT NULL,
-	"avatar" TEXT DEFAULT NULL,
-	"background" TEXT DEFAULT NULL,
+	"avatar" UUID DEFAULT NULL,
+	"background" UUID DEFAULT NULL,
 	"bio" TEXT DEFAULT NULL,
 	"role" user_role NOT NULL DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
@@ -28,8 +28,8 @@ CREATE TABLE "user" (
 );
 
 CREATE TABLE "password" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"user_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" UUID NOT NULL,
 	"password" TEXT NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -40,10 +40,10 @@ CREATE TABLE "password" (
 );
 
 CREATE TABLE "post" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"user_id" uuid NOT NULL,
-	"parent_id" uuid DEFAULT NULL,
-	"child_id" uuid DEFAULT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" UUID NOT NULL,
+	"parent_id" UUID DEFAULT NULL,
+	"child_id" UUID DEFAULT NULL,
 	"content" TEXT DEFAULT NULL,
 	"url" VARCHAR(20) NOT NULL UNIQUE,
 	"status" post_status NOT NULL DEFAULT 'PUBLIC',
@@ -57,9 +57,9 @@ CREATE TABLE "post" (
 
 -- status => 1: pending, 2: following
 CREATE TABLE "connection" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"follower_id" uuid NOT NULL,
-	"following_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"follower_id" UUID NOT NULL,
+	"following_id" UUID NOT NULL,
 	"status" INTEGER NOT NULL DEFAULT 1,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -70,7 +70,7 @@ CREATE TABLE "connection" (
 );
 
 CREATE TABLE "tag" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
 	"name" VARCHAR(100) NOT NULL UNIQUE,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -81,9 +81,9 @@ CREATE TABLE "tag" (
 );
 
 CREATE TABLE "post_tag" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"tag_id" uuid NOT NULL,
-	"post_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"tag_id" UUID NOT NULL,
+	"post_id" UUID NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -93,9 +93,9 @@ CREATE TABLE "post_tag" (
 );
 
 CREATE TABLE "post_attachment" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"post_id" uuid NOT NULL,
-	"name" TEXT NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"post_id" UUID NOT NULL,
+	"file_id" UUID NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -105,9 +105,9 @@ CREATE TABLE "post_attachment" (
 );
 
 CREATE TABLE "post_like" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"user_id" uuid NOT NULL,
-	"post_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" UUID NOT NULL,
+	"post_id" UUID NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -117,9 +117,9 @@ CREATE TABLE "post_like" (
 );
 
 CREATE TABLE "post_save" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"user_id" uuid NOT NULL,
-	"post_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" UUID NOT NULL,
+	"post_id" UUID NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -129,8 +129,8 @@ CREATE TABLE "post_save" (
 );
 
 CREATE TABLE "online_user" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"user_id" uuid NOT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"user_id" UUID NOT NULL,
 	"socket_id" VARCHAR(20) NOT NULL,
 	"token" TEXT NOT NULL,
 	"user_agent" TEXT NOT NULL,
@@ -143,7 +143,7 @@ CREATE TABLE "online_user" (
 );
 
 CREATE TABLE "notification_type" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
 	"name" VARCHAR(100) NOT NULL,
 	"template" TEXT NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -155,12 +155,12 @@ CREATE TABLE "notification_type" (
 );
 
 CREATE TABLE "notification" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
-	"notification_type_id" uuid NOT NULL,
-	"sender_id" uuid NOT NULL,
-	"receiver_id" uuid NOT NULL,
-	"post_id" uuid DEFAULT NULL,
-	"reply_id" uuid DEFAULT NULL,
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
+	"notification_type_id" UUID NOT NULL,
+	"sender_id" UUID NOT NULL,
+	"receiver_id" UUID NOT NULL,
+	"post_id" UUID DEFAULT NULL,
+	"reply_id" UUID DEFAULT NULL,
 	"url" TEXT NOT NULL,
 	"read" BOOLEAN NOT NULL DEFAULT FALSE,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
@@ -172,9 +172,11 @@ CREATE TABLE "notification" (
 );
 
 CREATE TABLE "file" (
-	"id" uuid NOT NULL DEFAULT uuid_generate_v4(),
+	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
 	"hash" TEXT NOT NULL UNIQUE,
 	"name" TEXT NOT NULL UNIQUE,
+	"width" SMALLINT NOT NULL,
+	"height" SMALLINT NOT NULL,
 	"created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
@@ -207,6 +209,8 @@ CREATE TRIGGER update_notification BEFORE UPDATE ON "notification" FOR EACH ROW 
 CREATE TRIGGER update_file BEFORE UPDATE ON "file" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
+ALTER TABLE "user" ADD CONSTRAINT "user_fk0" FOREIGN KEY ("avatar") REFERENCES "file"("id");
+ALTER TABLE "user" ADD CONSTRAINT "user_fk1" FOREIGN KEY ("background") REFERENCES "file"("id");
 ALTER TABLE "password" ADD CONSTRAINT "password_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post" ADD CONSTRAINT "post_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post" ADD CONSTRAINT "post_fk1" FOREIGN KEY ("parent_id") REFERENCES "post"("id");
@@ -216,6 +220,7 @@ ALTER TABLE "connection" ADD CONSTRAINT "connection_fk0" FOREIGN KEY ("following
 ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk0" FOREIGN KEY ("tag_id") REFERENCES "tag"("id");
 ALTER TABLE "post_tag" ADD CONSTRAINT "post_tag_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "post_attachment" ADD CONSTRAINT "post_attachment_fk0" FOREIGN KEY ("post_id") REFERENCES "post"("id");
+ALTER TABLE "post_attachment" ADD CONSTRAINT "post_attachment_fk1" FOREIGN KEY ("file_id") REFERENCES "file"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
 ALTER TABLE "post_like" ADD CONSTRAINT "post_like_fk1" FOREIGN KEY ("post_id") REFERENCES "post"("id");
 ALTER TABLE "post_save" ADD CONSTRAINT "post_save_fk0" FOREIGN KEY ("user_id") REFERENCES "user"("id");
