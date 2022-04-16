@@ -16,7 +16,7 @@ func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*mo
 }
 
 func (r *queryResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.Service.Test(ctx, input)
 }
 
 func (r *subscriptionResolver) Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error) {

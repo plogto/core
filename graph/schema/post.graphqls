@@ -5,7 +5,7 @@ type Post {
   child: Post
   user: User!
   content: String
-  attachment: [String!]
+  attachment: [File!]
   url: String!
   likes: PostLikes
   replies: Posts

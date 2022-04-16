@@ -1,7 +1,10 @@
 scalar Upload
 
 type File {
+  id: ID
   name: String
+  width: Int
+  height: Int
 }
 
 extend type Mutation {
