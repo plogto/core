@@ -1,8 +1,8 @@
 type User {
   id: ID!
   username: String!
-  avatar: String
-  background: String
+  avatar: File
+  background: File
   email: String!
   fullName: String!
   bio: String

@@ -58,8 +58,6 @@ func (t *Tag) GetTagByField(field, value string) (*model.Tag, error) {
 		Where("u.is_private is false").
 		Returning("*").First()
 
-	fmt.Println(tag, err)
-
 	return &tag, err
 }
 
