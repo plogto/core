@@ -38,8 +38,8 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 		return nil, errors.New("need to add attachment or content")
 	}
 
-	for _, name := range input.Attachment {
-		file, _ := s.File.GetFileByName(name)
+	for _, id := range input.Attachment {
+		file, _ := s.File.GetFileByID(id)
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}

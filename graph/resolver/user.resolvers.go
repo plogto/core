@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -36,7 +35,6 @@ func (r *queryResolver) CheckEmail(ctx context.Context, email string) (*model.Us
 }
 
 func (r *userResolver) Avatar(ctx context.Context, obj *model.User) (*model.File, error) {
-	fmt.Println("avatar", obj.Avatar)
 	if obj.Avatar != nil {
 		return r.Service.GetFileByFileId(ctx, *obj.Avatar)
 	} else {
