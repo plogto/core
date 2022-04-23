@@ -1,6 +1,23 @@
+enum ThemeColor {
+  LIGHT
+  DIM
+  DARK
+}
+
+enum PrimaryColor {
+  BLUE
+  GREEN
+  RED
+  PURPLE
+  ORANGE
+  YELLOW
+}
+
 type User {
   id: ID!
   username: String!
+  themeColor: ThemeColor!
+  primaryColor: PrimaryColor!
   avatar: File
   background: File
   email: String!
@@ -24,6 +41,8 @@ type Users {
 
 input EditUserInput {
   username: String
+  themeColor: ThemeColor
+  primaryColor: PrimaryColor
   avatar: String
   background: String
   fullName: String

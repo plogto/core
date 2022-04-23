@@ -66,6 +66,16 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		didUpdate = true
 	}
 
+	if input.ThemeColor != nil {
+		user.ThemeColor = *input.ThemeColor
+		didUpdate = true
+	}
+
+	if input.PrimaryColor != nil {
+		user.PrimaryColor = *input.PrimaryColor
+		didUpdate = true
+	}
+
 	if input.Avatar != nil {
 		user.Avatar = input.Avatar
 		if len(*input.Avatar) == 0 {

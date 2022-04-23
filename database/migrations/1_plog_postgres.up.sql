@@ -8,6 +8,12 @@ CREATE TYPE user_role AS ENUM ('USER', 'ADMIN');
 DROP TYPE IF EXISTS "post_status";
 CREATE TYPE post_status AS ENUM ('PUBLIC', 'PRIVATE');
 
+DROP TYPE IF EXISTS "theme_color";
+CREATE TYPE theme_color AS ENUM ('LIGHT', 'DIM', 'DARK');
+
+DROP TYPE IF EXISTS "primary_color";
+CREATE TYPE primary_color AS ENUM ('BLUE', 'GREEN', 'RED', 'PURPLE', 'ORANGE', 'YELLOW');
+
 -- Tables
 CREATE TABLE "user" (
 	"id" UUID NOT NULL DEFAULT uuid_generate_v4(),
@@ -15,6 +21,8 @@ CREATE TABLE "user" (
 	"email" VARCHAR(100) NOT NULL UNIQUE,
 	"full_name" VARCHAR(64) NOT NULL,
 	"avatar" UUID DEFAULT NULL,
+	"theme_color" theme_color DEFAULT 'LIGHT',
+	"primary_color" primary_color DEFAULT 'BLUE',
 	"background" UUID DEFAULT NULL,
 	"bio" TEXT DEFAULT NULL,
 	"role" user_role NOT NULL DEFAULT 'USER',
