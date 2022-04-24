@@ -66,8 +66,8 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		didUpdate = true
 	}
 
-	if input.ThemeColor != nil {
-		user.ThemeColor = *input.ThemeColor
+	if input.BackgroundColor != nil {
+		user.BackgroundColor = *input.BackgroundColor
 		didUpdate = true
 	}
 

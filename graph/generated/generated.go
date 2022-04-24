@@ -244,6 +244,7 @@ type ComplexityRoot struct {
 	User struct {
 		Avatar              func(childComplexity int) int
 		Background          func(childComplexity int) int
+		BackgroundColor     func(childComplexity int) int
 		Bio                 func(childComplexity int) int
 		ConnectionStatus    func(childComplexity int) int
 		CreatedAt           func(childComplexity int) int
@@ -257,7 +258,6 @@ type ComplexityRoot struct {
 		PostsCount          func(childComplexity int) int
 		PrimaryColor        func(childComplexity int) int
 		Role                func(childComplexity int) int
-		ThemeColor          func(childComplexity int) int
 		UpdatedAt           func(childComplexity int) int
 		Username            func(childComplexity int) int
 	}
@@ -1366,6 +1366,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Background(childComplexity), true
 
+	case "User.backgroundColor":
+		if e.complexity.User.BackgroundColor == nil {
+			break
+		}
+
+		return e.complexity.User.BackgroundColor(childComplexity), true
+
 	case "User.bio":
 		if e.complexity.User.Bio == nil {
 			break
@@ -1456,13 +1463,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.Role(childComplexity), true
-
-	case "User.themeColor":
-		if e.complexity.User.ThemeColor == nil {
-			break
-		}
-
-		return e.complexity.User.ThemeColor(childComplexity), true
 
 	case "User.updatedAt":
 		if e.complexity.User.UpdatedAt == nil {
@@ -1827,7 +1827,7 @@ extend type Query {
   getTrends(input: PaginationInput): Tags
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/user.graphqls", Input: `enum ThemeColor {
+	{Name: "graph/schema/user.graphqls", Input: `enum BackgroundColor{
   LIGHT
   DIM
   DARK
@@ -1845,7 +1845,7 @@ enum PrimaryColor {
 type User {
   id: ID!
   username: String!
-  themeColor: ThemeColor!
+  backgroundColor: BackgroundColor!
   primaryColor: PrimaryColor!
   avatar: File
   background: File
@@ -1870,7 +1870,7 @@ type Users {
 
 input EditUserInput {
   username: String
-  themeColor: ThemeColor
+  backgroundColor: BackgroundColor
   primaryColor: PrimaryColor
   avatar: String
   background: String
@@ -2569,8 +2569,8 @@ func (ec *executionContext) fieldContext_AuthResponse_user(ctx context.Context, 
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -2783,8 +2783,8 @@ func (ec *executionContext) fieldContext_Connection_following(ctx context.Contex
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -2865,8 +2865,8 @@ func (ec *executionContext) fieldContext_Connection_follower(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -4113,8 +4113,8 @@ func (ec *executionContext) fieldContext_Mutation_editUser(ctx context.Context, 
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -4364,8 +4364,8 @@ func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -4446,8 +4446,8 @@ func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Conte
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -5975,8 +5975,8 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -6525,8 +6525,8 @@ func (ec *executionContext) fieldContext_PostLike_user(ctx context.Context, fiel
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -6919,8 +6919,8 @@ func (ec *executionContext) fieldContext_PostSave_user(ctx context.Context, fiel
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -8232,8 +8232,8 @@ func (ec *executionContext) fieldContext_Query_getUserInfo(ctx context.Context, 
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -8311,8 +8311,8 @@ func (ec *executionContext) fieldContext_Query_getUserByUsername(ctx context.Con
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -8401,8 +8401,8 @@ func (ec *executionContext) fieldContext_Query_checkUsername(ctx context.Context
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -8491,8 +8491,8 @@ func (ec *executionContext) fieldContext_Query_checkEmail(ctx context.Context, f
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -9355,8 +9355,8 @@ func (ec *executionContext) fieldContext_User_username(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _User_themeColor(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_User_themeColor(ctx, field)
+func (ec *executionContext) _User_backgroundColor(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_backgroundColor(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -9369,7 +9369,7 @@ func (ec *executionContext) _User_themeColor(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ThemeColor, nil
+		return obj.BackgroundColor, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9381,19 +9381,19 @@ func (ec *executionContext) _User_themeColor(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.ThemeColor)
+	res := resTmp.(model.BackgroundColor)
 	fc.Result = res
-	return ec.marshalNThemeColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx, field.Selections, res)
+	return ec.marshalNBackgroundColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_User_themeColor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_User_backgroundColor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ThemeColor does not have child fields")
+			return nil, errors.New("field of type BackgroundColor does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10095,8 +10095,8 @@ func (ec *executionContext) fieldContext_Users_users(ctx context.Context, field 
 				return ec.fieldContext_User_id(ctx, field)
 			case "username":
 				return ec.fieldContext_User_username(ctx, field)
-			case "themeColor":
-				return ec.fieldContext_User_themeColor(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
 			case "primaryColor":
 				return ec.fieldContext_User_primaryColor(ctx, field)
 			case "avatar":
@@ -12008,11 +12008,11 @@ func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj
 			if err != nil {
 				return it, err
 			}
-		case "themeColor":
+		case "backgroundColor":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("themeColor"))
-			it.ThemeColor, err = ec.unmarshalOThemeColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backgroundColor"))
+			it.BackgroundColor, err = ec.unmarshalOBackgroundColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -14194,9 +14194,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "themeColor":
+		case "backgroundColor":
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_themeColor(ctx, field, obj)
+				return ec._User_backgroundColor(ctx, field, obj)
 			}
 
 			out.Values[i] = innerFunc(ctx)
@@ -14879,6 +14879,16 @@ func (ec *executionContext) marshalNAuthToken2ᚖgithubᚗcomᚋplogtoᚋcoreᚋ
 	return ec._AuthToken(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNBackgroundColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx context.Context, v interface{}) (model.BackgroundColor, error) {
+	var res model.BackgroundColor
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNBackgroundColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx context.Context, sel ast.SelectionSet, v model.BackgroundColor) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -15010,16 +15020,6 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
 	res, err := ec.unmarshalInputTestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNThemeColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx context.Context, v interface{}) (model.ThemeColor, error) {
-	var res model.ThemeColor
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNThemeColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx context.Context, sel ast.SelectionSet, v model.ThemeColor) graphql.Marshaler {
-	return v
 }
 
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
@@ -15329,6 +15329,22 @@ func (ec *executionContext) marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋcore
 		return graphql.Null
 	}
 	return ec._AuthResponse(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOBackgroundColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx context.Context, v interface{}) (*model.BackgroundColor, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.BackgroundColor)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOBackgroundColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx context.Context, sel ast.SelectionSet, v *model.BackgroundColor) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
@@ -15910,22 +15926,6 @@ func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 		return graphql.Null
 	}
 	return ec._Test(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOThemeColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx context.Context, v interface{}) (*model.ThemeColor, error) {
-	if v == nil {
-		return nil, nil
-	}
-	var res = new(model.ThemeColor)
-	err := res.UnmarshalGQL(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOThemeColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐThemeColor(ctx context.Context, sel ast.SelectionSet, v *model.ThemeColor) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return v
 }
 
 func (ec *executionContext) marshalOUser2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v []*model.User) graphql.Marshaler {

@@ -40,5 +40,5 @@ DROP TABLE IF EXISTS "file";
 -- Types
 DROP TYPE IF EXISTS "user_roles";
 DROP TYPE IF EXISTS "post_status";
-DROP TYPE IF EXISTS "theme_color";
+DROP TYPE IF EXISTS "background_color";
 DROP TYPE IF EXISTS "primary_color";
