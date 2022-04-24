@@ -30,15 +30,15 @@ type Connections struct {
 }
 
 type EditUserInput struct {
-	Username     *string       `json:"username"`
-	ThemeColor   *ThemeColor   `json:"themeColor"`
-	PrimaryColor *PrimaryColor `json:"primaryColor"`
-	Avatar       *string       `json:"avatar"`
-	Background   *string       `json:"background"`
-	FullName     *string       `json:"fullName"`
-	Email        *string       `json:"email"`
-	Bio          *string       `json:"bio"`
-	IsPrivate    *bool         `json:"isPrivate"`
+	Username        *string          `json:"username"`
+	BackgroundColor *BackgroundColor `json:"backgroundColor"`
+	PrimaryColor    *PrimaryColor    `json:"primaryColor"`
+	Avatar          *string          `json:"avatar"`
+	Background      *string          `json:"background"`
+	FullName        *string          `json:"fullName"`
+	Email           *string          `json:"email"`
+	Bio             *string          `json:"bio"`
+	IsPrivate       *bool            `json:"isPrivate"`
 }
 
 type LoginInput struct {
@@ -115,6 +115,49 @@ type AddPostInput struct {
 	Attachment []string `json:"attachment"`
 }
 
+type BackgroundColor string
+
+const (
+	BackgroundColorLight BackgroundColor = "LIGHT"
+	BackgroundColorDim   BackgroundColor = "DIM"
+	BackgroundColorDark  BackgroundColor = "DARK"
+)
+
+var AllBackgroundColor = []BackgroundColor{
+	BackgroundColorLight,
+	BackgroundColorDim,
+	BackgroundColorDark,
+}
+
+func (e BackgroundColor) IsValid() bool {
+	switch e {
+	case BackgroundColorLight, BackgroundColorDim, BackgroundColorDark:
+		return true
+	}
+	return false
+}
+
+func (e BackgroundColor) String() string {
+	return string(e)
+}
+
+func (e *BackgroundColor) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = BackgroundColor(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid BackgroundColor", str)
+	}
+	return nil
+}
+
+func (e BackgroundColor) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type PrimaryColor string
 
 const (
@@ -161,48 +204,5 @@ func (e *PrimaryColor) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PrimaryColor) MarshalGQL(w io.Writer) {
-	fmt.Fprint(w, strconv.Quote(e.String()))
-}
-
-type ThemeColor string
-
-const (
-	ThemeColorLight ThemeColor = "LIGHT"
-	ThemeColorDim   ThemeColor = "DIM"
-	ThemeColorDark  ThemeColor = "DARK"
-)
-
-var AllThemeColor = []ThemeColor{
-	ThemeColorLight,
-	ThemeColorDim,
-	ThemeColorDark,
-}
-
-func (e ThemeColor) IsValid() bool {
-	switch e {
-	case ThemeColorLight, ThemeColorDim, ThemeColorDark:
-		return true
-	}
-	return false
-}
-
-func (e ThemeColor) String() string {
-	return string(e)
-}
-
-func (e *ThemeColor) UnmarshalGQL(v interface{}) error {
-	str, ok := v.(string)
-	if !ok {
-		return fmt.Errorf("enums must be strings")
-	}
-
-	*e = ThemeColor(str)
-	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid ThemeColor", str)
-	}
-	return nil
-}
-
-func (e ThemeColor) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
