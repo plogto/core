@@ -27,6 +27,7 @@ CREATE TABLE "user" (
 	"bio" TEXT DEFAULT NULL,
 	"role" user_role NOT NULL DEFAULT 'USER',
 	"is_private" BOOLEAN NOT NULL DEFAULT FALSE,
+	"is_verified" BOOLEAN NOT NULL DEFAULT FALSE,
   "created_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"updated_at" TIMESTAMP NOT NULL DEFAULT (NOW()),
 	"deleted_at" TIMESTAMP,
