@@ -255,6 +255,7 @@ type ComplexityRoot struct {
 		FullName            func(childComplexity int) int
 		ID                  func(childComplexity int) int
 		IsPrivate           func(childComplexity int) int
+		IsVerified          func(childComplexity int) int
 		PostsCount          func(childComplexity int) int
 		PrimaryColor        func(childComplexity int) int
 		Role                func(childComplexity int) int
@@ -1443,6 +1444,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.IsPrivate(childComplexity), true
 
+	case "User.isVerified":
+		if e.complexity.User.IsVerified == nil {
+			break
+		}
+
+		return e.complexity.User.IsVerified(childComplexity), true
+
 	case "User.postsCount":
 		if e.complexity.User.PostsCount == nil {
 			break
@@ -1499,6 +1507,15 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
+	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputChangePasswordInput,
+		ec.unmarshalInputEditUserInput,
+		ec.unmarshalInputLoginInput,
+		ec.unmarshalInputPaginationInput,
+		ec.unmarshalInputRegisterInput,
+		ec.unmarshalInputTestInput,
+		ec.unmarshalInputaddPostInput,
+	)
 	first := true
 
 	switch rc.Operation.Operation {
@@ -1508,6 +1525,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				return nil
 			}
 			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Query(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
@@ -1522,6 +1540,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				return nil
 			}
 			first = false
+			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
 			data.MarshalGQL(&buf)
@@ -1854,6 +1873,7 @@ type User {
   bio: String
   role: String!
   isPrivate: Boolean!
+  isVerified: Boolean!
   connectionStatus: Int
   followingCount: Int
   followersCount: Int
@@ -2587,6 +2607,8 @@ func (ec *executionContext) fieldContext_AuthResponse_user(ctx context.Context, 
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -2801,6 +2823,8 @@ func (ec *executionContext) fieldContext_Connection_following(ctx context.Contex
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -2883,6 +2907,8 @@ func (ec *executionContext) fieldContext_Connection_follower(ctx context.Context
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -4131,6 +4157,8 @@ func (ec *executionContext) fieldContext_Mutation_editUser(ctx context.Context, 
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -4382,6 +4410,8 @@ func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -4464,6 +4494,8 @@ func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Conte
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -5993,6 +6025,8 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -6543,6 +6577,8 @@ func (ec *executionContext) fieldContext_PostLike_user(ctx context.Context, fiel
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -6937,6 +6973,8 @@ func (ec *executionContext) fieldContext_PostSave_user(ctx context.Context, fiel
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -8250,6 +8288,8 @@ func (ec *executionContext) fieldContext_Query_getUserInfo(ctx context.Context, 
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -8329,6 +8369,8 @@ func (ec *executionContext) fieldContext_Query_getUserByUsername(ctx context.Con
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -8419,6 +8461,8 @@ func (ec *executionContext) fieldContext_Query_checkUsername(ctx context.Context
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -8509,6 +8553,8 @@ func (ec *executionContext) fieldContext_Query_checkEmail(ctx context.Context, f
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -9762,6 +9808,50 @@ func (ec *executionContext) fieldContext_User_isPrivate(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _User_isVerified(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_isVerified(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsVerified, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_isVerified(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_connectionStatus(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_connectionStatus(ctx, field)
 	if err != nil {
@@ -10113,6 +10203,8 @@ func (ec *executionContext) fieldContext_Users_users(ctx context.Context, field 
 				return ec.fieldContext_User_role(ctx, field)
 			case "isPrivate":
 				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
 			case "connectionStatus":
 				return ec.fieldContext_User_connectionStatus(ctx, field)
 			case "followingCount":
@@ -12260,21 +12352,15 @@ func (ec *executionContext) _AuthResponse(ctx context.Context, sel ast.Selection
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AuthResponse")
 		case "authToken":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AuthResponse_authToken(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._AuthResponse_authToken(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "user":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AuthResponse_user(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._AuthResponse_user(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -12301,21 +12387,15 @@ func (ec *executionContext) _AuthToken(ctx context.Context, sel ast.SelectionSet
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("AuthToken")
 		case "token":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AuthToken_token(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._AuthToken_token(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "expiredAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._AuthToken_expiredAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._AuthToken_expiredAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -12342,11 +12422,8 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Connection")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connection_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connection_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -12392,28 +12469,19 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 
 			})
 		case "status":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connection_status(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connection_status(ctx, field, obj)
 
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connection_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connection_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connection_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connection_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -12440,18 +12508,12 @@ func (ec *executionContext) _Connections(ctx context.Context, sel ast.SelectionS
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Connections")
 		case "connections":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connections_connections(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connections_connections(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Connections_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Connections_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -12475,32 +12537,20 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("File")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._File_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._File_id(ctx, field, obj)
 
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._File_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._File_name(ctx, field, obj)
 
 		case "width":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._File_width(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._File_width(ctx, field, obj)
 
 		case "height":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._File_height(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._File_height(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -12533,95 +12583,82 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "test":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_test(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_test(ctx, field)
+			})
 
 		case "register":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_register(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_register(ctx, field)
+			})
 
 		case "followUser":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_followUser(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_followUser(ctx, field)
+			})
 
 		case "unfollowUser":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_unfollowUser(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unfollowUser(ctx, field)
+			})
 
 		case "acceptUser":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_acceptUser(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_acceptUser(ctx, field)
+			})
 
 		case "rejectUser":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_rejectUser(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_rejectUser(ctx, field)
+			})
 
 		case "singleUploadFile":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_singleUploadFile(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_singleUploadFile(ctx, field)
+			})
 
 		case "addPost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_addPost(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_addPost(ctx, field)
+			})
 
 		case "deletePost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_deletePost(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deletePost(ctx, field)
+			})
 
 		case "likePost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_likePost(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_likePost(ctx, field)
+			})
 
 		case "savePost":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_savePost(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_savePost(ctx, field)
+			})
 
 		case "editUser":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_editUser(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_editUser(ctx, field)
+			})
 
 		case "changePassword":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_changePassword(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_changePassword(ctx, field)
+			})
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -12645,11 +12682,8 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Notification")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notification_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notification_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -12749,38 +12783,26 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 
 			})
 		case "url":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notification_url(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notification_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "read":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notification_read(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notification_read(ctx, field, obj)
 
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notification_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notification_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notification_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notification_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -12807,51 +12829,36 @@ func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.Selec
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("NotificationType")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._NotificationType_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._NotificationType_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._NotificationType_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._NotificationType_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "template":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._NotificationType_template(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._NotificationType_template(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._NotificationType_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._NotificationType_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._NotificationType_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._NotificationType_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -12878,25 +12885,16 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Notifications")
 		case "notifications":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notifications_notifications(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notifications_notifications(ctx, field, obj)
 
 		case "unreadNotificationsCount":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notifications_unreadNotificationsCount(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notifications_unreadNotificationsCount(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Notifications_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Notifications_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -12920,71 +12918,50 @@ func (ec *executionContext) _OnlineUser(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("OnlineUser")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "userId":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_userId(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_userId(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "token":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_token(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_token(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "socketId":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_socketId(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_socketId(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "userAgent":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_userAgent(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_userAgent(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._OnlineUser_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._OnlineUser_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -13011,51 +12988,36 @@ func (ec *executionContext) _Pagination(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Pagination")
 		case "totalDocs":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Pagination_totalDocs(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Pagination_totalDocs(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "totalPages":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Pagination_totalPages(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Pagination_totalPages(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "limit":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Pagination_limit(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Pagination_limit(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "page":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Pagination_page(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Pagination_page(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "nextPage":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Pagination_nextPage(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Pagination_nextPage(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13079,21 +13041,15 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Post")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_status(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_status(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13153,11 +13109,8 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "content":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_content(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_content(ctx, field, obj)
 
 		case "attachment":
 			field := field
@@ -13177,11 +13130,8 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "url":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_url(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_url(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13255,21 +13205,15 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Post_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Post_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13296,11 +13240,8 @@ func (ec *executionContext) _PostLike(ctx context.Context, sel ast.SelectionSet,
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostLike")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostLike_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostLike_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13346,21 +13287,15 @@ func (ec *executionContext) _PostLike(ctx context.Context, sel ast.SelectionSet,
 
 			})
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostLike_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostLike_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostLike_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostLike_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13387,18 +13322,12 @@ func (ec *executionContext) _PostLikes(ctx context.Context, sel ast.SelectionSet
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostLikes")
 		case "postLikes":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostLikes_postLikes(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostLikes_postLikes(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostLikes_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostLikes_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13422,11 +13351,8 @@ func (ec *executionContext) _PostSave(ctx context.Context, sel ast.SelectionSet,
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostSave")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostSave_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostSave_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13472,21 +13398,15 @@ func (ec *executionContext) _PostSave(ctx context.Context, sel ast.SelectionSet,
 
 			})
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostSave_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostSave_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostSave_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostSave_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -13513,18 +13433,12 @@ func (ec *executionContext) _PostSaves(ctx context.Context, sel ast.SelectionSet
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostSaves")
 		case "postSaves":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostSaves_postSaves(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostSaves_postSaves(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._PostSaves_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._PostSaves_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13548,18 +13462,12 @@ func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Posts")
 		case "posts":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Posts_posts(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Posts_posts(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Posts_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Posts_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13952,18 +13860,16 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				return rrm(innerCtx)
 			})
 		case "__type":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Query___type(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Query___type(ctx, field)
+			})
 
 		case "__schema":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Query___schema(ctx, field)
-			}
 
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, innerFunc)
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Query___schema(ctx, field)
+			})
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -13987,18 +13893,12 @@ func (ec *executionContext) _Search(ctx context.Context, sel ast.SelectionSet, o
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Search")
 		case "user":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Search_user(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Search_user(ctx, field, obj)
 
 		case "tag":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Search_tag(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Search_tag(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14044,48 +13944,33 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Tag")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tag_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tag_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tag_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tag_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "count":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tag_count(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tag_count(ctx, field, obj)
 
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tag_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tag_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tag_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tag_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -14112,18 +13997,12 @@ func (ec *executionContext) _Tags(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Tags")
 		case "tags":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tags_tags(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tags_tags(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Tags_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Tags_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14147,11 +14026,8 @@ func (ec *executionContext) _Test(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Test")
 		case "content":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Test_content(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Test_content(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14175,41 +14051,29 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("User")
 		case "id":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_id(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "username":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_username(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_username(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "backgroundColor":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_backgroundColor(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_backgroundColor(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "primaryColor":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_primaryColor(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_primaryColor(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -14249,48 +14113,40 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "email":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_email(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_email(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "fullName":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_fullName(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_fullName(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "bio":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_bio(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_bio(ctx, field, obj)
 
 		case "role":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_role(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_role(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "isPrivate":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_isPrivate(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_isPrivate(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "isVerified":
+
+			out.Values[i] = ec._User_isVerified(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -14381,21 +14237,15 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "createdAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_createdAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_createdAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "updatedAt":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._User_updatedAt(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._User_updatedAt(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -14422,18 +14272,12 @@ func (ec *executionContext) _Users(ctx context.Context, sel ast.SelectionSet, ob
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Users")
 		case "users":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Users_users(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Users_users(ctx, field, obj)
 
 		case "pagination":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Users_pagination(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec._Users_pagination(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14457,48 +14301,33 @@ func (ec *executionContext) ___Directive(ctx context.Context, sel ast.SelectionS
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Directive")
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Directive_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Directive_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Directive_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Directive_description(ctx, field, obj)
 
 		case "locations":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Directive_locations(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Directive_locations(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "args":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Directive_args(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Directive_args(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "isRepeatable":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Directive_isRepeatable(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Directive_isRepeatable(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -14525,38 +14354,26 @@ func (ec *executionContext) ___EnumValue(ctx context.Context, sel ast.SelectionS
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__EnumValue")
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___EnumValue_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___EnumValue_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___EnumValue_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___EnumValue_description(ctx, field, obj)
 
 		case "isDeprecated":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___EnumValue_isDeprecated(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___EnumValue_isDeprecated(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "deprecationReason":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___EnumValue_deprecationReason(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___EnumValue_deprecationReason(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14580,58 +14397,40 @@ func (ec *executionContext) ___Field(ctx context.Context, sel ast.SelectionSet, 
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Field")
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_description(ctx, field, obj)
 
 		case "args":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_args(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_args(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "type":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_type(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_type(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "isDeprecated":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_isDeprecated(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_isDeprecated(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "deprecationReason":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Field_deprecationReason(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Field_deprecationReason(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14655,38 +14454,26 @@ func (ec *executionContext) ___InputValue(ctx context.Context, sel ast.Selection
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__InputValue")
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___InputValue_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___InputValue_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___InputValue_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___InputValue_description(ctx, field, obj)
 
 		case "type":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___InputValue_type(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___InputValue_type(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "defaultValue":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___InputValue_defaultValue(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___InputValue_defaultValue(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -14710,52 +14497,34 @@ func (ec *executionContext) ___Schema(ctx context.Context, sel ast.SelectionSet,
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Schema")
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_description(ctx, field, obj)
 
 		case "types":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_types(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_types(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "queryType":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_queryType(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_queryType(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "mutationType":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_mutationType(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_mutationType(ctx, field, obj)
 
 		case "subscriptionType":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_subscriptionType(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_subscriptionType(ctx, field, obj)
 
 		case "directives":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Schema_directives(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Schema_directives(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -14782,77 +14551,47 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("__Type")
 		case "kind":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_kind(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_kind(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
 		case "name":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_name(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_name(ctx, field, obj)
 
 		case "description":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_description(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_description(ctx, field, obj)
 
 		case "fields":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_fields(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_fields(ctx, field, obj)
 
 		case "interfaces":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_interfaces(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_interfaces(ctx, field, obj)
 
 		case "possibleTypes":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_possibleTypes(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_possibleTypes(ctx, field, obj)
 
 		case "enumValues":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_enumValues(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_enumValues(ctx, field, obj)
 
 		case "inputFields":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_inputFields(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_inputFields(ctx, field, obj)
 
 		case "ofType":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_ofType(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_ofType(ctx, field, obj)
 
 		case "specifiedByURL":
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				return ec.___Type_specifiedByURL(ctx, field, obj)
-			}
 
-			out.Values[i] = innerFunc(ctx)
+			out.Values[i] = ec.___Type_specifiedByURL(ctx, field, obj)
 
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))

@@ -25,6 +25,7 @@ type User {
   bio: String
   role: String!
   isPrivate: Boolean!
+  isVerified: Boolean!
   connectionStatus: Int
   followingCount: Int
   followersCount: Int
