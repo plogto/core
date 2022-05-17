@@ -71,9 +71,9 @@ func (s *Service) GetPostLikesByPostID(ctx context.Context, postID string) (*mod
 	}
 
 	// TODO: add inputPagination
-	postLikes, _ := s.PostLike.GetPostLikesByPostIDAndPagination(postID, 10, 1)
+	likedPosts, _ := s.PostLike.GetPostLikesByPostIDAndPagination(postID, 50, 1)
 
-	return postLikes, nil
+	return likedPosts, nil
 }
 
 func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLike, error) {

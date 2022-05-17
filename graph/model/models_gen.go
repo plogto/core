@@ -66,12 +66,12 @@ type PaginationInput struct {
 }
 
 type PostLikes struct {
-	PostLikes  []*PostLike `json:"postLikes"`
+	LikedPosts []*PostLike `json:"likedPosts"`
 	Pagination *Pagination `json:"pagination"`
 }
 
 type PostSaves struct {
-	PostSaves  []*PostSave `json:"postSaves"`
+	SavedPosts []*PostSave `json:"savedPosts"`
 	Pagination *Pagination `json:"pagination"`
 }
 

@@ -7,7 +7,7 @@ type PostSave {
 }
 
 type PostSaves {
-  postSaves: [PostSave]
+  savedPosts: [PostSave]
   pagination: Pagination
 }
 

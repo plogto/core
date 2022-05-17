@@ -171,8 +171,8 @@ type ComplexityRoot struct {
 	}
 
 	PostLikes struct {
+		LikedPosts func(childComplexity int) int
 		Pagination func(childComplexity int) int
-		PostLikes  func(childComplexity int) int
 	}
 
 	PostSave struct {
@@ -185,7 +185,7 @@ type ComplexityRoot struct {
 
 	PostSaves struct {
 		Pagination func(childComplexity int) int
-		PostSaves  func(childComplexity int) int
+		SavedPosts func(childComplexity int) int
 	}
 
 	Posts struct {
@@ -976,19 +976,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PostLike.User(childComplexity), true
 
+	case "PostLikes.likedPosts":
+		if e.complexity.PostLikes.LikedPosts == nil {
+			break
+		}
+
+		return e.complexity.PostLikes.LikedPosts(childComplexity), true
+
 	case "PostLikes.pagination":
 		if e.complexity.PostLikes.Pagination == nil {
 			break
 		}
 
 		return e.complexity.PostLikes.Pagination(childComplexity), true
-
-	case "PostLikes.postLikes":
-		if e.complexity.PostLikes.PostLikes == nil {
-			break
-		}
-
-		return e.complexity.PostLikes.PostLikes(childComplexity), true
 
 	case "PostSave.createdAt":
 		if e.complexity.PostSave.CreatedAt == nil {
@@ -1032,12 +1032,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PostSaves.Pagination(childComplexity), true
 
-	case "PostSaves.postSaves":
-		if e.complexity.PostSaves.PostSaves == nil {
+	case "PostSaves.savedPosts":
+		if e.complexity.PostSaves.SavedPosts == nil {
 			break
 		}
 
-		return e.complexity.PostSaves.PostSaves(childComplexity), true
+		return e.complexity.PostSaves.SavedPosts(childComplexity), true
 
 	case "Posts.pagination":
 		if e.complexity.Posts.Pagination == nil {
@@ -1787,7 +1787,7 @@ extend type Mutation {
 }
 
 type PostLikes {
-  postLikes: [PostLike]
+  likedPosts: [PostLike]
   pagination: Pagination
 }
 
@@ -1808,7 +1808,7 @@ extend type Mutation {
 }
 
 type PostSaves {
-  postSaves: [PostSave]
+  savedPosts: [PostSave]
   pagination: Pagination
 }
 
@@ -6220,8 +6220,8 @@ func (ec *executionContext) fieldContext_Post_likes(ctx context.Context, field g
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "postLikes":
-				return ec.fieldContext_PostLikes_postLikes(ctx, field)
+			case "likedPosts":
+				return ec.fieldContext_PostLikes_likedPosts(ctx, field)
 			case "pagination":
 				return ec.fieldContext_PostLikes_pagination(ctx, field)
 			}
@@ -6762,8 +6762,8 @@ func (ec *executionContext) fieldContext_PostLike_updatedAt(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PostLikes_postLikes(ctx context.Context, field graphql.CollectedField, obj *model.PostLikes) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PostLikes_postLikes(ctx, field)
+func (ec *executionContext) _PostLikes_likedPosts(ctx context.Context, field graphql.CollectedField, obj *model.PostLikes) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostLikes_likedPosts(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -6776,7 +6776,7 @@ func (ec *executionContext) _PostLikes_postLikes(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PostLikes, nil
+		return obj.LikedPosts, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6790,7 +6790,7 @@ func (ec *executionContext) _PostLikes_postLikes(ctx context.Context, field grap
 	return ec.marshalOPostLike2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostLike(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostLikes_postLikes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostLikes_likedPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostLikes",
 		Field:      field,
@@ -7158,8 +7158,8 @@ func (ec *executionContext) fieldContext_PostSave_updatedAt(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PostSaves_postSaves(ctx context.Context, field graphql.CollectedField, obj *model.PostSaves) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PostSaves_postSaves(ctx, field)
+func (ec *executionContext) _PostSaves_savedPosts(ctx context.Context, field graphql.CollectedField, obj *model.PostSaves) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostSaves_savedPosts(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7172,7 +7172,7 @@ func (ec *executionContext) _PostSaves_postSaves(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PostSaves, nil
+		return obj.SavedPosts, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7186,7 +7186,7 @@ func (ec *executionContext) _PostSaves_postSaves(ctx context.Context, field grap
 	return ec.marshalOPostSave2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_PostSaves_postSaves(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_PostSaves_savedPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PostSaves",
 		Field:      field,
@@ -7970,8 +7970,8 @@ func (ec *executionContext) fieldContext_Query_getPostLikesByPostId(ctx context.
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "postLikes":
-				return ec.fieldContext_PostLikes_postLikes(ctx, field)
+			case "likedPosts":
+				return ec.fieldContext_PostLikes_likedPosts(ctx, field)
 			case "pagination":
 				return ec.fieldContext_PostLikes_pagination(ctx, field)
 			}
@@ -8028,8 +8028,8 @@ func (ec *executionContext) fieldContext_Query_getSavedPosts(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "postSaves":
-				return ec.fieldContext_PostSaves_postSaves(ctx, field)
+			case "savedPosts":
+				return ec.fieldContext_PostSaves_savedPosts(ctx, field)
 			case "pagination":
 				return ec.fieldContext_PostSaves_pagination(ctx, field)
 			}
@@ -13321,9 +13321,9 @@ func (ec *executionContext) _PostLikes(ctx context.Context, sel ast.SelectionSet
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostLikes")
-		case "postLikes":
+		case "likedPosts":
 
-			out.Values[i] = ec._PostLikes_postLikes(ctx, field, obj)
+			out.Values[i] = ec._PostLikes_likedPosts(ctx, field, obj)
 
 		case "pagination":
 
@@ -13432,9 +13432,9 @@ func (ec *executionContext) _PostSaves(ctx context.Context, sel ast.SelectionSet
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("PostSaves")
-		case "postSaves":
+		case "savedPosts":
 
-			out.Values[i] = ec._PostSaves_postSaves(ctx, field, obj)
+			out.Values[i] = ec._PostSaves_savedPosts(ctx, field, obj)
 
 		case "pagination":
 

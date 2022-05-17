@@ -22,10 +22,10 @@ func (p *PostLike) CreatePostLike(postLike *model.PostLike) (*model.PostLike, er
 }
 
 func (p *PostLike) GetPostLikesByPostIDAndPagination(postID string, limit, page int) (*model.PostLikes, error) {
-	var postLikes []*model.PostLike
+	var likedPosts []*model.PostLike
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&postLikes).Where("post_id = ?", postID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	query := p.DB.Model(&likedPosts).Where("post_id = ?", postID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -36,7 +36,7 @@ func (p *PostLike) GetPostLikesByPostIDAndPagination(postID string, limit, page 
 			Page:      page,
 			TotalDocs: totalDocs,
 		}),
-		PostLikes: postLikes,
+		LikedPosts: likedPosts,
 	}, err
 }
 

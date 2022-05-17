@@ -31,10 +31,10 @@ func (p *PostSave) GetPostSaveByUserIDAndPostID(userID, postID string) (*model.P
 }
 
 func (p *PostSave) GetPostSavesByUserIDAndPagination(userID string, limit, page int) (*model.PostSaves, error) {
-	var postSaves []*model.PostSave
+	var savesPosts []*model.PostSave
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&postSaves).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	query := p.DB.Model(&savesPosts).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -45,7 +45,7 @@ func (p *PostSave) GetPostSavesByUserIDAndPagination(userID string, limit, page 
 			Page:      page,
 			TotalDocs: totalDocs,
 		}),
-		PostSaves: postSaves,
+		SavedPosts: savesPosts,
 	}, err
 }
 

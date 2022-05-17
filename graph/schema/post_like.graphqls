@@ -7,7 +7,7 @@ type PostLike {
 }
 
 type PostLikes {
-  postLikes: [PostLike]
+  likedPosts: [PostLike]
   pagination: Pagination
 }
 

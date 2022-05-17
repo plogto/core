@@ -58,9 +58,9 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInpu
 		}
 	}
 
-	postSaves, _ := s.PostSave.GetPostSavesByUserIDAndPagination(user.ID, limit, page)
+	savedPosts, _ := s.PostSave.GetPostSavesByUserIDAndPagination(user.ID, limit, page)
 
-	return postSaves, nil
+	return savedPosts, nil
 }
 
 func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.PostSave, error) {
