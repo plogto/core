@@ -70,11 +70,6 @@ type PostLikes struct {
 	Pagination *Pagination `json:"pagination"`
 }
 
-type PostSaves struct {
-	SavedPosts []*PostSave `json:"savedPosts"`
-	Pagination *Pagination `json:"pagination"`
-}
-
 type Posts struct {
 	Posts      []*Post     `json:"posts"`
 	Pagination *Pagination `json:"pagination"`

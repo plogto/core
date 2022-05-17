@@ -29,23 +29,31 @@ func (p *PostSave) GetPostSaveByUserIDAndPostID(userID, postID string) (*model.P
 	}
 	return &postSave, err
 }
-
-func (p *PostSave) GetPostSavesByUserIDAndPagination(userID string, limit, page int) (*model.PostSaves, error) {
-	var savesPosts []*model.PostSave
+func (p *PostSave) GetSavedPostsByUserIDAndPagination(userID string, limit, page int) (*model.Posts, error) {
+	var posts []*model.Post
 	var offset = (page - 1) * limit
 
-	query := p.DB.Model(&savesPosts).Where("user_id = ?", userID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
+	// TODO: fix this query
+	query := p.DB.Model(&posts).
+		ColumnExpr("post_save.post_id, post_save.user_id").
+		ColumnExpr("u.id").
+		ColumnExpr("post.*").
+		Join("INNER JOIN post_save ON post_save.user_id = ?", userID).
+		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
+		Where("post_save.post_id = post.id").
+		Where("post_save.deleted_at is ?", nil).
+		Where("post.deleted_at is ?", nil).
+		Order("post_save.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
-
-	return &model.PostSaves{
+	return &model.Posts{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
 			TotalDocs: totalDocs,
 		}),
-		SavedPosts: savesPosts,
+		Posts: posts,
 	}, err
 }
 

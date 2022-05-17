@@ -38,7 +38,7 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, err
 	return post, nil
 }
 
-func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error) {
+func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
@@ -58,7 +58,7 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInpu
 		}
 	}
 
-	savedPosts, _ := s.PostSave.GetPostSavesByUserIDAndPagination(user.ID, limit, page)
+	savedPosts, _ := s.PostSave.GetSavedPostsByUserIDAndPagination(user.ID, limit, page)
 
 	return savedPosts, nil
 }
