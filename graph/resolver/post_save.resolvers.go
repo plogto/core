@@ -22,7 +22,7 @@ func (r *postSaveResolver) Post(ctx context.Context, obj *model.PostSave) (*mode
 	return r.Service.GetPostByID(ctx, &obj.PostID)
 }
 
-func (r *queryResolver) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error) {
+func (r *queryResolver) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
 	return r.Service.GetSavedPosts(ctx, input)
 }
 

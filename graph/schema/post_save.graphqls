@@ -6,13 +6,8 @@ type PostSave {
   updatedAt: Time!
 }
 
-type PostSaves {
-  savedPosts: [PostSave]
-  pagination: Pagination
-}
-
 extend type Query {
-  getSavedPosts( input: PaginationInput): PostSaves
+  getSavedPosts(input: PaginationInput): Posts
 }
 
 extend type Mutation {

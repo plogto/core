@@ -183,11 +183,6 @@ type ComplexityRoot struct {
 		User      func(childComplexity int) int
 	}
 
-	PostSaves struct {
-		Pagination func(childComplexity int) int
-		SavedPosts func(childComplexity int) int
-	}
-
 	Posts struct {
 		Pagination func(childComplexity int) int
 		Posts      func(childComplexity int) int
@@ -326,7 +321,7 @@ type QueryResolver interface {
 	GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
 	GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error)
-	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.PostSaves, error)
+	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
 	GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
@@ -1024,20 +1019,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PostSave.User(childComplexity), true
-
-	case "PostSaves.pagination":
-		if e.complexity.PostSaves.Pagination == nil {
-			break
-		}
-
-		return e.complexity.PostSaves.Pagination(childComplexity), true
-
-	case "PostSaves.savedPosts":
-		if e.complexity.PostSaves.SavedPosts == nil {
-			break
-		}
-
-		return e.complexity.PostSaves.SavedPosts(childComplexity), true
 
 	case "Posts.pagination":
 		if e.complexity.Posts.Pagination == nil {
@@ -1807,13 +1788,8 @@ extend type Mutation {
   updatedAt: Time!
 }
 
-type PostSaves {
-  savedPosts: [PostSave]
-  pagination: Pagination
-}
-
 extend type Query {
-  getSavedPosts( input: PaginationInput): PostSaves
+  getSavedPosts(input: PaginationInput): Posts
 }
 
 extend type Mutation {
@@ -7158,112 +7134,6 @@ func (ec *executionContext) fieldContext_PostSave_updatedAt(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _PostSaves_savedPosts(ctx context.Context, field graphql.CollectedField, obj *model.PostSaves) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PostSaves_savedPosts(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SavedPosts, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.PostSave)
-	fc.Result = res
-	return ec.marshalOPostSave2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PostSaves_savedPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PostSaves",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_PostSave_id(ctx, field)
-			case "user":
-				return ec.fieldContext_PostSave_user(ctx, field)
-			case "post":
-				return ec.fieldContext_PostSave_post(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_PostSave_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_PostSave_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type PostSave", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _PostSaves_pagination(ctx context.Context, field graphql.CollectedField, obj *model.PostSaves) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_PostSaves_pagination(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Pagination, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Pagination)
-	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_PostSaves_pagination(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "PostSaves",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalDocs":
-				return ec.fieldContext_Pagination_totalDocs(ctx, field)
-			case "totalPages":
-				return ec.fieldContext_Pagination_totalPages(ctx, field)
-			case "limit":
-				return ec.fieldContext_Pagination_limit(ctx, field)
-			case "page":
-				return ec.fieldContext_Pagination_page(ctx, field)
-			case "nextPage":
-				return ec.fieldContext_Pagination_nextPage(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Pagination", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Posts_posts(ctx, field)
 	if err != nil {
@@ -8015,9 +7885,9 @@ func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostSaves)
+	res := resTmp.(*model.Posts)
 	fc.Result = res
-	return ec.marshalOPostSaves2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSaves(ctx, field.Selections, res)
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getSavedPosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8028,12 +7898,12 @@ func (ec *executionContext) fieldContext_Query_getSavedPosts(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "savedPosts":
-				return ec.fieldContext_PostSaves_savedPosts(ctx, field)
+			case "posts":
+				return ec.fieldContext_Posts_posts(ctx, field)
 			case "pagination":
-				return ec.fieldContext_PostSaves_pagination(ctx, field)
+				return ec.fieldContext_Posts_pagination(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type PostSaves", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
 	}
 	defer func() {
@@ -13422,35 +13292,6 @@ func (ec *executionContext) _PostSave(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
-var postSavesImplementors = []string{"PostSaves"}
-
-func (ec *executionContext) _PostSaves(ctx context.Context, sel ast.SelectionSet, obj *model.PostSaves) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, postSavesImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("PostSaves")
-		case "savedPosts":
-
-			out.Values[i] = ec._PostSaves_savedPosts(ctx, field, obj)
-
-		case "pagination":
-
-			out.Values[i] = ec._PostSaves_pagination(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var postsImplementors = []string{"Posts"}
 
 func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, obj *model.Posts) graphql.Marshaler {
@@ -15456,59 +15297,11 @@ func (ec *executionContext) marshalOPostLikes2ᚖgithubᚗcomᚋplogtoᚋcoreᚋ
 	return ec._PostLikes(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostSave2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v []*model.PostSave) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOPostSave2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSave(ctx context.Context, sel ast.SelectionSet, v *model.PostSave) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._PostSave(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPostSaves2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostSaves(ctx context.Context, sel ast.SelectionSet, v *model.PostSaves) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._PostSaves(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {
