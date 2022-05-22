@@ -1,6 +1,8 @@
 package util
 
 import (
+	"math"
+
 	"github.com/plogto/core/graph/model"
 )
 
@@ -11,7 +13,7 @@ type GetPaginationParams struct {
 }
 
 func GetPagination(params *GetPaginationParams) (pagination *model.Pagination) {
-	var totalPages int = params.TotalDocs / params.Limit
+	var totalPages = int(math.Ceil(float64(params.TotalDocs) / float64(params.Limit)))
 	var nextPage *int
 
 	if params.Page < totalPages {
