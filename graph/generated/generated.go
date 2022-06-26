@@ -86,9 +86,10 @@ type ComplexityRoot struct {
 
 	Mutation struct {
 		AcceptUser       func(childComplexity int, userID string) int
-		AddPost          func(childComplexity int, postID *string, input model.AddPostInput) int
+		AddPost          func(childComplexity int, input model.AddPostInput) int
 		ChangePassword   func(childComplexity int, input model.ChangePasswordInput) int
 		DeletePost       func(childComplexity int, postID string) int
+		EditPost         func(childComplexity int, postID string, input model.EditPostInput) int
 		EditUser         func(childComplexity int, input model.EditUserInput) int
 		FollowUser       func(childComplexity int, userID string) int
 		LikePost         func(childComplexity int, postID string) int
@@ -276,7 +277,8 @@ type MutationResolver interface {
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
 	SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error)
-	AddPost(ctx context.Context, postID *string, input model.AddPostInput) (*model.Post, error)
+	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
+	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
 	LikePost(ctx context.Context, postID string) (*model.Post, error)
 	SavePost(ctx context.Context, postID string) (*model.Post, error)
@@ -494,7 +496,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddPost(childComplexity, args["postId"].(*string), args["input"].(model.AddPostInput)), true
+		return e.complexity.Mutation.AddPost(childComplexity, args["input"].(model.AddPostInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -519,6 +521,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(string)), true
+
+	case "Mutation.editPost":
+		if e.complexity.Mutation.EditPost == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_editPost_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(string), args["input"].(model.EditPostInput)), true
 
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
@@ -1496,6 +1510,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputTestInput,
 		ec.unmarshalInputaddPostInput,
+		ec.unmarshalInputeditPostInput,
 	)
 	first := true
 
@@ -1573,7 +1588,7 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
-	{Name: "graph/schema/auth.graphqls", Input: `input LoginInput {
+	{Name: "../schema/auth.graphqls", Input: `input LoginInput {
   username: String!
   password: String!
 }
@@ -1602,7 +1617,7 @@ extend type Mutation {
   register(input: RegisterInput!): AuthResponse
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/connection.graphqls", Input: `type Connection {
+	{Name: "../schema/connection.graphqls", Input: `type Connection {
   id: ID!
   following: User!
   follower: User!
@@ -1629,7 +1644,7 @@ extend type Mutation {
   rejectUser(userId: ID!): Connection
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/file.graphqls", Input: `scalar Upload
+	{Name: "../schema/file.graphqls", Input: `scalar Upload
 
 type File {
   id: ID
@@ -1642,7 +1657,7 @@ extend type Mutation {
   singleUploadFile(file: Upload!): File
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/main.graphqls", Input: `scalar Time
+	{Name: "../schema/main.graphqls", Input: `scalar Time
 
 type Pagination {
   totalDocs: Int!
@@ -1677,7 +1692,7 @@ type Subscription {
   test(input: TestInput!): Test
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/notification.graphqls", Input: `type NotificationType {
+	{Name: "../schema/notification.graphqls", Input: `type NotificationType {
   id: ID!
   name: String!
   template: String!
@@ -1711,7 +1726,7 @@ extend type Query {
 extend type Subscription {
   getNotification: Notification
 }`, BuiltIn: false},
-	{Name: "graph/schema/online_user.graphqls", Input: `type OnlineUser {
+	{Name: "../schema/online_user.graphqls", Input: `type OnlineUser {
   id: ID!
   userId: ID!
   token: String!
@@ -1720,7 +1735,7 @@ extend type Subscription {
   createdAt: Time!
   updatedAt: Time!
 }`, BuiltIn: false},
-	{Name: "graph/schema/post.graphqls", Input: `type Post {
+	{Name: "../schema/post.graphqls", Input: `type Post {
   id: ID!
   status: String!
   parent: Post
@@ -1743,9 +1758,15 @@ type Posts {
 }
 
 input addPostInput {
+  parentId: ID
   content: String
-  status: Int
+  status: String
   attachment: [String!]
+}
+
+input editPostInput {
+  content: String
+  status: String
 }
 
 extend type Query {
@@ -1755,11 +1776,12 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(postId: ID, input: addPostInput!): Post
+  addPost(input: addPostInput!): Post
+  editPost(postId: ID!, input: editPostInput!): Post
   deletePost(postId: ID!): Post
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/post_like.graphqls", Input: `type PostLike {
+	{Name: "../schema/post_like.graphqls", Input: `type PostLike {
   id: ID!
   user: User!
   post: Post!
@@ -1780,7 +1802,7 @@ extend type Mutation {
   likePost(postId: ID!): Post
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/post_save.graphqls", Input: `type PostSave {
+	{Name: "../schema/post_save.graphqls", Input: `type PostSave {
   id: ID!
   user: User!
   post: Post!
@@ -1796,7 +1818,7 @@ extend type Mutation {
   savePost(postId: ID!): Post
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/search.graphqls", Input: `type Search {
+	{Name: "../schema/search.graphqls", Input: `type Search {
   user: Users
   tag: Tags
 }
@@ -1804,7 +1826,7 @@ extend type Mutation {
 extend type Query {
   search(expression: String!): Search
 }`, BuiltIn: false},
-	{Name: "graph/schema/tag.graphqls", Input: `type Tag {
+	{Name: "../schema/tag.graphqls", Input: `type Tag {
   id: ID!
   name: String!
   count: Int
@@ -1822,7 +1844,7 @@ extend type Query {
   getTrends(input: PaginationInput): Tags
 }
 `, BuiltIn: false},
-	{Name: "graph/schema/user.graphqls", Input: `enum BackgroundColor{
+	{Name: "../schema/user.graphqls", Input: `enum BackgroundColor{
   LIGHT
   DIM
   DARK
@@ -1918,24 +1940,15 @@ func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *string
-	if tmp, ok := rawArgs["postId"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["postId"] = arg0
-	var arg1 model.AddPostInput
+	var arg0 model.AddPostInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1966,6 +1979,30 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 		}
 	}
 	args["postId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_editPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["postId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["postId"] = arg0
+	var arg1 model.EditPostInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNeditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -3761,7 +3798,7 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddPost(rctx, fc.Args["postId"].(*string), fc.Args["input"].(model.AddPostInput))
+		return ec.resolvers.Mutation().AddPost(rctx, fc.Args["input"].(model.AddPostInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3823,6 +3860,88 @@ func (ec *executionContext) fieldContext_Mutation_addPost(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_addPost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_editPost(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(string), fc.Args["input"].(model.EditPostInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_editPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Post_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Post_status(ctx, field)
+			case "parent":
+				return ec.fieldContext_Post_parent(ctx, field)
+			case "child":
+				return ec.fieldContext_Post_child(ctx, field)
+			case "user":
+				return ec.fieldContext_Post_user(ctx, field)
+			case "content":
+				return ec.fieldContext_Post_content(ctx, field)
+			case "attachment":
+				return ec.fieldContext_Post_attachment(ctx, field)
+			case "url":
+				return ec.fieldContext_Post_url(ctx, field)
+			case "likes":
+				return ec.fieldContext_Post_likes(ctx, field)
+			case "replies":
+				return ec.fieldContext_Post_replies(ctx, field)
+			case "isLiked":
+				return ec.fieldContext_Post_isLiked(ctx, field)
+			case "isSaved":
+				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Post_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Post_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_editPost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -5780,9 +5899,9 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8704,17 +8823,21 @@ func (ec *executionContext) _Subscription_test(ctx context.Context, field graphq
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan *model.Test)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.Test):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
@@ -8770,17 +8893,21 @@ func (ec *executionContext) _Subscription_getNotification(ctx context.Context, f
 		return nil
 	}
 	return func(ctx context.Context) graphql.Marshaler {
-		res, ok := <-resTmp.(<-chan *model.Notification)
-		if !ok {
+		select {
+		case res, ok := <-resTmp.(<-chan *model.Notification):
+			if !ok {
+				return nil
+			}
+			return graphql.WriterFunc(func(w io.Writer) {
+				w.Write([]byte{'{'})
+				graphql.MarshalString(field.Alias).MarshalGQL(w)
+				w.Write([]byte{':'})
+				ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				w.Write([]byte{'}'})
+			})
+		case <-ctx.Done():
 			return nil
 		}
-		return graphql.WriterFunc(func(w io.Writer) {
-			w.Write([]byte{'{'})
-			graphql.MarshalString(field.Alias).MarshalGQL(w)
-			w.Write([]byte{':'})
-			ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
-			w.Write([]byte{'}'})
-		})
 	}
 }
 
@@ -12173,6 +12300,14 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 
 	for k, v := range asMap {
 		switch k {
+		case "parentId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
+			it.ParentID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "content":
 			var err error
 
@@ -12185,7 +12320,7 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			it.Status, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12194,6 +12329,37 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
 			it.Attachment, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputeditPostInput(ctx context.Context, obj interface{}) (model.EditPostInput, error) {
+	var it model.EditPostInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "content":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			it.Status, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -12498,6 +12664,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_addPost(ctx, field)
+			})
+
+		case "editPost":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_editPost(ctx, field)
 			})
 
 		case "deletePost":
@@ -14597,6 +14769,27 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) unmarshalNString2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNString2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
 	res, err := ec.unmarshalInputTestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -14901,6 +15094,11 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 
 func (ec *executionContext) unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx context.Context, v interface{}) (model.AddPostInput, error) {
 	res, err := ec.unmarshalInputaddPostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNeditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx context.Context, v interface{}) (model.EditPostInput, error) {
+	res, err := ec.unmarshalInputeditPostInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 

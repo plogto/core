@@ -105,9 +105,15 @@ type Users struct {
 }
 
 type AddPostInput struct {
+	ParentID   *string  `json:"parentId"`
 	Content    *string  `json:"content"`
-	Status     *int     `json:"status"`
+	Status     *string  `json:"status"`
 	Attachment []string `json:"attachment"`
+}
+
+type EditPostInput struct {
+	Content *string `json:"content"`
+	Status  *string `json:"status"`
 }
 
 type BackgroundColor string

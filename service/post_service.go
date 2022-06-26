@@ -10,7 +10,7 @@ import (
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID *string) (*model.Post, error) {
+func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
 	// authentication
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
@@ -19,8 +19,8 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 
 	// check parent post
 	var parentPost *model.Post
-	if postID != nil {
-		parentPost, _ = s.Post.GetPostByID(*postID)
+	if input.ParentID != nil {
+		parentPost, _ = s.Post.GetPostByID(*input.ParentID)
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
@@ -46,9 +46,10 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 	}
 
 	post := &model.Post{
-		ParentID: postID,
+		ParentID: input.ParentID,
 		UserID:   user.ID,
 		Content:  input.Content,
+		Status:   input.Status,
 		Url:      util.RandomString(20),
 	}
 
@@ -69,19 +70,52 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput, postID 
 			s.SaveTagsPost(post.ID, *post.Content)
 		}
 		// notification for reply
-		if postID != nil {
+		if input.ParentID != nil {
 			s.CreateNotification(CreateNotificationArgs{
 				Name:       constants.NOTIFICATION_REPLY_POST,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "p/" + post.Url + "#" + post.ID,
-				PostID:     postID,
+				PostID:     input.ParentID,
 				ReplyID:    &post.ID,
 			})
 		}
 	}
 
 	return post, nil
+}
+
+func (s *Service) EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	post, _ := s.Post.GetPostByID(postID)
+	if post == nil || post.UserID != user.ID {
+		return nil, errors.New("access denied")
+	}
+
+	didUpdate := false
+
+	if input.Content != nil {
+		post.Content = input.Content
+		didUpdate = true
+	}
+
+	if input.Status != nil {
+		post.Status = input.Status
+		didUpdate = true
+	}
+
+	if didUpdate == bool(false) {
+		return nil, nil
+	}
+
+	updatedPost, _ := s.Post.UpdatePost(post)
+
+	return updatedPost, nil
+
 }
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {

@@ -117,6 +117,11 @@ func (p *Post) CreatePost(post *model.Post) (*model.Post, error) {
 	return post, err
 }
 
+func (p *Post) UpdatePost(post *model.Post) (*model.Post, error) {
+	_, err := p.DB.Model(post).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+	return post, err
+}
+
 func (p *Post) DeletePostByID(id string) (*model.Post, error) {
 	DeletedAt := time.Now()
 	var post = &model.Post{
