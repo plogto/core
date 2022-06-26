@@ -21,9 +21,15 @@ type Posts {
 }
 
 input addPostInput {
+  parentId: ID
   content: String
-  status: Int
+  status: String
   attachment: [String!]
+}
+
+input editPostInput {
+  content: String
+  status: String
 }
 
 extend type Query {
@@ -33,6 +39,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(postId: ID, input: addPostInput!): Post
+  addPost(input: addPostInput!): Post
+  editPost(postId: ID!, input: editPostInput!): Post
   deletePost(postId: ID!): Post
 }
