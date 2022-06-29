@@ -98,12 +98,12 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 
 	didUpdate := false
 
-	if input.Content != nil {
+	if input.Content != nil && post.Content != input.Content {
 		post.Content = input.Content
 		didUpdate = true
 	}
 
-	if input.Status != nil {
+	if input.Status != nil && post.Status != input.Status {
 		post.Status = input.Status
 		didUpdate = true
 	}

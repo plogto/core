@@ -203,18 +203,18 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
-CREATE TRIGGER update_user BEFORE UPDATE ON "user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_password BEFORE UPDATE ON "password" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_post BEFORE UPDATE ON "post" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_connection BEFORE UPDATE ON "connection" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_tag BEFORE UPDATE ON "tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_post_tag BEFORE UPDATE ON "post_tag" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_post_attachment BEFORE UPDATE ON "post_attachment" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_notification_type BEFORE UPDATE ON "notification_type" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
-CREATE TRIGGER update_notification BEFORE UPDATE ON "notification" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
+CREATE TRIGGER update_user BEFORE UPDATE ON "user" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_password BEFORE UPDATE ON "password" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_post BEFORE UPDATE ON "post" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_connection BEFORE UPDATE ON "connection" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_tag BEFORE UPDATE ON "tag" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_post_tag BEFORE UPDATE ON "post_tag" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_post_attachment BEFORE UPDATE ON "post_attachment" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_post_like BEFORE UPDATE ON "post_like" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_post_save BEFORE UPDATE ON "post_save" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_online_user BEFORE UPDATE ON "online_user" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_notification_type BEFORE UPDATE ON "notification_type" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
+CREATE TRIGGER update_notification BEFORE UPDATE ON "notification" FOR EACH ROW EXECUTE PROCEDURE trigger_set_updated_at();
 CREATE TRIGGER update_file BEFORE UPDATE ON "file" FOR EACH ROW EXECUTE PROCEDURE  trigger_set_updated_at();
 
 -- Foreign keys
