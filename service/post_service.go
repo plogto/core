@@ -115,7 +115,6 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 	updatedPost, _ := s.Post.UpdatePost(post)
 
 	return updatedPost, nil
-
 }
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
@@ -236,4 +235,25 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, er
 	post, _ := s.Post.GetPostByURL(url)
 
 	return post, nil
+}
+
+func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	var limit int = constants.POSTS_PAGE_LIMIT
+	var page int = 1
+
+	if input != nil {
+		if input.Limit != nil {
+			limit = *input.Limit
+		}
+
+		if input.Page != nil && *input.Page > 0 {
+			page = *input.Page
+		}
+	}
+
+	posts, _ := s.Post.GetTimelinePostsByPagination(user.ID, limit, page)
+
+	return posts, nil
 }
