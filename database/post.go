@@ -95,6 +95,36 @@ func (p *Post) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*mod
 	}, err
 }
 
+func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*model.Posts, error) {
+	var posts []*model.Post
+	var offset = (page - 1) * limit
+
+	query := p.DB.Model(&posts).
+		ColumnExpr("connection.follower_id, connection.following_id, connection.status").
+		ColumnExpr("u.id").
+		ColumnExpr("post.*").
+		Join("INNER JOIN connection ON connection.follower_id = ?", userID).
+		Join("INNER JOIN \"user\" as u ON u.id = connection.following_id").
+		Where("post.user_id = connection.following_id").
+		Where("post.parent_id is ?", nil).
+		Where("connection.deleted_at is ?", nil).
+		Where("post.deleted_at is ?", nil).
+		Order("post.created_at DESC").Returning("*")
+	query.Offset(offset).Limit(limit)
+
+	totalDocs, err := query.SelectAndCount()
+
+	fmt.Println(err)
+	return &model.Posts{
+		Pagination: util.GetPagination(&util.GetPaginationParams{
+			Limit:     limit,
+			Page:      page,
+			TotalDocs: totalDocs,
+		}),
+		Posts: posts,
+	}, err
+}
+
 func (p *Post) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }

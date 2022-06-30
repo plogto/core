@@ -36,6 +36,7 @@ extend type Query {
   getPostsByUsername(username: String!, input: PaginationInput): Posts
   getPostsByTagName(tagName: String!, input: PaginationInput): Posts
   getPostByUrl(url: String!): Post
+  getTimelinePosts(input: PaginationInput): Posts
 }
 
 extend type Mutation {

@@ -202,6 +202,7 @@ type ComplexityRoot struct {
 		GetPostsByUsername     func(childComplexity int, username string, input *model.PaginationInput) int
 		GetSavedPosts          func(childComplexity int, input *model.PaginationInput) int
 		GetTagByTagName        func(childComplexity int, tagName string) int
+		GetTimelinePosts       func(childComplexity int, input *model.PaginationInput) int
 		GetTrends              func(childComplexity int, input *model.PaginationInput) int
 		GetUserByUsername      func(childComplexity int, username string) int
 		GetUserInfo            func(childComplexity int) int
@@ -322,6 +323,7 @@ type QueryResolver interface {
 	GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
+	GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error)
 	GetPostLikesByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.PostLikes, error)
 	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
@@ -1192,6 +1194,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetTagByTagName(childComplexity, args["tagName"].(string)), true
 
+	case "Query.getTimelinePosts":
+		if e.complexity.Query.GetTimelinePosts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getTimelinePosts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetTimelinePosts(childComplexity, args["input"].(*model.PaginationInput)), true
+
 	case "Query.getTrends":
 		if e.complexity.Query.GetTrends == nil {
 			break
@@ -1773,6 +1787,7 @@ extend type Query {
   getPostsByUsername(username: String!, input: PaginationInput): Posts
   getPostsByTagName(tagName: String!, input: PaginationInput): Posts
   getPostByUrl(url: String!): Post
+  getTimelinePosts(input: PaginationInput): Posts
 }
 
 extend type Mutation {
@@ -2378,6 +2393,21 @@ func (ec *executionContext) field_Query_getTagByTagName_args(ctx context.Context
 		}
 	}
 	args["tagName"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getTimelinePosts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.PaginationInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -7917,6 +7947,64 @@ func (ec *executionContext) fieldContext_Query_getPostByUrl(ctx context.Context,
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getPostByUrl_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getTimelinePosts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getTimelinePosts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetTimelinePosts(rctx, fc.Args["input"].(*model.PaginationInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Posts)
+	fc.Result = res
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getTimelinePosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "posts":
+				return ec.fieldContext_Posts_posts(ctx, field)
+			case "pagination":
+				return ec.fieldContext_Posts_pagination(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getTimelinePosts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -13682,6 +13770,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getPostByUrl(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getTimelinePosts":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getTimelinePosts(ctx, field)
 				return res
 			}
 
