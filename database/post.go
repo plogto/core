@@ -110,11 +110,7 @@ func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*mo
 				WhereOr("u.is_private = ?", false)
 			return q, nil
 		}).
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("post.user_id = connection.following_id").
-				WhereOr("post.user_id = ?", userID)
-			return q, nil
-		}).
+		Where("post.user_id = u.id").
 		Where("post.parent_id is ?", nil).
 		Where("connection.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
