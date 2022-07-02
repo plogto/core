@@ -101,13 +101,21 @@ func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*mo
 
 	query := p.DB.Model(&posts).
 		ColumnExpr("connection.follower_id, connection.following_id, connection.status").
-		ColumnExpr("u.id").
+		ColumnExpr("u.id, u.is_private").
 		ColumnExpr("post.*").
 		Join("INNER JOIN connection ON connection.follower_id = ?", userID).
 		Join("INNER JOIN \"user\" as u ON u.id = connection.following_id").
-		Where("post.user_id = connection.following_id").
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.Where("connection.status = ?", 2).
+				WhereOr("u.is_private = ?", false)
+			return q, nil
+		}).
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.Where("post.user_id = connection.following_id").
+				WhereOr("post.user_id = ?", userID)
+			return q, nil
+		}).
 		Where("post.parent_id is ?", nil).
-		Where("connection.status = ?", 2).
 		Where("connection.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
 		Order("post.created_at DESC").Returning("*")
@@ -115,7 +123,6 @@ func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*mo
 
 	totalDocs, err := query.SelectAndCount()
 
-	fmt.Println(err)
 	return &model.Posts{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
