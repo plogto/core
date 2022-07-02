@@ -107,6 +107,7 @@ func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*mo
 		Join("INNER JOIN \"user\" as u ON u.id = connection.following_id").
 		Where("post.user_id = connection.following_id").
 		Where("post.parent_id is ?", nil).
+		Where("connection.status = ?", 2).
 		Where("connection.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
 		Order("post.created_at DESC").Returning("*")
