@@ -9,6 +9,7 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
+// Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, expression string) (*model.Search, error) {
 	return r.Service.Search(ctx, expression)
 }

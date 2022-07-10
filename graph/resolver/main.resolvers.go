@@ -11,14 +11,17 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
+// Test is the resolver for the test field.
 func (r *mutationResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
 	panic(fmt.Errorf("not implemented"))
 }
 
+// Test is the resolver for the test field.
 func (r *queryResolver) Test(ctx context.Context, input model.TestInput) (*model.Test, error) {
 	return r.Service.Test(ctx, input)
 }
 
+// Test is the resolver for the test field.
 func (r *subscriptionResolver) Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error) {
 	panic(fmt.Errorf("not implemented"))
 }
