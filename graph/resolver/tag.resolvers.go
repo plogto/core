@@ -9,10 +9,12 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
+// GetTagByTagName is the resolver for the getTagByTagName field.
 func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error) {
 	return r.Service.GetTagByName(ctx, tagName)
 }
 
+// GetTrends is the resolver for the getTrends field.
 func (r *queryResolver) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
 	return r.Service.GetTrends(ctx, input)
 }

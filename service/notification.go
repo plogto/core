@@ -61,11 +61,10 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 	}()
 
 	notification := make(chan *model.Notification, 1)
-	// TODO: uncomment these lines
-	// s.mu.Lock()
-	// // Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	// s.Notifications[onlineUserContext.SocketID] = notification
-	// s.mu.Unlock()
+	s.mu.Lock()
+	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
+	s.Notifications[onlineUserContext.SocketID] = notification
+	s.mu.Unlock()
 
 	return notification, nil
 }
@@ -85,14 +84,13 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 
 		s.Notification.CreateNotification(notification)
 
-		// TODO: uncomment these lines
-		// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
+		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
 
-		// if onlineUser != nil {
-		// 	s.mu.Lock()
-		// 	s.Notifications[onlineUser.SocketID] <- notification
-		// 	s.mu.Unlock()
-		// }
+		if onlineUser != nil {
+			s.mu.Lock()
+			s.Notifications[onlineUser.SocketID] <- notification
+			s.mu.Unlock()
+		}
 	}
 
 	return nil
@@ -112,7 +110,7 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 
 	s.Notification.RemoveNotification(notification)
 
-	// TODO: add revmoved type for Notification
+	// TODO: add removed type for Notification
 	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
 
 	// if onlineUser != nil {

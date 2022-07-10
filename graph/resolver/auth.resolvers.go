@@ -9,10 +9,12 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
+// Register is the resolver for the register field.
 func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
 	return r.Service.Register(ctx, input)
 }
 
+// Login is the resolver for the login field.
 func (r *queryResolver) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
 	return r.Service.Login(ctx, input)
 }

@@ -1,16 +1,20 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/handler/extension"
 	"github.com/99designs/gqlgen/graphql/handler/transport"
 	"github.com/99designs/gqlgen/graphql/playground"
+	"github.com/dgrijalva/jwt-go"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
+	"github.com/gorilla/websocket"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
@@ -20,6 +24,7 @@ import (
 	graph "github.com/plogto/core/graph/resolver"
 	customMiddleware "github.com/plogto/core/middleware"
 	"github.com/plogto/core/service"
+	"github.com/plogto/core/util"
 )
 
 const defaultPort = "8080"
@@ -68,6 +73,8 @@ func main() {
 		NotificationType: database.NotificationType{DB: DB},
 	})
 
+	s.OnlineUser.DeleteAllOnlineUsers()
+
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
 	queryHandler.AddTransport(transport.POST{})
@@ -75,39 +82,43 @@ func main() {
 		MaxMemory:     32 * constants.MB,
 		MaxUploadSize: 50 * constants.MB,
 	})
-	// queryHandler.AddTransport(transport.Websocket{
-	// 	InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
-	// 		claims := jwt.MapClaims{}
+	queryHandler.AddTransport(transport.Websocket{
+		InitFunc: func(ctx context.Context, initPayload transport.InitPayload) (context.Context, error) {
+			claims := jwt.MapClaims{}
 
-	// 		token, _ := customMiddleware.StripBearerPrefixFromToken(initPayload.Authorization())
+			token, _ := customMiddleware.StripBearerPrefixFromToken(initPayload.Authorization())
+			util.ParseJWTWithClaims(token, &claims)
 
-	// 		util.ParseJWTWithClaims(token, &claims)
+			if len(claims) > 0 {
+				user, err := user.GetUserByID(claims["jti"].(string))
 
-	// 		user, err := user.GetUserByID(claims["jti"].(string))
-	// 		if err != nil {
-	// 			return nil, err
-	// 		}
+				if err != nil {
+					return nil, err
+				}
 
-	// 		currentOnlineUser := &customMiddleware.OnlineUserContext{
-	// 			User:      *user,
-	// 			Token:     token,
-	// 			SocketID:  util.RandomString(20),
-	// 			UserAgent: "UserAgent",
-	// 		}
+				currentOnlineUser := &customMiddleware.OnlineUserContext{
+					User:      *user,
+					Token:     token,
+					SocketID:  util.RandomString(20),
+					UserAgent: "UserAgent",
+				}
 
-	// 		c := context.WithValue(ctx, constants.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
+				c := context.WithValue(ctx, constants.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
 
-	// 		s.AddOnlineUser(c, currentOnlineUser)
+				s.AddOnlineUser(c, currentOnlineUser)
 
-	// 		return c, nil
-	// 	},
-	// 	KeepAlivePingInterval: 10 * time.Second,
-	// 	Upgrader: websocket.Upgrader{
-	// 		CheckOrigin: func(r *http.Request) bool {
-	// 			return true
-	// 		},
-	// 	},
-	// })
+				return c, nil
+			}
+
+			return ctx, nil
+		},
+		KeepAlivePingInterval: 10 * time.Second,
+		Upgrader: websocket.Upgrader{
+			CheckOrigin: func(r *http.Request) bool {
+				return true
+			},
+		},
+	})
 	queryHandler.Use(extension.Introspection{})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
