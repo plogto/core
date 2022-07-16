@@ -112,9 +112,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		return nil, nil
 	}
 
-	updatedPost, _ := s.Post.UpdatePost(post)
-
-	return updatedPost, nil
+	return s.Post.UpdatePost(post)
 }
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
@@ -159,13 +157,11 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*mod
 	parentPost, _ := s.Post.GetPostByID(parentID)
 	followingUser, _ := s.User.GetUserByID(parentPost.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
+		return nil, nil
+	} else {
+		// TODO: add inputPagination
+		return s.Post.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
 	}
-
-	// 	// TODO: add inputPagination
-	posts, _ := s.Post.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
-
-	return posts, nil
 }
 
 func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
@@ -190,9 +186,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
-
-	return posts, nil
+	return s.Post.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
 }
 
 func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
@@ -211,30 +205,31 @@ func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *
 		}
 	}
 
-	posts, _ := s.Post.GetPostsByTagIDAndPagination(tag.ID, limit, page)
-
-	return posts, nil
+	return s.Post.GetPostsByTagIDAndPagination(tag.ID, limit, page)
 }
 
 func (s *Service) GetPostsCount(ctx context.Context, userID string) (*int, error) {
-	count, _ := s.Post.CountPostsByUserID(userID)
-
-	return count, nil
+	return s.Post.CountPostsByUserID(userID)
 }
 
 func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
 	if id == nil {
 		return nil, nil
 	}
 	post, _ := s.Post.GetPostByID(*id)
 
-	return post, nil
+	followingUser, _ := s.User.GetUserByID(post.UserID)
+	if s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, nil
+	} else {
+		return post, nil
+	}
 }
 
 func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
-	post, _ := s.Post.GetPostByURL(url)
-
-	return post, nil
+	return s.Post.GetPostByURL(url)
 }
 
 func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
@@ -253,7 +248,5 @@ func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationI
 		}
 	}
 
-	posts, _ := s.Post.GetTimelinePostsByPagination(user.ID, limit, page)
-
-	return posts, nil
+	return s.Post.GetTimelinePostsByPagination(user.ID, limit, page)
 }
