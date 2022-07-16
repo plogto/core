@@ -67,13 +67,11 @@ func (s *Service) GetPostLikesByPostID(ctx context.Context, postID string) (*mod
 	post, _ := s.Post.GetPostByID(postID)
 	followingUser, _ := s.User.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
+		return nil, nil
+	} else {
+		// TODO: add inputPagination
+		return s.PostLike.GetPostLikesByPostIDAndPagination(postID, 50, 1)
 	}
-
-	// TODO: add inputPagination
-	likedPosts, _ := s.PostLike.GetPostLikesByPostIDAndPagination(postID, 50, 1)
-
-	return likedPosts, nil
 }
 
 func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLike, error) {
@@ -86,10 +84,8 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLi
 	post, _ := s.Post.GetPostByID(postID)
 	followingUser, _ := s.User.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
+		return nil, nil
+	} else {
+		return s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
 	}
-
-	postLike, _ := s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
-
-	return postLike, nil
 }
