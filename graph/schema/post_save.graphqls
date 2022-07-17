@@ -2,8 +2,8 @@ type PostSave {
   id: ID!
   user: User!
   post: Post!
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 extend type Query {

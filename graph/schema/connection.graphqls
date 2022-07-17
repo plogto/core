@@ -3,8 +3,8 @@ type Connection {
   following: User!
   follower: User!
   status: Int
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 type Connections {
