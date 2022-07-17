@@ -2,8 +2,8 @@ type NotificationType {
   id: ID!
   name: String!
   template: String!
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 type Notification {
@@ -15,8 +15,8 @@ type Notification {
   reply: Post
   url: String!
   read: Boolean
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 type Notifications {

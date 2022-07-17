@@ -9,7 +9,7 @@ type Tag struct {
 	ID        string
 	Name      string
 	Count     int64 `pg:"-"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 	DeletedAt *time.Time `pg:"-,soft_delete"`
 }

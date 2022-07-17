@@ -31,8 +31,8 @@ type User {
   followersCount: Int
   followRequestsCount: Int
   postsCount: Int
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 type Users {

@@ -9,7 +9,7 @@ type PostLike struct {
 	ID        string
 	UserID    string
 	PostID    string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 	DeletedAt *time.Time `pg:"-,soft_delete"`
 }

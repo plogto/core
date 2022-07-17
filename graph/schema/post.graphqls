@@ -11,8 +11,8 @@ type Post {
   replies: Posts
   isLiked: PostLike
   isSaved: PostSave
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
 
 type Posts {

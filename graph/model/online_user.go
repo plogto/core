@@ -11,7 +11,7 @@ type OnlineUser struct {
 	Token     string
 	SocketID  string
 	UserAgent string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CreatedAt *time.Time
+	UpdatedAt *time.Time
 	DeletedAt *time.Time `pg:"-,soft_delete"`
 }

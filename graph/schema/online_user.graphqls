@@ -4,6 +4,6 @@ type OnlineUser {
   token: String!
   socketId: String!
   userAgent: String!
-  createdAt: Time!
-  updatedAt: Time!
+  createdAt: Time
+  updatedAt: Time
 }
