@@ -41,6 +41,11 @@ type EditUserInput struct {
 	IsPrivate       *bool            `json:"isPrivate"`
 }
 
+type LikedPosts struct {
+	LikedPosts []*LikedPost `json:"likedPosts"`
+	Pagination *Pagination  `json:"pagination"`
+}
+
 type LoginInput struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -63,11 +68,6 @@ type Pagination struct {
 type PaginationInput struct {
 	Page  *int `json:"page"`
 	Limit *int `json:"limit"`
-}
-
-type PostLikes struct {
-	LikedPosts []*PostLike `json:"likedPosts"`
-	Pagination *Pagination `json:"pagination"`
 }
 
 type Posts struct {

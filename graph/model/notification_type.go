@@ -5,7 +5,7 @@ import (
 )
 
 type NotificationType struct {
-	tableName struct{} `pg:"notification_type"`
+	tableName struct{} `pg:"notification_types"`
 	ID        string
 	Name      string
 	Template  string

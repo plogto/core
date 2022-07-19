@@ -47,8 +47,8 @@ func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*mode
 }
 
 // Likes is the resolver for the likes field.
-func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.PostLikes, error) {
-	return r.Service.GetPostLikesByPostID(ctx, obj.ID)
+func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error) {
+	return r.Service.GetLikedPostsByPostID(ctx, obj.ID)
 }
 
 // Replies is the resolver for the replies field.
@@ -57,12 +57,12 @@ func (r *postResolver) Replies(ctx context.Context, obj *model.Post) (*model.Pos
 }
 
 // IsLiked is the resolver for the isLiked field.
-func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.PostLike, error) {
+func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*model.LikedPost, error) {
 	return r.Service.IsPostLiked(ctx, obj.ID)
 }
 
 // IsSaved is the resolver for the isSaved field.
-func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.PostSave, error) {
+func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.SavedPost, error) {
 	return r.Service.IsPostSaved(ctx, obj.ID)
 }
 

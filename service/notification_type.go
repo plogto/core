@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) GetNotificationType(ctx context.Context, id string) (*model.NotificationType, error) {
-	notificationType, _ := s.NotificationType.GetNotificationTypeByID(id)
+	notificationType, _ := s.NotificationTypes.GetNotificationTypeByID(id)
 
 	return notificationType, nil
 }

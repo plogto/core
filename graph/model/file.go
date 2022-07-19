@@ -5,7 +5,7 @@ import (
 )
 
 type File struct {
-	tableName struct{} `pg:"file,discard_unknown_columns"`
+	tableName struct{} `pg:"files,discard_unknown_columns"`
 	ID        string
 	Hash      string
 	Name      string

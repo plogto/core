@@ -5,7 +5,7 @@ import (
 )
 
 type OnlineUser struct {
-	tableName struct{} `pg:"online_user"`
+	tableName struct{} `pg:"online_users"`
 	ID        string
 	UserID    string
 	Token     string

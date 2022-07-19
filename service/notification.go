@@ -40,7 +40,7 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationI
 		}
 	}
 
-	posts, _ := s.Notification.GetNotificationsByReceiverIDAndPagination(user.ID, limit, page)
+	posts, _ := s.Notifications.GetNotificationsByReceiverIDAndPagination(user.ID, limit, page)
 
 	return posts, nil
 }
@@ -55,15 +55,15 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 	go func() {
 		<-ctx.Done()
 		s.mu.Lock()
-		s.OnlineUser.DeleteOnlineUserBySocketID(onlineUserContext.SocketID)
-		delete(s.Notifications, onlineUserContext.SocketID)
+		s.OnlineUsers.DeleteOnlineUserBySocketID(onlineUserContext.SocketID)
+		delete(s.OnlineNotifications, onlineUserContext.SocketID)
 		s.mu.Unlock()
 	}()
 
 	notification := make(chan *model.Notification, 1)
 	s.mu.Lock()
 	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	s.Notifications[onlineUserContext.SocketID] = notification
+	s.OnlineNotifications[onlineUserContext.SocketID] = notification
 	s.mu.Unlock()
 
 	return notification, nil
@@ -72,7 +72,7 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 
 	if args.SenderID != args.ReceiverID {
-		notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(args.Name)
 		notification := &model.Notification{
 			NotificationTypeID: notificationType.ID,
 			SenderID:           args.SenderID,
@@ -82,13 +82,13 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 			ReplyID:            args.ReplyID,
 		}
 
-		s.Notification.CreateNotification(notification)
+		s.Notifications.CreateNotification(notification)
 
-		onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
+		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID)
 
 		if onlineUser != nil {
 			s.mu.Lock()
-			s.Notifications[onlineUser.SocketID] <- notification
+			s.OnlineNotifications[onlineUser.SocketID] <- notification
 			s.mu.Unlock()
 		}
 	}
@@ -97,7 +97,7 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 }
 
 func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
-	notificationType, _ := s.NotificationType.GetNotificationTypeByName(args.Name)
+	notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(args.Name)
 	DeletedAt := time.Now()
 	notification := &model.Notification{
 		NotificationTypeID: notificationType.ID,
@@ -108,7 +108,7 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 		DeletedAt:          &DeletedAt,
 	}
 
-	s.Notification.RemoveNotification(notification)
+	s.Notifications.RemoveNotification(notification)
 
 	// TODO: add removed type for Notification
 	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
@@ -130,7 +130,7 @@ func (s *Service) RemoveNotifications(args RemovePostNotificationsArgs) error {
 		DeletedAt:  &DeletedAt,
 	}
 
-	s.Notification.RemovePostNotifications(notification)
+	s.Notifications.RemovePostNotifications(notification)
 
 	return nil
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type PostAttachment struct {
-	tableName struct{} `pg:"post_attachment"`
+	tableName struct{} `pg:"post_attachments"`
 	ID        string
 	PostID    string
 	FileID    string

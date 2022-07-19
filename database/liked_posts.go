@@ -8,11 +8,11 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type PostLike struct {
+type LikedPosts struct {
 	DB *pg.DB
 }
 
-func (p *PostLike) CreatePostLike(postLike *model.PostLike) (*model.PostLike, error) {
+func (p *LikedPosts) CreatePostLike(postLike *model.LikedPost) (*model.LikedPost, error) {
 	_, err := p.DB.Model(postLike).
 		Where("user_id = ?user_id").
 		Where("post_id = ?post_id").
@@ -21,8 +21,8 @@ func (p *PostLike) CreatePostLike(postLike *model.PostLike) (*model.PostLike, er
 	return postLike, err
 }
 
-func (p *PostLike) GetPostLikesByPostIDAndPagination(postID string, limit, page int) (*model.PostLikes, error) {
-	var likedPosts []*model.PostLike
+func (p *LikedPosts) GetLikedPostsByPostIDAndPagination(postID string, limit, page int) (*model.LikedPosts, error) {
+	var likedPosts []*model.LikedPost
 	var offset = (page - 1) * limit
 
 	query := p.DB.Model(&likedPosts).Where("post_id = ?", postID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
@@ -30,7 +30,7 @@ func (p *PostLike) GetPostLikesByPostIDAndPagination(postID string, limit, page 
 
 	totalDocs, err := query.SelectAndCount()
 
-	return &model.PostLikes{
+	return &model.LikedPosts{
 		Pagination: util.GetPagination(&util.GetPaginationParams{
 			Limit:     limit,
 			Page:      page,
@@ -40,8 +40,8 @@ func (p *PostLike) GetPostLikesByPostIDAndPagination(postID string, limit, page 
 	}, err
 }
 
-func (p *PostLike) GetPostLikeByUserIDAndPostID(userID, postID string) (*model.PostLike, error) {
-	var postLike model.PostLike
+func (p *LikedPosts) GetPostLikeByUserIDAndPostID(userID, postID string) (*model.LikedPost, error) {
+	var postLike model.LikedPost
 	err := p.DB.Model(&postLike).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
 	if len(postLike.ID) < 1 {
 		return nil, nil
@@ -49,9 +49,9 @@ func (p *PostLike) GetPostLikeByUserIDAndPostID(userID, postID string) (*model.P
 	return &postLike, err
 }
 
-func (p *PostLike) DeletePostLikeByID(id string) (*model.PostLike, error) {
+func (p *LikedPosts) DeletePostLikeByID(id string) (*model.LikedPost, error) {
 	DeletedAt := time.Now()
-	var postLike = &model.PostLike{
+	var postLike = &model.LikedPost{
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}

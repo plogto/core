@@ -5,7 +5,7 @@ import (
 )
 
 type Connection struct {
-	tableName   struct{} `pg:"connection"`
+	tableName   struct{} `pg:"connections"`
 	ID          string
 	FollowingID string
 	FollowerID  string

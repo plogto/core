@@ -23,7 +23,7 @@ type OnlineUserContext struct {
 
 var errAuthenticationFailed error = errors.New("Authentication failed")
 
-func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
+func AuthMiddleware(users database.Users) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			token, err := parseToken(r)
@@ -39,7 +39,7 @@ func AuthMiddleware(user database.User) func(http.Handler) http.Handler {
 				return
 			}
 
-			user, err := user.GetUserByID(claims["jti"].(string))
+			user, err := users.GetUserByID(claims["jti"].(string))
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return

@@ -20,13 +20,13 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check parent post
 	var parentPost *model.Post
 	if input.ParentID != nil {
-		parentPost, _ = s.Post.GetPostByID(*input.ParentID)
+		parentPost, _ = s.Posts.GetPostByID(*input.ParentID)
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
 		}
 
-		followingUser, _ := s.User.GetUserByID(parentPost.UserID)
+		followingUser, _ := s.Users.GetUserByID(parentPost.UserID)
 		if s.CheckUserAccess(user, followingUser) == bool(false) {
 			return nil, errors.New("access denied")
 		}
@@ -39,7 +39,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	for _, id := range input.Attachment {
-		file, _ := s.File.GetFileByID(id)
+		file, _ := s.Files.GetFileByID(id)
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -53,12 +53,12 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		Url:      util.RandomString(20),
 	}
 
-	s.Post.CreatePost(post)
+	s.Posts.CreatePost(post)
 
 	// check attachment
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			s.PostAttachment.CreatePostAttachment(&model.PostAttachment{
+			s.PostAttachments.CreatePostAttachment(&model.PostAttachment{
 				PostID: post.ID,
 				FileID: v,
 			})
@@ -91,7 +91,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Post.GetPostByID(postID)
+	post, _ := s.Posts.GetPostByID(postID)
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
@@ -112,7 +112,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		return nil, nil
 	}
 
-	return s.Post.UpdatePost(post)
+	return s.Posts.UpdatePost(post)
 }
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
@@ -122,13 +122,13 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Post.GetPostByID(postID)
+	post, _ := s.Posts.GetPostByID(postID)
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
 
 	if post.ParentID != nil {
-		parentPost, _ := s.Post.GetPostByID(*post.ParentID)
+		parentPost, _ := s.Posts.GetPostByID(*post.ParentID)
 
 		if parentPost != nil && len(parentPost.ID) > 0 {
 			// remove notification for reply
@@ -148,26 +148,26 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		PostID:     post.ID,
 	})
 
-	return s.Post.DeletePostByID(postID)
+	return s.Posts.DeletePostByID(postID)
 }
 
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	parentPost, _ := s.Post.GetPostByID(parentID)
-	followingUser, _ := s.User.GetUserByID(parentPost.UserID)
+	parentPost, _ := s.Posts.GetPostByID(parentID)
+	followingUser, _ := s.Users.GetUserByID(parentPost.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
 		// TODO: add inputPagination
-		return s.Post.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
+		return s.Posts.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
 	}
 }
 
 func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	followingUser, _ := s.User.GetUserByUsername(username)
+	followingUser, _ := s.Users.GetUserByUsername(username)
 
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
@@ -186,11 +186,11 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 		}
 	}
 
-	return s.Post.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
+	return s.Posts.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
 }
 
 func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	tag, _ := s.Tag.GetTagByName(tagName)
+	tag, _ := s.Tags.GetTagByName(tagName)
 
 	var limit int = constants.POSTS_PAGE_LIMIT
 	var page int = 1
@@ -205,11 +205,11 @@ func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *
 		}
 	}
 
-	return s.Post.GetPostsByTagIDAndPagination(tag.ID, limit, page)
+	return s.Posts.GetPostsByTagIDAndPagination(tag.ID, limit, page)
 }
 
 func (s *Service) GetPostsCount(ctx context.Context, userID string) (*int, error) {
-	return s.Post.CountPostsByUserID(userID)
+	return s.Posts.CountPostsByUserID(userID)
 }
 
 func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
@@ -218,9 +218,9 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 	if id == nil {
 		return nil, nil
 	}
-	post, _ := s.Post.GetPostByID(*id)
+	post, _ := s.Posts.GetPostByID(*id)
 
-	followingUser, _ := s.User.GetUserByID(post.UserID)
+	followingUser, _ := s.Users.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
@@ -229,7 +229,7 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 }
 
 func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
-	return s.Post.GetPostByURL(url)
+	return s.Posts.GetPostByURL(url)
 }
 
 func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
@@ -248,5 +248,5 @@ func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationI
 		}
 	}
 
-	return s.Post.GetTimelinePostsByPagination(user.ID, limit, page)
+	return s.Posts.GetTimelinePostsByPagination(user.ID, limit, page)
 }

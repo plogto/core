@@ -5,7 +5,7 @@ import (
 )
 
 type PostTag struct {
-	tableName struct{} `pg:"post_tag,discard_unknown_columns"`
+	tableName struct{} `pg:"post_tags,discard_unknown_columns"`
 	ID        string
 	TagID     string
 	PostID    string

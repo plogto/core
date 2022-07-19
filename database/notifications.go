@@ -6,11 +6,11 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type Notification struct {
+type Notifications struct {
 	DB *pg.DB
 }
 
-func (p *Notification) GetNotificationsByReceiverIDAndPagination(receiverID string, limit, page int) (*model.Notifications, error) {
+func (p *Notifications) GetNotificationsByReceiverIDAndPagination(receiverID string, limit, page int) (*model.Notifications, error) {
 	var notifications []*model.Notification
 	var offset = (page - 1) * limit
 
@@ -37,7 +37,7 @@ func (p *Notification) GetNotificationsByReceiverIDAndPagination(receiverID stri
 	}, err
 }
 
-func (p *Notification) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
+func (p *Notifications) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
 	count, err := p.DB.Model((*model.Notification)(nil)).
 		Where("receiver_id = ?", receiverID).
 		Where("read = ?", false).
@@ -48,7 +48,7 @@ func (p *Notification) CountUnreadNotificationsByReceiverID(receiverID string) (
 	return &count, err
 }
 
-func (n *Notification) CreateNotification(notification *model.Notification) (*model.Notification, error) {
+func (n *Notifications) CreateNotification(notification *model.Notification) (*model.Notification, error) {
 	query := n.DB.Model(notification).
 		Where("notification_type_id = ?notification_type_id").
 		Where("sender_id = ?sender_id").
@@ -67,7 +67,7 @@ func (n *Notification) CreateNotification(notification *model.Notification) (*mo
 	return notification, err
 }
 
-func (n *Notification) RemoveNotification(notification *model.Notification) (*model.Notification, error) {
+func (n *Notifications) RemoveNotification(notification *model.Notification) (*model.Notification, error) {
 	query := n.DB.Model(notification).
 		Where("notification_type_id = ?notification_type_id").
 		Where("sender_id = ?sender_id").
@@ -85,7 +85,7 @@ func (n *Notification) RemoveNotification(notification *model.Notification) (*mo
 	return notification, err
 }
 
-func (n *Notification) RemovePostNotifications(notification *model.Notification) (*model.Notification, error) {
+func (n *Notifications) RemovePostNotifications(notification *model.Notification) (*model.Notification, error) {
 	query := n.DB.Model(notification).
 		Where("receiver_id = ?receiver_id").
 		Where("post_id = ?post_id")
