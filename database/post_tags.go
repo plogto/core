@@ -1,8 +1,6 @@
 package database
 
 import (
-	"fmt"
-
 	"github.com/go-pg/pg/v10"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -34,8 +32,6 @@ func (p *PostTags) GetTagsOrderByCountTags(limit, page int) (*model.Tags, error)
 	query.Offset(offset).Limit(limit)
 
 	err := query.Select()
-
-	fmt.Println(err)
 
 	return &model.Tags{
 		Pagination: util.GetPagination(&util.GetPaginationParams{

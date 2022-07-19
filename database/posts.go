@@ -71,8 +71,6 @@ func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*mo
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
-	fmt.Println(tagID)
-
 	// TODO: fix this query
 	query := p.DB.Model(&posts).
 		ColumnExpr("post_tags.post_id, post_tags.tag_id").
