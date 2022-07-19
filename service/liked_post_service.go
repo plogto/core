@@ -16,16 +16,16 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Post.GetPostByID(postID)
-	followingUser, _ := s.User.GetUserByID(post.UserID)
+	post, _ := s.Posts.GetPostByID(postID)
+	followingUser, _ := s.Users.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
 
-	postLike, _ := s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
+	postLike, _ := s.LikedPosts.GetPostLikeByUserIDAndPostID(user.ID, postID)
 
 	if postLike != nil {
-		s.PostLike.DeletePostLikeByID(postLike.ID)
+		s.LikedPosts.DeletePostLikeByID(postLike.ID)
 		s.RemoveNotification(CreateNotificationArgs{
 			Name:       constants.NOTIFICATION_LIKE_POST,
 			SenderID:   user.ID,
@@ -34,12 +34,12 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 			PostID:     &post.ID,
 		})
 	} else {
-		postLike := &model.PostLike{
+		postLike := &model.LikedPost{
 			UserID: user.ID,
 			PostID: postID,
 		}
 
-		s.PostLike.CreatePostLike(postLike)
+		s.LikedPosts.CreatePostLike(postLike)
 
 		if len(postLike.ID) > 0 {
 			var name string = constants.NOTIFICATION_LIKE_POST
@@ -61,31 +61,31 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 	return post, nil
 }
 
-func (s *Service) GetPostLikesByPostID(ctx context.Context, postID string) (*model.PostLikes, error) {
+func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, _ := s.Post.GetPostByID(postID)
-	followingUser, _ := s.User.GetUserByID(post.UserID)
+	post, _ := s.Posts.GetPostByID(postID)
+	followingUser, _ := s.Users.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
 		// TODO: add inputPagination
-		return s.PostLike.GetPostLikesByPostIDAndPagination(postID, 50, 1)
+		return s.LikedPosts.GetLikedPostsByPostIDAndPagination(postID, 50, 1)
 	}
 }
 
-func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.PostLike, error) {
+func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
 		return nil, nil
 	}
 
-	post, _ := s.Post.GetPostByID(postID)
-	followingUser, _ := s.User.GetUserByID(post.UserID)
+	post, _ := s.Posts.GetPostByID(postID)
+	followingUser, _ := s.Users.GetUserByID(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		return s.PostLike.GetPostLikeByUserIDAndPostID(user.ID, postID)
+		return s.LikedPosts.GetPostLikeByUserIDAndPostID(user.ID, postID)
 	}
 }

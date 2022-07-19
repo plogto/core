@@ -7,10 +7,10 @@ type Post {
   content: String
   attachment: [File!]
   url: String!
-  likes: PostLikes
+  likes: LikedPosts
   replies: Posts
-  isLiked: PostLike
-  isSaved: PostSave
+  isLiked: LikedPost
+  isSaved: SavedPost
   createdAt: Time
   updatedAt: Time
 }

@@ -1,4 +1,4 @@
-type PostSave {
+type SavedPost {
   id: ID!
   user: User!
   post: Post!

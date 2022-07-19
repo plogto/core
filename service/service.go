@@ -10,39 +10,39 @@ import (
 )
 
 type Service struct {
-	User             database.User
-	Password         database.Password
-	Post             database.Post
-	File             database.File
-	Connection       database.Connection
-	Tag              database.Tag
-	PostAttachment   database.PostAttachment
-	PostTag          database.PostTag
-	PostLike         database.PostLike
-	PostSave         database.PostSave
-	OnlineUser       database.OnlineUser
-	Notification     database.Notification
-	NotificationType database.NotificationType
-	Notifications    map[string]chan *model.Notification
-	mu               sync.Mutex
+	Users               database.Users
+	Passwords           database.Passwords
+	Posts               database.Posts
+	Files               database.Files
+	Connections         database.Connections
+	Tags                database.Tags
+	PostAttachments     database.PostAttachments
+	PostTags            database.PostTags
+	LikedPosts          database.LikedPosts
+	SavedPosts          database.SavedPosts
+	OnlineUsers         database.OnlineUsers
+	Notifications       database.Notifications
+	NotificationTypes   database.NotificationTypes
+	OnlineNotifications map[string]chan *model.Notification
+	mu                  sync.Mutex
 }
 
 func New(service Service) *Service {
 	return &Service{
-		User:             service.User,
-		Password:         service.Password,
-		Post:             service.Post,
-		File:             service.File,
-		Connection:       service.Connection,
-		Tag:              service.Tag,
-		PostTag:          service.PostTag,
-		PostAttachment:   service.PostAttachment,
-		PostLike:         service.PostLike,
-		PostSave:         service.PostSave,
-		OnlineUser:       service.OnlineUser,
-		Notification:     service.Notification,
-		NotificationType: service.NotificationType,
-		Notifications:    map[string]chan *model.Notification{},
+		Users:               service.Users,
+		Passwords:           service.Passwords,
+		Posts:               service.Posts,
+		Files:               service.Files,
+		Connections:         service.Connections,
+		Tags:                service.Tags,
+		PostTags:            service.PostTags,
+		PostAttachments:     service.PostAttachments,
+		LikedPosts:          service.LikedPosts,
+		SavedPosts:          service.SavedPosts,
+		OnlineUsers:         service.OnlineUsers,
+		Notifications:       service.Notifications,
+		NotificationTypes:   service.NotificationTypes,
+		OnlineNotifications: map[string]chan *model.Notification{},
 	}
 }
 

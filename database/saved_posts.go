@@ -8,11 +8,11 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type PostSave struct {
+type SavedPosts struct {
 	DB *pg.DB
 }
 
-func (p *PostSave) CreatePostSave(postSave *model.PostSave) (*model.PostSave, error) {
+func (p *SavedPosts) CreatePostSave(postSave *model.SavedPost) (*model.SavedPost, error) {
 	_, err := p.DB.Model(postSave).
 		Where("user_id = ?user_id").
 		Where("post_id = ?post_id").
@@ -21,29 +21,29 @@ func (p *PostSave) CreatePostSave(postSave *model.PostSave) (*model.PostSave, er
 	return postSave, err
 }
 
-func (p *PostSave) GetPostSaveByUserIDAndPostID(userID, postID string) (*model.PostSave, error) {
-	var postSave model.PostSave
+func (p *SavedPosts) GetPostSaveByUserIDAndPostID(userID, postID string) (*model.SavedPost, error) {
+	var postSave model.SavedPost
 	err := p.DB.Model(&postSave).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
 	if len(postSave.ID) < 1 {
 		return nil, nil
 	}
 	return &postSave, err
 }
-func (p *PostSave) GetSavedPostsByUserIDAndPagination(userID string, limit, page int) (*model.Posts, error) {
+func (p *SavedPosts) GetSavedPostsByUserIDAndPagination(userID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
 	// TODO: fix this query
 	query := p.DB.Model(&posts).
-		ColumnExpr("post_save.post_id, post_save.user_id").
-		ColumnExpr("u.id").
+		ColumnExpr("saved_posts.post_id, saved_posts.user_id").
+		ColumnExpr("users.id").
 		ColumnExpr("post.*").
-		Join("INNER JOIN post_save ON post_save.user_id = ?", userID).
-		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
-		Where("post_save.post_id = post.id").
-		Where("post_save.deleted_at is ?", nil).
+		Join("INNER JOIN saved_posts ON saved_posts.user_id = ?", userID).
+		Join("INNER JOIN users ON users.id = post.user_id").
+		Where("saved_posts.post_id = post.id").
+		Where("saved_posts.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
-		Order("post_save.created_at DESC").Returning("*")
+		Order("saved_posts.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
 	totalDocs, err := query.SelectAndCount()
@@ -57,9 +57,9 @@ func (p *PostSave) GetSavedPostsByUserIDAndPagination(userID string, limit, page
 	}, err
 }
 
-func (p *PostSave) DeletePostSaveByID(id string) (*model.PostSave, error) {
+func (p *SavedPosts) DeletePostSaveByID(id string) (*model.SavedPost, error) {
 	DeletedAt := time.Now()
-	var postSave = &model.PostSave{
+	var postSave = &model.SavedPost{
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}

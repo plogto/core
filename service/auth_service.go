@@ -10,12 +10,12 @@ import (
 )
 
 func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
-	user, err := s.User.GetUserByUsernameOrEmail(input.Username)
+	user, err := s.Users.GetUserByUsernameOrEmail(input.Username)
 	if err != nil {
 		return nil, errors.New("username or password is not valid")
 	}
 
-	password, err := s.Password.GetPasswordByUserID(user.ID)
+	password, err := s.Passwords.GetPasswordByUserID(user.ID)
 	if err != nil {
 		return nil, errors.New("username or password is not valid")
 	}
@@ -37,7 +37,7 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 }
 
 func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
-	if _, err := s.User.GetUserByUsernameOrEmail(input.Email); err == nil {
+	if _, err := s.Users.GetUserByUsernameOrEmail(input.Email); err == nil {
 		return nil, errors.New("email has already been taken")
 	}
 
@@ -47,7 +47,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		FullName: input.FullName,
 	}
 
-	newUser, err := s.User.CreateUser(user)
+	newUser, err := s.Users.CreateUser(user)
 	if err != nil {
 		log.Printf("error while creating a user: %v", err)
 		return nil, err
@@ -62,7 +62,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		return nil, errors.New("something went wrong")
 	}
 
-	if _, err := s.Password.AddPassword(password); err != nil {
+	if _, err := s.Passwords.AddPassword(password); err != nil {
 		log.Printf("error white adding password: %v", err)
 		return nil, err
 	}

@@ -84,15 +84,15 @@ models:
         resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag
-  PostLike:
-    model: github.com/plogto/core/graph/model.PostLike
+  LikedPost:
+    model: github.com/plogto/core/graph/model.LikedPost
     fields:
       user:
         resolver: true
       post:
         resolver: true
-  PostSave:
-    model: github.com/plogto/core/graph/model.PostSave
+  SavedPost:
+    model: github.com/plogto/core/graph/model.SavedPost
     fields:
       user:
         resolver: true

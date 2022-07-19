@@ -44,7 +44,7 @@ func main() {
 	}
 	router := chi.NewRouter()
 
-	user := database.User{DB: DB}
+	users := database.Users{DB: DB}
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "*"},
@@ -55,25 +55,25 @@ func main() {
 	}).Handler)
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Logger)
-	router.Use(customMiddleware.AuthMiddleware(user))
+	router.Use(customMiddleware.AuthMiddleware(users))
 
 	s := service.New(service.Service{
-		User:             user,
-		Password:         database.Password{DB: DB},
-		Post:             database.Post{DB: DB},
-		File:             database.File{DB: DB},
-		Connection:       database.Connection{DB: DB},
-		Tag:              database.Tag{DB: DB},
-		PostAttachment:   database.PostAttachment{DB: DB},
-		PostTag:          database.PostTag{DB: DB},
-		PostLike:         database.PostLike{DB: DB},
-		PostSave:         database.PostSave{DB: DB},
-		OnlineUser:       database.OnlineUser{DB: DB},
-		Notification:     database.Notification{DB: DB},
-		NotificationType: database.NotificationType{DB: DB},
+		Users:             users,
+		Passwords:         database.Passwords{DB: DB},
+		Posts:             database.Posts{DB: DB},
+		Files:             database.Files{DB: DB},
+		Connections:       database.Connections{DB: DB},
+		Tags:              database.Tags{DB: DB},
+		PostAttachments:   database.PostAttachments{DB: DB},
+		PostTags:          database.PostTags{DB: DB},
+		LikedPosts:        database.LikedPosts{DB: DB},
+		SavedPosts:        database.SavedPosts{DB: DB},
+		OnlineUsers:       database.OnlineUsers{DB: DB},
+		Notifications:     database.Notifications{DB: DB},
+		NotificationTypes: database.NotificationTypes{DB: DB},
 	})
 
-	s.OnlineUser.DeleteAllOnlineUsers()
+	s.OnlineUsers.DeleteAllOnlineUsers()
 
 	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
@@ -90,7 +90,7 @@ func main() {
 			util.ParseJWTWithClaims(token, &claims)
 
 			if len(claims) > 0 {
-				user, err := user.GetUserByID(claims["jti"].(string))
+				user, err := users.GetUserByID(claims["jti"].(string))
 
 				if err != nil {
 					return nil, err

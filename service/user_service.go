@@ -15,13 +15,13 @@ func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	user, _ := s.User.GetUserByID(id)
+	user, _ := s.Users.GetUserByID(id)
 
 	return user, nil
 }
 
 func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	user, _ := s.User.GetUserByUsername(username)
+	user, _ := s.Users.GetUserByUsername(username)
 
 	return user, nil
 }
@@ -29,7 +29,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	limit := 10
 	page := 1
-	users, _ := s.User.GetUsersByUsernameOrFullNameAndPagination(expression+"%", limit, page)
+	users, _ := s.Users.GetUsersByUsernameOrFullNameAndPagination(expression+"%", limit, page)
 
 	return users, nil
 }
@@ -37,7 +37,7 @@ func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Use
 func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) bool {
 	if followingUser.IsPrivate == bool(true) {
 		if user != nil {
-			connection, _ := s.Connection.GetConnection(followingUser.ID, user.ID)
+			connection, _ := s.Connections.GetConnection(followingUser.ID, user.ID)
 
 			if followingUser.ID != user.ID {
 				if len(connection.ID) < 1 || *connection.Status < 2 {
@@ -116,7 +116,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		return nil, nil
 	}
 
-	updatedUser, _ := s.User.UpdateUser(user)
+	updatedUser, _ := s.Users.UpdateUser(user)
 
 	return updatedUser, nil
 }
@@ -128,7 +128,7 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		return nil, errors.New(err.Error())
 	}
 
-	password, _ := s.Password.GetPasswordByUserID(user.ID)
+	password, _ := s.Passwords.GetPasswordByUserID(user.ID)
 
 	if err = password.ComparePassword(input.OldPassword); err != nil {
 		return nil, errors.New("old password is not valid")
@@ -139,7 +139,7 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		return nil, errors.New("something went wrong")
 	}
 
-	if _, err := s.Password.UpdatePassword(password); err != nil {
+	if _, err := s.Passwords.UpdatePassword(password); err != nil {
 		log.Printf("error white updating password: %v", err)
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (s *Service) CheckUsername(ctx context.Context, username string) (*model.Us
 		return nil, errors.New(err.Error())
 	}
 
-	user, _ := s.User.GetUserByUsername(username)
+	user, _ := s.Users.GetUserByUsername(username)
 
 	return user, nil
 }
@@ -175,7 +175,7 @@ func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, er
 		return nil, errors.New(err.Error())
 	}
 
-	user, _ := s.User.GetUserByEmail(email)
+	user, _ := s.Users.GetUserByEmail(email)
 
 	return user, nil
 }

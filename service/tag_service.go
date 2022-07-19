@@ -13,7 +13,7 @@ import (
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
 	limit := 10
 	page := 1
-	tags, _ := s.Tag.GetTagsByTagNameAndPagination(expression+"%", limit, page)
+	tags, _ := s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit, page)
 
 	return tags, nil
 }
@@ -31,13 +31,11 @@ func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (
 			page = *input.Page
 		}
 	}
-	tags, _ := s.PostTag.GetTagsOrderByCountTags(limit, page)
-
-	return tags, nil
+	return s.PostTags.GetTagsOrderByCountTags(limit, page)
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
-	tag, _ := s.Tag.GetTagByName(tagName)
+	tag, _ := s.Tags.GetTagByName(tagName)
 
 	if len(tag.ID) < 1 {
 		return nil, nil
@@ -56,12 +54,12 @@ func (s *Service) SaveTagsPost(postID, content string) {
 		tag := &model.Tag{
 			Name: strings.ToLower(tagName),
 		}
-		s.Tag.CreateTag(tag)
+		s.Tags.CreateTag(tag)
 
 		postTag := &model.PostTag{
 			TagID:  tag.ID,
 			PostID: postID,
 		}
-		s.PostTag.CreatePostTag(postTag)
+		s.PostTags.CreatePostTag(postTag)
 	}
 }

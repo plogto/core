@@ -9,7 +9,7 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type Connection struct {
+type Connections struct {
 	DB *pg.DB
 }
 
@@ -19,7 +19,7 @@ type ConnectionFilter struct {
 	Status *int
 }
 
-func (c *Connection) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
 	var offset = (filter.Page - 1) * filter.Limit
 
@@ -43,42 +43,42 @@ func (c *Connection) GetConnectionsByFieldAndPagination(field, value string, fil
 	}, err
 }
 
-func (c *Connection) GetFollowersByUserIDAndPagination(followerID string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowersByUserIDAndPagination(followerID string, filter ConnectionFilter) (*model.Connections, error) {
 	return c.GetConnectionsByFieldAndPagination("following_id", followerID, filter)
 }
 
-func (c *Connection) GetFollowingByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowingByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
 	return c.GetConnectionsByFieldAndPagination("follower_id", followingID, filter)
 }
 
-func (c *Connection) GetFollowRequestsByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowRequestsByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
 	return c.GetConnectionsByFieldAndPagination("following_id", followingID, filter)
 }
 
-func (c *Connection) CreateConnection(connection *model.Connection) (*model.Connection, error) {
+func (c *Connections) CreateConnection(connection *model.Connection) (*model.Connection, error) {
 	_, err := c.DB.Model(connection).Returning("*").Insert()
 	return connection, err
 }
 
-func (c *Connection) GetConnectionByField(field, value string) (*model.Connection, error) {
+func (c *Connections) GetConnectionByField(field, value string) (*model.Connection, error) {
 	var connection model.Connection
 	err := c.DB.Model(&connection).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
 	return &connection, err
 }
 
-func (c *Connection) GetConnection(followingID, followerID string) (*model.Connection, error) {
+func (c *Connections) GetConnection(followingID, followerID string) (*model.Connection, error) {
 	var connection model.Connection
 	err := c.DB.Model(&connection).Where("following_id = ?", followingID).Where("follower_id = ?", followerID).Where("deleted_at is ?", nil).First()
 	return &connection, err
 }
 
-func (c *Connection) UpdateConnection(connection *model.Connection) (*model.Connection, error) {
+func (c *Connections) UpdateConnection(connection *model.Connection) (*model.Connection, error) {
 	_, err := c.DB.Model(connection).Where("id = ?", connection.ID).Where("deleted_at is ?", nil).Returning("*").Update()
 	return connection, err
 }
 
 // TODO: fix this name or functionality
-func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
+func (c *Connections) DeleteConnection(id string) (*model.Connection, error) {
 	DeletedAt := time.Now()
 	var connection = &model.Connection{
 		ID:        id,
@@ -88,7 +88,7 @@ func (c *Connection) DeleteConnection(id string) (*model.Connection, error) {
 	return connection, err
 }
 
-func (c *Connection) CountConnectionByUserID(field, userID string, status int) (*int, error) {
+func (c *Connections) CountConnectionByUserID(field, userID string, status int) (*int, error) {
 	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
 	return &count, err
 }

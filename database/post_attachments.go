@@ -5,11 +5,11 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-type PostAttachment struct {
+type PostAttachments struct {
 	DB *pg.DB
 }
 
-func (p *PostAttachment) CreatePostAttachment(postAttachment *model.PostAttachment) (*model.PostAttachment, error) {
+func (p *PostAttachments) CreatePostAttachment(postAttachment *model.PostAttachment) (*model.PostAttachment, error) {
 	_, err := p.DB.Model(postAttachment).Returning("*").Insert()
 	return postAttachment, err
 }

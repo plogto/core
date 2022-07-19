@@ -7,7 +7,7 @@ import (
 )
 
 type Password struct {
-	tableName struct{} `pg:"password"`
+	tableName struct{} `pg:"passwords"`
 	ID        string
 	UserID    string
 	Password  string

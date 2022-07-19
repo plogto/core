@@ -4,8 +4,8 @@ import (
 	"time"
 )
 
-type PostSave struct {
-	tableName struct{} `pg:"post_save"`
+type LikedPost struct {
+	tableName struct{} `pg:"liked_posts"`
 	ID        string
 	UserID    string
 	PostID    string

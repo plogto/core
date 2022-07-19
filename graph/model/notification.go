@@ -5,7 +5,7 @@ import (
 )
 
 type Notification struct {
-	tableName          struct{} `pg:"notification"`
+	tableName          struct{} `pg:"notifications"`
 	ID                 string
 	NotificationTypeID string
 	SenderID           string

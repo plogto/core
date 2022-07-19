@@ -8,7 +8,7 @@ import (
 )
 
 type User struct {
-	tableName       struct{} `pg:"user"`
+	tableName       struct{} `pg:"users"`
 	ID              string
 	Username        string
 	Avatar          *string

@@ -15,5 +15,5 @@ func (s *Service) AddOnlineUser(ctx context.Context, onlineUserContext *middlewa
 		UserAgent: onlineUserContext.UserAgent,
 	}
 
-	s.OnlineUser.CreateOnlineUser(onlineUser)
+	s.OnlineUsers.CreateOnlineUser(onlineUser)
 }

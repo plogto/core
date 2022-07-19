@@ -5,7 +5,7 @@ import (
 )
 
 type Post struct {
-	tableName struct{} `pg:"post,discard_unknown_columns"`
+	tableName struct{} `pg:"posts,discard_unknown_columns"`
 	ID        string
 	UserID    string
 	ParentID  *string

@@ -5,16 +5,16 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-type OnlineUser struct {
+type OnlineUsers struct {
 	DB *pg.DB
 }
 
-func (o *OnlineUser) CreateOnlineUser(onlineUser *model.OnlineUser) (*model.OnlineUser, error) {
+func (o *OnlineUsers) CreateOnlineUser(onlineUser *model.OnlineUser) (*model.OnlineUser, error) {
 	_, err := o.DB.Model(onlineUser).Returning("*").Insert()
 	return onlineUser, err
 }
 
-func (o *OnlineUser) DeleteOnlineUserBySocketID(socketID string) (*model.OnlineUser, error) {
+func (o *OnlineUsers) DeleteOnlineUserBySocketID(socketID string) (*model.OnlineUser, error) {
 	var onlineUser = &model.OnlineUser{
 		SocketID: socketID,
 	}
@@ -22,14 +22,14 @@ func (o *OnlineUser) DeleteOnlineUserBySocketID(socketID string) (*model.OnlineU
 	return onlineUser, err
 }
 
-func (o *OnlineUser) DeleteAllOnlineUsers() ([]*model.OnlineUser, error) {
+func (o *OnlineUsers) DeleteAllOnlineUsers() ([]*model.OnlineUser, error) {
 	var onlineUsers []*model.OnlineUser
 
 	_, err := o.DB.Model(&onlineUsers).Where("true").Returning("*").Delete()
 	return onlineUsers, err
 }
 
-func (o *OnlineUser) GetOnlineUserByUserID(userID string) (*model.OnlineUser, error) {
+func (o *OnlineUsers) GetOnlineUserByUserID(userID string) (*model.OnlineUser, error) {
 	var onlineUser model.OnlineUser
 	err := o.DB.Model(&onlineUser).Where("user_id = ?", userID).Where("deleted_at is ?", nil).First()
 	if len(onlineUser.ID) < 1 {

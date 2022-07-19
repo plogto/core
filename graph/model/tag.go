@@ -5,7 +5,7 @@ import (
 )
 
 type Tag struct {
-	tableName struct{} `pg:"tag,discard_unknown_columns"`
+	tableName struct{} `pg:"tags,discard_unknown_columns"`
 	ID        string
 	Name      string
 	Count     int64 `pg:"-"`

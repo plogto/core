@@ -9,11 +9,11 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type Post struct {
+type Posts struct {
 	DB *pg.DB
 }
 
-func (p *Post) GetPostByField(field string, value string) (*model.Post, error) {
+func (p *Posts) GetPostByField(field string, value string) (*model.Post, error) {
 	var post model.Post
 	err := p.DB.Model(&post).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
 	if len(post.ID) < 1 {
@@ -22,7 +22,7 @@ func (p *Post) GetPostByField(field string, value string) (*model.Post, error) {
 	return &post, err
 }
 
-func (p *Post) GetPostsByUserIDAndPagination(userID string, parentID *string, limit, page int) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
@@ -48,7 +48,7 @@ func (p *Post) GetPostsByUserIDAndPagination(userID string, parentID *string, li
 	}, err
 }
 
-func (p *Post) GetPostsByParentIDAndPagination(parentID string, limit, page int) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
@@ -67,20 +67,22 @@ func (p *Post) GetPostsByParentIDAndPagination(parentID string, limit, page int)
 	}, err
 }
 
-func (p *Post) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*model.Posts, error) {
+func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
+
+	fmt.Println(tagID)
 
 	// TODO: fix this query
 	query := p.DB.Model(&posts).
-		ColumnExpr("post_tag.post_id, post_tag.tag_id").
-		ColumnExpr("u.id, u.is_private").
+		ColumnExpr("post_tags.post_id, post_tags.tag_id").
+		ColumnExpr("users.id, users.is_private").
 		ColumnExpr("post.*").
-		Join("INNER JOIN post_tag ON post_tag.tag_id = ?", tagID).
-		Join("INNER JOIN \"user\" as u ON u.id = post.user_id").
-		Where("post_tag.post_id = post.id").
+		Join("INNER JOIN post_tags ON post_tags.tag_id = ?", tagID).
+		Join("INNER JOIN users ON users.id = post.user_id").
+		Where("post_tags.post_id = post.id").
 		Where("post.deleted_at is ?", nil).
-		Where("u.is_private is false").
+		Where("users.is_private is false").
 		Order("post.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
 
@@ -95,24 +97,24 @@ func (p *Post) GetPostsByTagIDAndPagination(tagID string, limit, page int) (*mod
 	}, err
 }
 
-func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*model.Posts, error) {
+func (p *Posts) GetTimelinePostsByPagination(userID string, limit, page int) (*model.Posts, error) {
 	var posts []*model.Post
 	var offset = (page - 1) * limit
 
 	query := p.DB.Model(&posts).
-		ColumnExpr("connection.follower_id, connection.following_id, connection.status").
-		ColumnExpr("u.id, u.is_private").
+		ColumnExpr("connections.follower_id, connections.following_id, connections.status").
+		ColumnExpr("users.id, users.is_private").
 		ColumnExpr("post.*").
-		Join("INNER JOIN connection ON connection.follower_id = ?", userID).
-		Join("INNER JOIN \"user\" as u ON u.id = connection.following_id").
+		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
+		Join("INNER JOIN users ON users.id = connections.following_id").
 		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("connection.status = ?", 2).
-				WhereOr("u.is_private = ?", false)
+			q = q.Where("connections.status = ?", 2).
+				WhereOr("users.is_private = ?", false)
 			return q, nil
 		}).
-		Where("post.user_id = u.id").
+		Where("post.user_id = users.id").
 		Where("post.parent_id is ?", nil).
-		Where("connection.deleted_at is ?", nil).
+		Where("connections.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
 		Order("post.created_at DESC").Returning("*")
 	query.Offset(offset).Limit(limit)
@@ -129,15 +131,15 @@ func (p *Post) GetTimelinePostsByPagination(userID string, limit, page int) (*mo
 	}, err
 }
 
-func (p *Post) GetPostByID(id string) (*model.Post, error) {
+func (p *Posts) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }
 
-func (p *Post) GetPostByURL(url string) (*model.Post, error) {
+func (p *Posts) GetPostByURL(url string) (*model.Post, error) {
 	return p.GetPostByField("url", url)
 }
 
-func (p *Post) CountPostsByUserID(userID string) (*int, error) {
+func (p *Posts) CountPostsByUserID(userID string) (*int, error) {
 	count, err := p.DB.Model((*model.Post)(nil)).
 		Where("user_id = ?", userID).
 		Where("parent_id is ?", nil).
@@ -146,17 +148,17 @@ func (p *Post) CountPostsByUserID(userID string) (*int, error) {
 	return &count, err
 }
 
-func (p *Post) CreatePost(post *model.Post) (*model.Post, error) {
+func (p *Posts) CreatePost(post *model.Post) (*model.Post, error) {
 	_, err := p.DB.Model(post).Returning("*").Insert()
 	return post, err
 }
 
-func (p *Post) UpdatePost(post *model.Post) (*model.Post, error) {
+func (p *Posts) UpdatePost(post *model.Post) (*model.Post, error) {
 	_, err := p.DB.Model(post).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 	return post, err
 }
 
-func (p *Post) DeletePostByID(id string) (*model.Post, error) {
+func (p *Posts) DeletePostByID(id string) (*model.Post, error) {
 	DeletedAt := time.Now()
 	var post = &model.Post{
 		ID:        id,

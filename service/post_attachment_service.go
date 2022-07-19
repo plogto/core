@@ -7,7 +7,7 @@ import (
 )
 
 func (s *Service) GetPostAttachmentsByPostID(ctx context.Context, postID string) ([]*model.File, error) {
-	postAttachments, _ := s.File.GetFilesByPostId(postID)
+	postAttachments, _ := s.Files.GetFilesByPostId(postID)
 
 	return postAttachments, nil
 }

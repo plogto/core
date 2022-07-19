@@ -30,7 +30,7 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 
 		// calculate hash
 		hash := util.CalculateHash(file.File, fileName)
-		isFile, _ := s.File.GetFileByHash(hash)
+		isFile, _ := s.Files.GetFileByHash(hash)
 		if isFile != nil && len(isFile.ID) > 0 {
 			_ = os.Remove(fileName)
 
@@ -94,11 +94,11 @@ func (s *Service) UploadImage(fileName string, fileSize int64) {
 }
 
 func (s *Service) SaveImageData(file *model.File) (*model.File, error) {
-	s.File.CreateFile(file)
+	s.Files.CreateFile(file)
 
 	return file, nil
 }
 
 func (s *Service) GetFileByFileId(ctx context.Context, fileID string) (*model.File, error) {
-	return s.File.GetFileByID(fileID)
+	return s.Files.GetFileByID(fileID)
 }

@@ -1,4 +1,4 @@
-type PostLike {
+type LikedPost {
   id: ID!
   user: User!
   post: Post!
@@ -6,13 +6,13 @@ type PostLike {
   updatedAt: Time
 }
 
-type PostLikes {
-  likedPosts: [PostLike]
+type LikedPosts {
+  likedPosts: [LikedPost]
   pagination: Pagination
 }
 
 extend type Query {
-  getPostLikesByPostId(postId: String!, input: PaginationInput): PostLikes
+  getLikedPostsByPostId(postId: String!, input: PaginationInput): LikedPosts
 }
 
 extend type Mutation {
