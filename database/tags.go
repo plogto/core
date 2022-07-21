@@ -19,13 +19,13 @@ func (t *Tags) GetTagsByTagNameAndPagination(value string, limit, page int) (*mo
 	value = strings.ToLower(value)
 
 	query := t.DB.Model(&tags).
-		ColumnExpr("tags.*, count(tags.id)").
+		ColumnExpr("tag.*, count(tag.id)").
 		ColumnExpr("post_tags.tag_id").
-		Join("INNER JOIN post_tags ON post_tags.tag_id = tags.id").
+		Join("INNER JOIN post_tags ON post_tags.tag_id = tag.id").
 		Join("INNER JOIN posts ON post_tags.post_id = posts.id").
 		Join("INNER JOIN users ON users.id = posts.user_id").
-		GroupExpr("post_tags.tag_id, tags.id").
-		Where("lower(tags.name) LIKE lower(?)", strings.ToLower(value)).
+		GroupExpr("post_tags.tag_id, tag.id").
+		Where("lower(tag.name) LIKE lower(?)", strings.ToLower(value)).
 		Where("posts.deleted_at is ?", nil).
 		Where("users.is_private is false").
 		Order("count DESC").Returning("*")
