@@ -13,9 +13,8 @@ import (
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
 	limit := 10
 	page := 1
-	tags, _ := s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit, page)
 
-	return tags, nil
+	return s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit, page)
 }
 
 func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
