@@ -103,6 +103,12 @@ models:
     fields:
       user:
         resolver: true
+  NotificationsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   Notification:
     model: github.com/plogto/core/graph/model.Notification
     fields:

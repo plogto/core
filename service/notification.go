@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 )
 
 type CreateNotificationArgs struct {
@@ -24,25 +24,26 @@ type RemovePostNotificationsArgs struct {
 	PostID     string
 }
 
-func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
-	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInput) (*model.Notifications, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	posts, _ := s.Notifications.GetNotificationsByReceiverIDAndPagination(user.ID, limit, page)
+	pageInfoInput := util.ExtractPageInfo(input)
 
-	return posts, nil
+	return s.Notifications.GetNotificationsByReceiverIDAndPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+}
+
+func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.Notification, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Notifications.GetNotificationByID(id)
 }
 
 func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
