@@ -30,7 +30,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 			Name:       constants.NOTIFICATION_LIKE_POST,
 			SenderID:   user.ID,
 			ReceiverID: post.UserID,
-			Url:        "p/" + post.Url,
+			Url:        "/p/" + post.Url,
 			PostID:     &post.ID,
 		})
 	} else {
@@ -52,7 +52,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.Post, err
 				Name:       name,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
-				Url:        "p/" + post.Url,
+				Url:        "/p/" + post.Url,
 				PostID:     &post.ID,
 			})
 		}
