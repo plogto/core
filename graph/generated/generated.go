@@ -42,6 +42,7 @@ type ResolverRoot interface {
 	LikedPost() LikedPostResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
+	NotificationsEdge() NotificationsEdgeResolver
 	Post() PostResolver
 	Query() QueryResolver
 	SavedPost() SavedPostResolver
@@ -136,9 +137,15 @@ type ComplexityRoot struct {
 	}
 
 	Notifications struct {
-		Notifications            func(childComplexity int) int
-		Pagination               func(childComplexity int) int
+		Edges                    func(childComplexity int) int
+		PageInfo                 func(childComplexity int) int
+		TotalCount               func(childComplexity int) int
 		UnreadNotificationsCount func(childComplexity int) int
+	}
+
+	NotificationsEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	OnlineUser struct {
@@ -149,6 +156,10 @@ type ComplexityRoot struct {
 		UpdatedAt func(childComplexity int) int
 		UserAgent func(childComplexity int) int
 		UserID    func(childComplexity int) int
+	}
+
+	PageInfo struct {
+		EndCursor func(childComplexity int) int
 	}
 
 	Pagination struct {
@@ -188,7 +199,7 @@ type ComplexityRoot struct {
 		GetFollowersByUsername func(childComplexity int, username string, input *model.PaginationInput) int
 		GetFollowingByUsername func(childComplexity int, username string, input *model.PaginationInput) int
 		GetLikedPostsByPostID  func(childComplexity int, postID string, input *model.PaginationInput) int
-		GetNotifications       func(childComplexity int, input *model.PaginationInput) int
+		GetNotifications       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetPostByURL           func(childComplexity int, url string) int
 		GetPostsByTagName      func(childComplexity int, tagName string, input *model.PaginationInput) int
 		GetPostsByUsername     func(childComplexity int, username string, input *model.PaginationInput) int
@@ -297,6 +308,10 @@ type NotificationResolver interface {
 	Post(ctx context.Context, obj *model.Notification) (*model.Post, error)
 	Reply(ctx context.Context, obj *model.Notification) (*model.Post, error)
 }
+type NotificationsEdgeResolver interface {
+	Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error)
+	Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error)
+}
 type PostResolver interface {
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
 	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
@@ -316,7 +331,7 @@ type QueryResolver interface {
 	GetFollowingByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error)
 	GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error)
 	GetLikedPostsByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.LikedPosts, error)
-	GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error)
+	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
@@ -798,19 +813,26 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.NotificationType.UpdatedAt(childComplexity), true
 
-	case "Notifications.notifications":
-		if e.complexity.Notifications.Notifications == nil {
+	case "Notifications.edges":
+		if e.complexity.Notifications.Edges == nil {
 			break
 		}
 
-		return e.complexity.Notifications.Notifications(childComplexity), true
+		return e.complexity.Notifications.Edges(childComplexity), true
 
-	case "Notifications.pagination":
-		if e.complexity.Notifications.Pagination == nil {
+	case "Notifications.pageInfo":
+		if e.complexity.Notifications.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.Notifications.Pagination(childComplexity), true
+		return e.complexity.Notifications.PageInfo(childComplexity), true
+
+	case "Notifications.totalCount":
+		if e.complexity.Notifications.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.Notifications.TotalCount(childComplexity), true
 
 	case "Notifications.unreadNotificationsCount":
 		if e.complexity.Notifications.UnreadNotificationsCount == nil {
@@ -818,6 +840,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Notifications.UnreadNotificationsCount(childComplexity), true
+
+	case "NotificationsEdge.cursor":
+		if e.complexity.NotificationsEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.NotificationsEdge.Cursor(childComplexity), true
+
+	case "NotificationsEdge.node":
+		if e.complexity.NotificationsEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.NotificationsEdge.Node(childComplexity), true
 
 	case "OnlineUser.createdAt":
 		if e.complexity.OnlineUser.CreatedAt == nil {
@@ -867,6 +903,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.OnlineUser.UserID(childComplexity), true
+
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
 
 	case "Pagination.limit":
 		if e.complexity.Pagination.Limit == nil {
@@ -1097,7 +1140,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetNotifications(childComplexity, args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetNotifications(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
 
 	case "Query.getPostByUrl":
 		if e.complexity.Query.GetPostByURL == nil {
@@ -1520,6 +1563,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputEditUserInput,
 		ec.unmarshalInputLoginInput,
+		ec.unmarshalInputPageInfoInput,
 		ec.unmarshalInputPaginationInput,
 		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputTestInput,
@@ -1694,6 +1738,16 @@ extend type Mutation {
 `, BuiltIn: false},
 	{Name: "../schema/main.graphqls", Input: `scalar Time
 
+type PageInfo {
+  endCursor: String!
+}
+
+input PageInfoInput {
+  first: Int
+  after: String
+}
+
+# TODO: remove Pagination
 type Pagination {
   totalDocs: Int!
   totalPages: Int!
@@ -1702,6 +1756,7 @@ type Pagination {
   nextPage: Int
 }
 
+# TODO: remove PaginationInput
 input PaginationInput {
   page: Int
   limit: Int
@@ -1748,14 +1803,20 @@ type Notification {
   updatedAt: Time
 }
 
+type NotificationsEdge {
+  cursor: String!
+  node: Notification
+}
+
 type Notifications {
-  notifications: [Notification]
+  totalCount: Int
+  edges: [NotificationsEdge]
   unreadNotificationsCount: Int
-  pagination: Pagination
+  pageInfo: PageInfo!
 }
 
 extend type Query {
-  getNotifications(input: PaginationInput): Notifications
+  getNotifications(pageInfoInput: PageInfoInput): Notifications
 }
 
 extend type Subscription {
@@ -2291,15 +2352,15 @@ func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.C
 func (ec *executionContext) field_Query_getNotifications_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.PaginationInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+	var arg0 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["pageInfoInput"] = arg0
 	return args, nil
 }
 
@@ -5276,9 +5337,9 @@ func (ec *executionContext) _Notification_createdAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5317,9 +5378,9 @@ func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5549,8 +5610,8 @@ func (ec *executionContext) fieldContext_NotificationType_updatedAt(ctx context.
 	return fc, nil
 }
 
-func (ec *executionContext) _Notifications_notifications(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Notifications_notifications(ctx, field)
+func (ec *executionContext) _Notifications_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notifications_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5563,7 +5624,7 @@ func (ec *executionContext) _Notifications_notifications(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Notifications, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5572,12 +5633,53 @@ func (ec *executionContext) _Notifications_notifications(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Notification)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notifications_notifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Notifications_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notifications",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Notifications_edges(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notifications_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.NotificationsEdge)
+	fc.Result = res
+	return ec.marshalONotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notifications_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Notifications",
 		Field:      field,
@@ -5585,28 +5687,12 @@ func (ec *executionContext) fieldContext_Notifications_notifications(ctx context
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Notification_id(ctx, field)
-			case "notificationType":
-				return ec.fieldContext_Notification_notificationType(ctx, field)
-			case "sender":
-				return ec.fieldContext_Notification_sender(ctx, field)
-			case "receiver":
-				return ec.fieldContext_Notification_receiver(ctx, field)
-			case "post":
-				return ec.fieldContext_Notification_post(ctx, field)
-			case "reply":
-				return ec.fieldContext_Notification_reply(ctx, field)
-			case "url":
-				return ec.fieldContext_Notification_url(ctx, field)
-			case "read":
-				return ec.fieldContext_Notification_read(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Notification_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Notification_updatedAt(ctx, field)
+			case "cursor":
+				return ec.fieldContext_NotificationsEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NotificationsEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type NotificationsEdge", field.Name)
 		},
 	}
 	return fc, nil
@@ -5653,8 +5739,8 @@ func (ec *executionContext) fieldContext_Notifications_unreadNotificationsCount(
 	return fc, nil
 }
 
-func (ec *executionContext) _Notifications_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Notifications_pagination(ctx, field)
+func (ec *executionContext) _Notifications_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.Notifications) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Notifications_pageInfo(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -5667,7 +5753,99 @@ func (ec *executionContext) _Notifications_pagination(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Pagination, nil
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Notifications_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Notifications",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NotificationsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.NotificationsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NotificationsEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NotificationsEdge().Cursor(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_NotificationsEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "NotificationsEdge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _NotificationsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.NotificationsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_NotificationsEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.NotificationsEdge().Node(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5676,31 +5854,41 @@ func (ec *executionContext) _Notifications_pagination(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Pagination)
+	res := resTmp.(*model.Notification)
 	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Notifications_pagination(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_NotificationsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "Notifications",
+		Object:     "NotificationsEdge",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "totalDocs":
-				return ec.fieldContext_Pagination_totalDocs(ctx, field)
-			case "totalPages":
-				return ec.fieldContext_Pagination_totalPages(ctx, field)
-			case "limit":
-				return ec.fieldContext_Pagination_limit(ctx, field)
-			case "page":
-				return ec.fieldContext_Pagination_page(ctx, field)
-			case "nextPage":
-				return ec.fieldContext_Pagination_nextPage(ctx, field)
+			case "id":
+				return ec.fieldContext_Notification_id(ctx, field)
+			case "notificationType":
+				return ec.fieldContext_Notification_notificationType(ctx, field)
+			case "sender":
+				return ec.fieldContext_Notification_sender(ctx, field)
+			case "receiver":
+				return ec.fieldContext_Notification_receiver(ctx, field)
+			case "post":
+				return ec.fieldContext_Notification_post(ctx, field)
+			case "reply":
+				return ec.fieldContext_Notification_reply(ctx, field)
+			case "url":
+				return ec.fieldContext_Notification_url(ctx, field)
+			case "read":
+				return ec.fieldContext_Notification_read(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Notification_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Notification_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Pagination", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
 		},
 	}
 	return fc, nil
@@ -6003,6 +6191,50 @@ func (ec *executionContext) fieldContext_OnlineUser_updatedAt(ctx context.Contex
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_endCursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7441,7 +7673,7 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetNotifications(rctx, fc.Args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetNotifications(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7463,12 +7695,14 @@ func (ec *executionContext) fieldContext_Query_getNotifications(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "notifications":
-				return ec.fieldContext_Notifications_notifications(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Notifications_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Notifications_edges(ctx, field)
 			case "unreadNotificationsCount":
 				return ec.fieldContext_Notifications_unreadNotificationsCount(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Notifications_pagination(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Notifications_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Notifications", field.Name)
 		},
@@ -10117,9 +10351,9 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10158,9 +10392,9 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(time.Time)
+	res := resTmp.(*time.Time)
 	fc.Result = res
-	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12247,6 +12481,42 @@ func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputPageInfoInput(ctx context.Context, obj interface{}) (model.PageInfoInput, error) {
+	var it model.PageInfoInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"first", "after"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "first":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+			it.First, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "after":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPaginationInput(ctx context.Context, obj interface{}) (model.PaginationInput, error) {
 	var it model.PaginationInput
 	asMap := map[string]interface{}{}
@@ -13087,18 +13357,83 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Notifications")
-		case "notifications":
+		case "totalCount":
 
-			out.Values[i] = ec._Notifications_notifications(ctx, field, obj)
+			out.Values[i] = ec._Notifications_totalCount(ctx, field, obj)
+
+		case "edges":
+
+			out.Values[i] = ec._Notifications_edges(ctx, field, obj)
 
 		case "unreadNotificationsCount":
 
 			out.Values[i] = ec._Notifications_unreadNotificationsCount(ctx, field, obj)
 
-		case "pagination":
+		case "pageInfo":
 
-			out.Values[i] = ec._Notifications_pagination(ctx, field, obj)
+			out.Values[i] = ec._Notifications_pageInfo(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var notificationsEdgeImplementors = []string{"NotificationsEdge"}
+
+func (ec *executionContext) _NotificationsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, notificationsEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("NotificationsEdge")
+		case "cursor":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NotificationsEdge_cursor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "node":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NotificationsEdge_node(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -13163,6 +13498,34 @@ func (ec *executionContext) _OnlineUser(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._OnlineUser_updatedAt(ctx, field, obj)
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, pageInfoImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "endCursor":
+
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14765,6 +15128,16 @@ func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋ
 	return ec._NotificationType(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
@@ -15417,7 +15790,21 @@ func (ec *executionContext) marshalOLikedPosts2ᚖgithubᚗcomᚋplogtoᚋcore�
 	return ec._LikedPosts(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v []*model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Notification(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONotifications2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotifications(ctx context.Context, sel ast.SelectionSet, v *model.Notifications) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Notifications(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -15444,7 +15831,7 @@ func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋc
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, sel, v[i])
+			ret[i] = ec.marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15458,18 +15845,19 @@ func (ec *executionContext) marshalONotification2ᚕᚖgithubᚗcomᚋplogtoᚋc
 	return ret
 }
 
-func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Notification(ctx, sel, v)
+	return ec._NotificationsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotifications2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotifications(ctx context.Context, sel ast.SelectionSet, v *model.Notifications) graphql.Marshaler {
+func (ec *executionContext) unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx context.Context, v interface{}) (*model.PageInfoInput, error) {
 	if v == nil {
-		return graphql.Null
+		return nil, nil
 	}
-	return ec._Notifications(ctx, sel, v)
+	res, err := ec.unmarshalInputPageInfoInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPagination(ctx context.Context, sel ast.SelectionSet, v *model.Pagination) graphql.Marshaler {
@@ -15696,16 +16084,6 @@ func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 		return graphql.Null
 	}
 	return ec._Test(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
-	res, err := graphql.UnmarshalTime(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
-	res := graphql.MarshalTime(v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {

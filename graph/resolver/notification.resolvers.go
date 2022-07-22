@@ -8,6 +8,7 @@ import (
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 // NotificationType is the resolver for the notificationType field.
@@ -35,9 +36,19 @@ func (r *notificationResolver) Reply(ctx context.Context, obj *model.Notificatio
 	return r.Service.GetPostByID(ctx, obj.ReplyID)
 }
 
+// Cursor is the resolver for the cursor field.
+func (r *notificationsEdgeResolver) Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *notificationsEdgeResolver) Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error) {
+	return r.Service.GetNotificationByID(ctx, obj.Node.ID)
+}
+
 // GetNotifications is the resolver for the getNotifications field.
-func (r *queryResolver) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
-	return r.Service.GetNotifications(ctx, input)
+func (r *queryResolver) GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error) {
+	return r.Service.GetNotifications(ctx, pageInfoInput)
 }
 
 // GetNotification is the resolver for the getNotification field.
@@ -48,4 +59,10 @@ func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *mod
 // Notification returns generated.NotificationResolver implementation.
 func (r *Resolver) Notification() generated.NotificationResolver { return &notificationResolver{r} }
 
+// NotificationsEdge returns generated.NotificationsEdgeResolver implementation.
+func (r *Resolver) NotificationsEdge() generated.NotificationsEdgeResolver {
+	return &notificationsEdgeResolver{r}
+}
+
 type notificationResolver struct{ *Resolver }
+type notificationsEdgeResolver struct{ *Resolver }

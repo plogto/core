@@ -52,9 +52,24 @@ type LoginInput struct {
 }
 
 type Notifications struct {
-	Notifications            []*Notification `json:"notifications"`
-	UnreadNotificationsCount *int            `json:"unreadNotificationsCount"`
-	Pagination               *Pagination     `json:"pagination"`
+	TotalCount               *int                 `json:"totalCount"`
+	Edges                    []*NotificationsEdge `json:"edges"`
+	UnreadNotificationsCount *int                 `json:"unreadNotificationsCount"`
+	PageInfo                 *PageInfo            `json:"pageInfo"`
+}
+
+type NotificationsEdge struct {
+	Cursor string        `json:"cursor"`
+	Node   *Notification `json:"node"`
+}
+
+type PageInfo struct {
+	EndCursor string `json:"endCursor"`
+}
+
+type PageInfoInput struct {
+	First *int    `json:"first"`
+	After *string `json:"after"`
 }
 
 type Pagination struct {
