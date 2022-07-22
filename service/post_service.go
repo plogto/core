@@ -75,7 +75,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 				Name:       constants.NOTIFICATION_REPLY_POST,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
-				Url:        "p/" + post.Url + "#" + post.ID,
+				Url:        "/p/" + post.Url + "#" + post.ID,
 				PostID:     input.ParentID,
 				ReplyID:    &post.ID,
 			})
@@ -136,7 +136,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 				Name:       constants.NOTIFICATION_REPLY_POST,
 				SenderID:   user.ID,
 				ReceiverID: parentPost.UserID,
-				Url:        "p/" + parentPost.Url + "#" + post.ID,
+				Url:        "/p/" + parentPost.Url + "#" + post.ID,
 				PostID:     &parentPost.ID,
 				ReplyID:    &post.ID,
 			})
