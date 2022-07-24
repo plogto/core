@@ -17,15 +17,14 @@ func (u *Users) GetUserByField(field, value string) (*model.User, error) {
 	var user model.User
 	value = strings.ToLower(value)
 	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = lower(?)", field), value).Where("deleted_at is ?", nil).First()
-	if len(user.ID) < 1 {
-		return nil, nil
-	}
+
 	return &user, err
 }
 
 func (u *Users) GetUserByID(id string) (*model.User, error) {
 	var user model.User
 	err := u.DB.Model(&user).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+
 	return &user, err
 }
 
@@ -41,6 +40,7 @@ func (u *Users) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	var user model.User
 	value = strings.ToLower(value)
 	err := u.DB.Model(&user).Where("lower(username) = lower(?)", value).WhereOr("lower(email) = lower(?)", value).Where("deleted_at is ?", nil).First()
+
 	return &user, err
 }
 
@@ -66,10 +66,12 @@ func (u *Users) GetUsersByUsernameOrFullNameAndPagination(value string, limit, p
 
 func (u *Users) CreateUser(user *model.User) (*model.User, error) {
 	_, err := u.DB.Model(user).Returning("*").Insert()
+
 	return user, err
 }
 
 func (u *Users) UpdateUser(user *model.User) (*model.User, error) {
 	_, err := u.DB.Model(user).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+
 	return user, err
 }

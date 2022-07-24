@@ -64,22 +64,22 @@ func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*
 }
 
 // FollowingCount is the resolver for the followingCount field.
-func (r *userResolver) FollowingCount(ctx context.Context, obj *model.User) (*int, error) {
+func (r *userResolver) FollowingCount(ctx context.Context, obj *model.User) (int, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, "following")
 }
 
 // FollowersCount is the resolver for the followersCount field.
-func (r *userResolver) FollowersCount(ctx context.Context, obj *model.User) (*int, error) {
+func (r *userResolver) FollowersCount(ctx context.Context, obj *model.User) (int, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, "followers")
 }
 
 // FollowRequestsCount is the resolver for the followRequestsCount field.
-func (r *userResolver) FollowRequestsCount(ctx context.Context, obj *model.User) (*int, error) {
+func (r *userResolver) FollowRequestsCount(ctx context.Context, obj *model.User) (int, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, "requests")
 }
 
 // PostsCount is the resolver for the postsCount field.
-func (r *userResolver) PostsCount(ctx context.Context, obj *model.User) (*int, error) {
+func (r *userResolver) PostsCount(ctx context.Context, obj *model.User) (int, error) {
 	return r.Service.GetPostsCount(ctx, obj.ID)
 }
 

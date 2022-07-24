@@ -88,7 +88,6 @@ func (c *Connections) DeleteConnection(id string) (*model.Connection, error) {
 	return connection, err
 }
 
-func (c *Connections) CountConnectionByUserID(field, userID string, status int) (*int, error) {
-	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
-	return &count, err
+func (c *Connections) CountConnectionByUserID(field, userID string, status int) (int, error) {
+	return c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
 }

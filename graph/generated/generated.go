@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	Notification() NotificationResolver
 	NotificationsEdge() NotificationsEdgeResolver
 	Post() PostResolver
+	PostsEdge() PostsEdgeResolver
 	Query() QueryResolver
 	SavedPost() SavedPostResolver
 	Subscription() SubscriptionResolver
@@ -188,8 +189,14 @@ type ComplexityRoot struct {
 	}
 
 	Posts struct {
-		Pagination func(childComplexity int) int
-		Posts      func(childComplexity int) int
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	PostsEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Query struct {
@@ -201,11 +208,11 @@ type ComplexityRoot struct {
 		GetLikedPostsByPostID  func(childComplexity int, postID string, input *model.PaginationInput) int
 		GetNotifications       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetPostByURL           func(childComplexity int, url string) int
-		GetPostsByTagName      func(childComplexity int, tagName string, input *model.PaginationInput) int
-		GetPostsByUsername     func(childComplexity int, username string, input *model.PaginationInput) int
-		GetSavedPosts          func(childComplexity int, input *model.PaginationInput) int
+		GetPostsByTagName      func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
+		GetPostsByUsername     func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetSavedPosts          func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetTagByTagName        func(childComplexity int, tagName string) int
-		GetTimelinePosts       func(childComplexity int, input *model.PaginationInput) int
+		GetTimelinePosts       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetTrends              func(childComplexity int, input *model.PaginationInput) int
 		GetUserByUsername      func(childComplexity int, username string) int
 		GetUserInfo            func(childComplexity int) int
@@ -324,6 +331,10 @@ type PostResolver interface {
 	IsLiked(ctx context.Context, obj *model.Post) (*model.LikedPost, error)
 	IsSaved(ctx context.Context, obj *model.Post) (*model.SavedPost, error)
 }
+type PostsEdgeResolver interface {
+	Cursor(ctx context.Context, obj *model.PostsEdge) (string, error)
+	Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error)
+}
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
@@ -332,11 +343,11 @@ type QueryResolver interface {
 	GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error)
 	GetLikedPostsByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
-	GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error)
-	GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error)
+	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
-	GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error)
-	GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error)
+	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
 	GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error)
@@ -358,10 +369,10 @@ type UserResolver interface {
 	Background(ctx context.Context, obj *model.User) (*model.File, error)
 
 	ConnectionStatus(ctx context.Context, obj *model.User) (*int, error)
-	FollowingCount(ctx context.Context, obj *model.User) (*int, error)
-	FollowersCount(ctx context.Context, obj *model.User) (*int, error)
-	FollowRequestsCount(ctx context.Context, obj *model.User) (*int, error)
-	PostsCount(ctx context.Context, obj *model.User) (*int, error)
+	FollowingCount(ctx context.Context, obj *model.User) (int, error)
+	FollowersCount(ctx context.Context, obj *model.User) (int, error)
+	FollowRequestsCount(ctx context.Context, obj *model.User) (int, error)
+	PostsCount(ctx context.Context, obj *model.User) (int, error)
 }
 
 type executableSchema struct {
@@ -1044,19 +1055,40 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Post.User(childComplexity), true
 
-	case "Posts.pagination":
-		if e.complexity.Posts.Pagination == nil {
+	case "Posts.edges":
+		if e.complexity.Posts.Edges == nil {
 			break
 		}
 
-		return e.complexity.Posts.Pagination(childComplexity), true
+		return e.complexity.Posts.Edges(childComplexity), true
 
-	case "Posts.posts":
-		if e.complexity.Posts.Posts == nil {
+	case "Posts.pageInfo":
+		if e.complexity.Posts.PageInfo == nil {
 			break
 		}
 
-		return e.complexity.Posts.Posts(childComplexity), true
+		return e.complexity.Posts.PageInfo(childComplexity), true
+
+	case "Posts.totalCount":
+		if e.complexity.Posts.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.Posts.TotalCount(childComplexity), true
+
+	case "PostsEdge.cursor":
+		if e.complexity.PostsEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.PostsEdge.Cursor(childComplexity), true
+
+	case "PostsEdge.node":
+		if e.complexity.PostsEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.PostsEdge.Node(childComplexity), true
 
 	case "Query.checkEmail":
 		if e.complexity.Query.CheckEmail == nil {
@@ -1164,7 +1196,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPostsByTagName(childComplexity, args["tagName"].(string), args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetPostsByTagName(childComplexity, args["tagName"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
 
 	case "Query.getPostsByUsername":
 		if e.complexity.Query.GetPostsByUsername == nil {
@@ -1176,7 +1208,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
 
 	case "Query.getSavedPosts":
 		if e.complexity.Query.GetSavedPosts == nil {
@@ -1188,7 +1220,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSavedPosts(childComplexity, args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetSavedPosts(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
 
 	case "Query.getTagByTagName":
 		if e.complexity.Query.GetTagByTagName == nil {
@@ -1212,7 +1244,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTimelinePosts(childComplexity, args["input"].(*model.PaginationInput)), true
+		return e.complexity.Query.GetTimelinePosts(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
 
 	case "Query.getTrends":
 		if e.complexity.Query.GetTrends == nil {
@@ -1848,9 +1880,15 @@ extend type Subscription {
   updatedAt: Time
 }
 
+type PostsEdge {
+  cursor: String!
+  node: Post
+}
+
 type Posts {
-  posts: [Post]
-  pagination: Pagination
+  totalCount: Int
+  edges: [PostsEdge]
+  pageInfo: PageInfo!
 }
 
 input addPostInput {
@@ -1866,10 +1904,10 @@ input editPostInput {
 }
 
 extend type Query {
-  getPostsByUsername(username: String!, input: PaginationInput): Posts
-  getPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostsByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
+  getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
-  getTimelinePosts(input: PaginationInput): Posts
+  getTimelinePosts(pageInfoInput: PageInfoInput): Posts
 }
 
 extend type Mutation {
@@ -1887,7 +1925,8 @@ extend type Mutation {
 }
 
 extend type Query {
-  getSavedPosts(input: PaginationInput): Posts
+  # TODO: return array of SavedPost instead of Post
+  getSavedPosts(pageInfoInput: PageInfoInput): Posts
 }
 
 extend type Mutation {
@@ -1949,10 +1988,10 @@ type User {
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int
-  followingCount: Int
-  followersCount: Int
-  followRequestsCount: Int
-  postsCount: Int
+  followingCount: Int!
+  followersCount: Int!
+  followRequestsCount: Int!
+  postsCount: Int!
   createdAt: Time
   updatedAt: Time
 }
@@ -2391,15 +2430,15 @@ func (ec *executionContext) field_Query_getPostsByTagName_args(ctx context.Conte
 		}
 	}
 	args["tagName"] = arg0
-	var arg1 *model.PaginationInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg1
+	args["pageInfoInput"] = arg1
 	return args, nil
 }
 
@@ -2415,30 +2454,30 @@ func (ec *executionContext) field_Query_getPostsByUsername_args(ctx context.Cont
 		}
 	}
 	args["username"] = arg0
-	var arg1 *model.PaginationInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg1
+	args["pageInfoInput"] = arg1
 	return args, nil
 }
 
 func (ec *executionContext) field_Query_getSavedPosts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.PaginationInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+	var arg0 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["pageInfoInput"] = arg0
 	return args, nil
 }
 
@@ -2460,15 +2499,15 @@ func (ec *executionContext) field_Query_getTagByTagName_args(ctx context.Context
 func (ec *executionContext) field_Query_getTimelinePosts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.PaginationInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPaginationInput(ctx, tmp)
+	var arg0 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["input"] = arg0
+	args["pageInfoInput"] = arg0
 	return args, nil
 }
 
@@ -6990,10 +7029,12 @@ func (ec *executionContext) fieldContext_Post_replies(ctx context.Context, field
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "posts":
-				return ec.fieldContext_Posts_posts(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Posts_pagination(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
@@ -7189,8 +7230,8 @@ func (ec *executionContext) fieldContext_Post_updatedAt(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Posts_posts(ctx, field)
+func (ec *executionContext) _Posts_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Posts_totalCount(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -7203,7 +7244,7 @@ func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Posts, nil
+		return obj.TotalCount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7212,17 +7253,197 @@ func (ec *executionContext) _Posts_posts(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.Post)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Posts_posts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Posts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Posts",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Posts_edges(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Posts_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.PostsEdge)
+	fc.Result = res
+	return ec.marshalOPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Posts_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Posts",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_PostsEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_PostsEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PostsEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Posts_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Posts_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Posts_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Posts",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostsEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.PostsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostsEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostsEdge().Cursor(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostsEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostsEdge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PostsEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.PostsEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PostsEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.PostsEdge().Node(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PostsEdge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -7255,59 +7476,6 @@ func (ec *executionContext) fieldContext_Posts_posts(ctx context.Context, field 
 				return ec.fieldContext_Post_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Posts_pagination(ctx context.Context, field graphql.CollectedField, obj *model.Posts) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Posts_pagination(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Pagination, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.Pagination)
-	fc.Result = res
-	return ec.marshalOPagination2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPagination(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Posts_pagination(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Posts",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalDocs":
-				return ec.fieldContext_Pagination_totalDocs(ctx, field)
-			case "totalPages":
-				return ec.fieldContext_Pagination_totalPages(ctx, field)
-			case "limit":
-				return ec.fieldContext_Pagination_limit(ctx, field)
-			case "page":
-				return ec.fieldContext_Pagination_page(ctx, field)
-			case "nextPage":
-				return ec.fieldContext_Pagination_nextPage(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Pagination", field.Name)
 		},
 	}
 	return fc, nil
@@ -7735,7 +7903,7 @@ func (ec *executionContext) _Query_getPostsByUsername(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPostsByUsername(rctx, fc.Args["username"].(string), fc.Args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetPostsByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7757,10 +7925,12 @@ func (ec *executionContext) fieldContext_Query_getPostsByUsername(ctx context.Co
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "posts":
-				return ec.fieldContext_Posts_posts(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Posts_pagination(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
@@ -7793,7 +7963,7 @@ func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPostsByTagName(rctx, fc.Args["tagName"].(string), fc.Args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetPostsByTagName(rctx, fc.Args["tagName"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7815,10 +7985,12 @@ func (ec *executionContext) fieldContext_Query_getPostsByTagName(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "posts":
-				return ec.fieldContext_Posts_posts(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Posts_pagination(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
@@ -7933,7 +8105,7 @@ func (ec *executionContext) _Query_getTimelinePosts(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTimelinePosts(rctx, fc.Args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetTimelinePosts(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7955,10 +8127,12 @@ func (ec *executionContext) fieldContext_Query_getTimelinePosts(ctx context.Cont
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "posts":
-				return ec.fieldContext_Posts_posts(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Posts_pagination(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
@@ -7991,7 +8165,7 @@ func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSavedPosts(rctx, fc.Args["input"].(*model.PaginationInput))
+		return ec.resolvers.Query().GetSavedPosts(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8013,10 +8187,12 @@ func (ec *executionContext) fieldContext_Query_getSavedPosts(ctx context.Context
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "posts":
-				return ec.fieldContext_Posts_posts(ctx, field)
-			case "pagination":
-				return ec.fieldContext_Posts_pagination(ctx, field)
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
 		},
@@ -10185,11 +10361,14 @@ func (ec *executionContext) _User_followingCount(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followingCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10226,11 +10405,14 @@ func (ec *executionContext) _User_followersCount(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followersCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10267,11 +10449,14 @@ func (ec *executionContext) _User_followRequestsCount(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followRequestsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10308,11 +10493,14 @@ func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_postsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13793,14 +13981,79 @@ func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, ob
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Posts")
-		case "posts":
+		case "totalCount":
 
-			out.Values[i] = ec._Posts_posts(ctx, field, obj)
+			out.Values[i] = ec._Posts_totalCount(ctx, field, obj)
 
-		case "pagination":
+		case "edges":
 
-			out.Values[i] = ec._Posts_pagination(ctx, field, obj)
+			out.Values[i] = ec._Posts_edges(ctx, field, obj)
 
+		case "pageInfo":
+
+			out.Values[i] = ec._Posts_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var postsEdgeImplementors = []string{"PostsEdge"}
+
+func (ec *executionContext) _PostsEdge(ctx context.Context, sel ast.SelectionSet, obj *model.PostsEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, postsEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PostsEdge")
+		case "cursor":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostsEdge_cursor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "node":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._PostsEdge_node(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14600,6 +14853,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_followingCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -14617,6 +14873,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_followersCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -14634,6 +14893,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_followRequestsCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -14651,6 +14913,9 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._User_postsCount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -15875,7 +16140,21 @@ func (ec *executionContext) unmarshalOPaginationInput2ᚖgithubᚗcomᚋplogto�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v []*model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Posts(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.PostsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -15902,7 +16181,7 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, sel, v[i])
+			ret[i] = ec.marshalOPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -15916,18 +16195,11 @@ func (ec *executionContext) marshalOPost2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ret
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx context.Context, sel ast.SelectionSet, v *model.PostsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Post(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._Posts(ctx, sel, v)
+	return ec._PostsEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOPrimaryColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPrimaryColor(ctx context.Context, v interface{}) (*model.PrimaryColor, error) {
