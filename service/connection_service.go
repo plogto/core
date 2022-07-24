@@ -12,7 +12,6 @@ import (
 
 func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -22,9 +21,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	followingUser, _ := s.Users.GetUserByID(userID)
-
 	connection, _ := s.Connections.GetConnection(userID, user.ID)
-
 	if len(connection.ID) > 0 {
 		return connection, nil
 	}
@@ -41,7 +38,6 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	s.Connections.CreateConnection(newConnection)
-
 	if len(newConnection.ID) > 0 && status == 2 {
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       constants.NOTIFICATION_FOLLOW_USER,
@@ -56,7 +52,6 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 
 func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -66,7 +61,6 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 	}
 
 	connection, _ := s.Connections.GetConnection(userID, user.ID)
-
 	if len(connection.ID) < 1 {
 		return nil, errors.New("connection not found")
 	}
@@ -94,7 +88,6 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 
 func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -104,7 +97,6 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	connection, _ := s.Connections.GetConnection(user.ID, userID)
-
 	if len(connection.ID) < 1 {
 		return nil, errors.New("connection not found")
 	}
@@ -114,9 +106,7 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	*connection.Status = 2
-
 	updatedConnection, _ := s.Connections.UpdateConnection(connection)
-
 	if len(updatedConnection.ID) > 0 {
 		s.CreateNotification(CreateNotificationArgs{
 			Name:       constants.NOTIFICATION_ACCEPT_USER,
@@ -131,7 +121,6 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 
 func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -141,7 +130,6 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 	}
 
 	connection, _ := s.Connections.GetConnection(user.ID, userID)
-
 	if len(connection.ID) < 1 {
 		return nil, errors.New("connection not found")
 	}
@@ -150,9 +138,7 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 		return nil, errors.New("can not reject accepted request")
 	}
 
-	deletedConnection, _ := s.Connections.DeleteConnection(connection.ID)
-
-	return deletedConnection, nil
+	return s.Connections.DeleteConnection(connection.ID)
 }
 
 func (s *Service) GetConnectionsByUsername(ctx context.Context, username string, input *model.PaginationInput, resultType string) (*model.Connections, error) {
@@ -185,27 +171,24 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	switch resultType {
 	case "followers":
-		connections, _ := s.Connections.GetFollowersByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowersByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &connectedStatus,
 		})
-		return connections, nil
 	case "following":
-		connections, _ := s.Connections.GetFollowingByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowingByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &connectedStatus,
 		})
-		return connections, nil
 	case "requests":
 		status := 1
-		connections, _ := s.Connections.GetFollowRequestsByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowRequestsByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
 			Limit:  limit,
 			Page:   page,
 			Status: &status,
 		})
-		return connections, nil
 	}
 
 	return nil, nil
@@ -223,33 +206,28 @@ func (s *Service) GetFollowRequests(ctx context.Context, input *model.Pagination
 
 func (s *Service) GetConnectionStatus(ctx context.Context, userID string) (*int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
 	if user == nil {
 		return nil, nil
 	}
 
-	connection, _ := s.Connections.GetConnection(userID, user.ID)
-
-	return connection.Status, nil
+	connection, err := s.Connections.GetConnection(userID, user.ID)
+	return connection.Status, err
 }
 
-func (s *Service) GetConnectionCount(ctx context.Context, userID string, resultType string) (*int, error) {
+func (s *Service) GetConnectionCount(ctx context.Context, userID string, resultType string) (int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	switch resultType {
 	case "followers":
-		count, _ := s.Connections.CountConnectionByUserID("following_id", userID, 2)
-		return count, nil
+		return s.Connections.CountConnectionByUserID("following_id", userID, 2)
 	case "following":
-		count, _ := s.Connections.CountConnectionByUserID("follower_id", userID, 2)
-		return count, nil
+		return s.Connections.CountConnectionByUserID("follower_id", userID, 2)
 	case "requests":
 		if user == nil || user.ID != userID {
-			return nil, nil
+			return 0, nil
 		}
-		count, _ := s.Connections.CountConnectionByUserID("following_id", userID, 1)
-		return count, nil
+		return s.Connections.CountConnectionByUserID("following_id", userID, 1)
 	}
 
-	return nil, nil
+	return 0, nil
 }

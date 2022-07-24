@@ -52,7 +52,6 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		Status:   input.Status,
 		Url:      util.RandomString(20),
 	}
-
 	s.Posts.CreatePost(post)
 
 	// check attachment
@@ -117,7 +116,6 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 
 func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -153,74 +151,55 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
 	parentPost, _ := s.Posts.GetPostByID(parentID)
 	followingUser, _ := s.Users.GetUserByID(parentPost.UserID)
+
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
 		// TODO: add inputPagination
-		return s.Posts.GetPostsByParentIDAndPagination(parentPost.ID, 50, 1)
+		return s.Posts.GetPostsByParentIDAndPagination(parentPost.ID, 50, "")
 	}
 }
 
-func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
+func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+	followingUser, err := s.Users.GetUserByUsername(username)
 
-	followingUser, _ := s.Users.GetUserByUsername(username)
-
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
-		return nil, errors.New("access denied")
-	}
-
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
+	if err != nil {
+		return nil, errors.New("user not found")
+	} else {
+		if s.CheckUserAccess(user, followingUser) == bool(false) {
+			return nil, errors.New("access denied")
 		}
 
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
-	}
+		pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.Posts.GetPostsByUserIDAndPagination(followingUser.ID, nil, limit, page)
+		return s.Posts.GetPostsByUserIDAndPagination(followingUser.ID, nil, *pageInfoInput.First, *pageInfoInput.After)
+	}
 }
 
-func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	tag, _ := s.Tags.GetTagByName(tagName)
+func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PageInfoInput) (*model.Posts, error) {
+	tag, err := s.Tags.GetTagByName(tagName)
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
+	if err != nil {
+		return nil, errors.New("tag not found")
+	} else {
+		pageInfoInput := util.ExtractPageInfo(input)
+		return s.Posts.GetPostsByTagIDAndPagination(tag.ID, *pageInfoInput.First, *pageInfoInput.After)
 	}
 
-	return s.Posts.GetPostsByTagIDAndPagination(tag.ID, limit, page)
 }
 
-func (s *Service) GetPostsCount(ctx context.Context, userID string) (*int, error) {
+func (s *Service) GetPostsCount(ctx context.Context, userID string) (int, error) {
 	return s.Posts.CountPostsByUserID(userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id string) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
-	if id == nil {
-		return nil, nil
-	}
-	post, _ := s.Posts.GetPostByID(*id)
-
+	post, _ := s.Posts.GetPostByID(id)
 	followingUser, _ := s.Users.GetUserByID(post.UserID)
+
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
@@ -232,21 +211,9 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, er
 	return s.Posts.GetPostByURL(url)
 }
 
-func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
+func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+	pageInfoInput := util.ExtractPageInfo(input)
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
-	}
-
-	return s.Posts.GetTimelinePostsByPagination(user.ID, limit, page)
+	return s.Posts.GetTimelinePostsByPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }

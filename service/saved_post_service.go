@@ -4,14 +4,13 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 )
 
 func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
-
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
@@ -23,7 +22,6 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, err
 	}
 
 	postSave, _ := s.SavedPosts.GetPostSaveByUserIDAndPostID(user.ID, postID)
-
 	if postSave != nil {
 		s.SavedPosts.DeletePostSaveByID(postSave.ID)
 	} else {
@@ -38,32 +36,18 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, err
 	return post, nil
 }
 
-func (s *Service) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
+func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
 	if user == nil {
 		return nil, nil
 	}
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
-	}
-
-	return s.SavedPosts.GetSavedPostsByUserIDAndPagination(user.ID, limit, page)
+	pageInfoInput := util.ExtractPageInfo(input)
+	return s.SavedPosts.GetSavedPostsByUserIDAndPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }
 
 func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
 	if user == nil {
 		return nil, nil
 	}

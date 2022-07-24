@@ -86,8 +86,14 @@ type PaginationInput struct {
 }
 
 type Posts struct {
-	Posts      []*Post     `json:"posts"`
-	Pagination *Pagination `json:"pagination"`
+	TotalCount *int         `json:"totalCount"`
+	Edges      []*PostsEdge `json:"edges"`
+	PageInfo   *PageInfo    `json:"pageInfo"`
+}
+
+type PostsEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Post  `json:"node"`
 }
 
 type RegisterInput struct {
