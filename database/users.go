@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-pg/pg/v10"
 	"github.com/plogto/core/graph/model"
-	"github.com/plogto/core/util"
 )
 
 type Users struct {
@@ -44,23 +43,28 @@ func (u *Users) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	return &user, err
 }
 
-func (u *Users) GetUsersByUsernameOrFullNameAndPagination(value string, limit, page int) (*model.Users, error) {
+func (u *Users) GetUsersByUsernameOrFullNameAndPagination(value string, limit int) (*model.Users, error) {
 	var users []*model.User
-	var offset = (page - 1) * limit
+	var edges []*model.UsersEdge
+
 	value = strings.ToLower(value)
 
-	query := u.DB.Model(&users).Where("lower(username) LIKE lower(?)", value).WhereOr("lower(full_name) LIKE lower(?)", value).Where("deleted_at is ?", nil)
-	query.Offset(offset).Limit(limit)
+	err := u.DB.Model(&users).
+		Where("lower(username) LIKE lower(?)", value).
+		WhereOr("lower(full_name) LIKE lower(?)", value).
+		Where("deleted_at is ?", nil).
+		Limit(limit).
+		Select()
 
-	totalDocs, err := query.SelectAndCount()
+	for _, value := range users {
+		edges = append(edges, &model.UsersEdge{Node: &model.User{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
 
 	return &model.Users{
-		Pagination: util.GetPagination(&util.GetPaginationParams{
-			Limit:     limit,
-			Page:      page,
-			TotalDocs: totalDocs,
-		}),
-		Users: users,
+		Edges: edges,
 	}, err
 }
 

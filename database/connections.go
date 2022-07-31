@@ -15,31 +15,45 @@ type Connections struct {
 
 type ConnectionFilter struct {
 	Limit  int
-	Page   int
+	After  string
 	Status *int
 }
 
 func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
-	var offset = (filter.Page - 1) * filter.Limit
+	var edges []*model.ConnectionsEdge
+	var endCursor string
 
 	query := c.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
+
+	if len(filter.After) > 0 {
+		query.Where("created_at < ?", filter.After)
+	}
 
 	if filter.Status != nil {
 		query.Where("status = ?", *filter.Status)
 	}
 
-	query.Offset(offset).Limit(filter.Limit)
+	totalCount, err :=
+		query.Limit(filter.Limit).Order("created_at DESC").SelectAndCount()
 
-	totalDocs, err := query.Order("created_at DESC").Returning("*").SelectAndCount()
+	for _, value := range connections {
+		edges = append(edges, &model.ConnectionsEdge{Node: &model.Connection{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	return &model.Connections{
-		Pagination: util.GetPagination(&util.GetPaginationParams{
-			Limit:     filter.Limit,
-			Page:      filter.Page,
-			TotalDocs: totalDocs,
-		}),
-		Connections: connections,
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor: endCursor,
+		},
 	}, err
 }
 

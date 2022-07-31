@@ -8,6 +8,7 @@ import (
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 )
 
 func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connection, error) {
@@ -141,7 +142,7 @@ func (s *Service) RejectUser(ctx context.Context, userID string) (*model.Connect
 	return s.Connections.DeleteConnection(connection.ID)
 }
 
-func (s *Service) GetConnectionsByUsername(ctx context.Context, username string, input *model.PaginationInput, resultType string) (*model.Connections, error) {
+func (s *Service) GetConnectionsByUsername(ctx context.Context, username string, input *model.PageInfoInput, resultType string) (*model.Connections, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
@@ -150,18 +151,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	followingUser, _ := s.Users.GetUserByUsername(username)
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
-	}
+	pageInfoInput := util.ExtractPageInfo(input)
 
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
@@ -172,21 +162,21 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 	switch resultType {
 	case "followers":
 		return s.Connections.GetFollowersByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			Page:   page,
+			Limit:  *pageInfoInput.First,
+			After:  *pageInfoInput.After,
 			Status: &connectedStatus,
 		})
 	case "following":
 		return s.Connections.GetFollowingByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			Page:   page,
+			Limit:  *pageInfoInput.First,
+			After:  *pageInfoInput.After,
 			Status: &connectedStatus,
 		})
 	case "requests":
 		status := 1
 		return s.Connections.GetFollowRequestsByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			Page:   page,
+			Limit:  *pageInfoInput.First,
+			After:  *pageInfoInput.After,
 			Status: &status,
 		})
 	}
@@ -194,7 +184,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 	return nil, nil
 }
 
-func (s *Service) GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error) {
+func (s *Service) GetFollowRequests(ctx context.Context, input *model.PageInfoInput) (*model.Connections, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -211,6 +201,10 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userID string) (*int,
 	}
 
 	connection, err := s.Connections.GetConnection(userID, user.ID)
+	if len(connection.ID) < 1 {
+		return nil, nil
+	}
+
 	return connection.Status, err
 }
 

@@ -11,36 +11,29 @@ import (
 )
 
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
-	limit := 10
-	page := 1
+	var limit = constants.TAGS_PAGE_LIMIT
 
-	return s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit, page)
+	return s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit)
 }
 
-func (s *Service) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
+func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
+	var limit int
 
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
+	if first == nil {
+		limit = constants.TRENDS_PAGE_LIMIT
+	} else {
+		limit = *first
 	}
-	return s.PostTags.GetTagsOrderByCountTags(limit, page)
+
+	return s.PostTags.GetTagsOrderByCountTags(limit)
+}
+
+func (s *Service) GetTagByID(ctx context.Context, id string) (*model.Tag, error) {
+	return s.Tags.GetTagByID(id)
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
-	tag, _ := s.Tags.GetTagByName(tagName)
-
-	if len(tag.ID) < 1 {
-		return nil, nil
-	}
-
-	return tag, nil
+	return s.Tags.GetTagByName(tagName)
 }
 
 func (s *Service) SaveTagsPost(postID, content string) {

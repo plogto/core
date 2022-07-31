@@ -41,18 +41,18 @@ func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*mode
 }
 
 // GetFollowersByUsername is the resolver for the getFollowersByUsername field.
-func (r *queryResolver) GetFollowersByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetConnectionsByUsername(ctx, username, input, "followers")
+func (r *queryResolver) GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error) {
+	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, "followers")
 }
 
 // GetFollowingByUsername is the resolver for the getFollowingByUsername field.
-func (r *queryResolver) GetFollowingByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetConnectionsByUsername(ctx, username, input, "following")
+func (r *queryResolver) GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error) {
+	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, "following")
 }
 
 // GetFollowRequests is the resolver for the getFollowRequests field.
-func (r *queryResolver) GetFollowRequests(ctx context.Context, input *model.PaginationInput) (*model.Connections, error) {
-	return r.Service.GetFollowRequests(ctx, input)
+func (r *queryResolver) GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error) {
+	return r.Service.GetFollowRequests(ctx, pageInfoInput)
 }
 
 // Connection returns generated.ConnectionResolver implementation.

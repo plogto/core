@@ -28,12 +28,12 @@ func (r *notificationResolver) Receiver(ctx context.Context, obj *model.Notifica
 
 // Post is the resolver for the post field.
 func (r *notificationResolver) Post(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, *obj.PostID)
+	return r.Service.GetPostByID(ctx, obj.PostID)
 }
 
 // Reply is the resolver for the reply field.
 func (r *notificationResolver) Reply(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, *obj.ReplyID)
+	return r.Service.GetPostByID(ctx, obj.ReplyID)
 }
 
 // Cursor is the resolver for the cursor field.

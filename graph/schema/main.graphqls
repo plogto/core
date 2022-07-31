@@ -9,21 +9,6 @@ input PageInfoInput {
   after: String
 }
 
-# TODO: remove Pagination
-type Pagination {
-  totalDocs: Int!
-  totalPages: Int!
-  limit: Int!
-  page: Int!
-  nextPage: Int
-}
-
-# TODO: remove PaginationInput
-input PaginationInput {
-  page: Int
-  limit: Int
-}
-
 type Test {
   content: String
 }

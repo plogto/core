@@ -29,7 +29,7 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*mode
 
 // Parent is the resolver for the parent field.
 func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, *obj.ParentID)
+	return r.Service.GetPostByID(ctx, obj.ParentID)
 }
 
 // Child is the resolver for the child field.
@@ -74,7 +74,7 @@ func (r *postsEdgeResolver) Cursor(ctx context.Context, obj *model.PostsEdge) (s
 
 // Node is the resolver for the node field.
 func (r *postsEdgeResolver) Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, obj.Node.ID)
+	return r.Service.GetPostByID(ctx, &obj.Node.ID)
 }
 
 // GetPostsByUsername is the resolver for the getPostsByUsername field.
