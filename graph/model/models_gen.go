@@ -25,8 +25,14 @@ type ChangePasswordInput struct {
 }
 
 type Connections struct {
-	Connections []*Connection `json:"connections"`
-	Pagination  *Pagination   `json:"pagination"`
+	TotalCount *int               `json:"totalCount"`
+	Edges      []*ConnectionsEdge `json:"edges"`
+	PageInfo   *PageInfo          `json:"pageInfo"`
+}
+
+type ConnectionsEdge struct {
+	Cursor string      `json:"cursor"`
+	Node   *Connection `json:"node"`
 }
 
 type EditUserInput struct {
@@ -42,8 +48,14 @@ type EditUserInput struct {
 }
 
 type LikedPosts struct {
-	LikedPosts []*LikedPost `json:"likedPosts"`
-	Pagination *Pagination  `json:"pagination"`
+	TotalCount *int              `json:"totalCount"`
+	Edges      []*LikedPostsEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type LikedPostsEdge struct {
+	Cursor string     `json:"cursor"`
+	Node   *LikedPost `json:"node"`
 }
 
 type LoginInput struct {
@@ -72,19 +84,6 @@ type PageInfoInput struct {
 	After *string `json:"after"`
 }
 
-type Pagination struct {
-	TotalDocs  int  `json:"totalDocs"`
-	TotalPages int  `json:"totalPages"`
-	Limit      int  `json:"limit"`
-	Page       int  `json:"page"`
-	NextPage   *int `json:"nextPage"`
-}
-
-type PaginationInput struct {
-	Page  *int `json:"page"`
-	Limit *int `json:"limit"`
-}
-
 type Posts struct {
 	TotalCount *int         `json:"totalCount"`
 	Edges      []*PostsEdge `json:"edges"`
@@ -102,14 +101,28 @@ type RegisterInput struct {
 	Password string `json:"password"`
 }
 
+type SavedPosts struct {
+	TotalCount *int              `json:"totalCount"`
+	Edges      []*SavedPostsEdge `json:"edges"`
+	PageInfo   *PageInfo         `json:"pageInfo"`
+}
+
+type SavedPostsEdge struct {
+	Cursor string     `json:"cursor"`
+	Node   *SavedPost `json:"node"`
+}
+
 type Search struct {
 	User *Users `json:"user"`
 	Tag  *Tags  `json:"tag"`
 }
 
 type Tags struct {
-	Tags       []*Tag      `json:"tags"`
-	Pagination *Pagination `json:"pagination"`
+	Edges []*TagsEdge `json:"edges"`
+}
+
+type TagsEdge struct {
+	Node *Tag `json:"node"`
 }
 
 type Test struct {
@@ -121,8 +134,11 @@ type TestInput struct {
 }
 
 type Users struct {
-	Users      []*User     `json:"users"`
-	Pagination *Pagination `json:"pagination"`
+	Edges []*UsersEdge `json:"edges"`
+}
+
+type UsersEdge struct {
+	Node *User `json:"node"`
 }
 
 type AddPostInput struct {

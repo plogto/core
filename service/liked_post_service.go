@@ -70,7 +70,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 		return nil, nil
 	} else {
 		// TODO: add inputPagination
-		return s.LikedPosts.GetLikedPostsByPostIDAndPagination(postID, 50, 1)
+		return s.LikedPosts.GetLikedPostsByPostIDAndPagination(postID, 50, "")
 	}
 }
 
@@ -86,6 +86,11 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		return s.LikedPosts.GetPostLikeByUserIDAndPostID(user.ID, postID)
+		isPostLiked, err := s.LikedPosts.GetPostLikeByUserIDAndPostID(user.ID, postID)
+		if len(isPostLiked.ID) < 1 {
+			return nil, nil
+		}
+
+		return isPostLiked, err
 	}
 }

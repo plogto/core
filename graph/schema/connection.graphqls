@@ -7,15 +7,22 @@ type Connection {
   updatedAt: Time
 }
 
+
+type ConnectionsEdge {
+  cursor: String!
+  node: Connection
+}
+
 type Connections {
-  connections: [Connection]
-  pagination: Pagination
+  totalCount: Int
+  edges: [ConnectionsEdge]
+  pageInfo: PageInfo!
 }
 
 extend type Query {
-  getFollowersByUsername(username: String!, input: PaginationInput): Connections
-  getFollowingByUsername(username: String!, input: PaginationInput): Connections
-  getFollowRequests(input: PaginationInput): Connections
+  getFollowersByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
+  getFollowingByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
+  getFollowRequests(pageInfoInput: PageInfoInput): Connections
 }
 
 extend type Mutation {

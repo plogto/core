@@ -6,11 +6,21 @@ type SavedPost {
   updatedAt: Time
 }
 
+type SavedPostsEdge {
+  cursor: String!
+  node: SavedPost
+}
+
+type SavedPosts {
+  totalCount: Int
+  edges: [SavedPostsEdge]
+  pageInfo: PageInfo!
+}
+
 extend type Query {
-  # TODO: return array of SavedPost instead of Post
-  getSavedPosts(pageInfoInput: PageInfoInput): Posts
+  getSavedPosts(pageInfoInput: PageInfoInput): SavedPosts
 }
 
 extend type Mutation {
-  savePost(postId: ID!): Post
+  savePost(postId: ID!): SavedPost
 }

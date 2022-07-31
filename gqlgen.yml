@@ -63,6 +63,8 @@ models:
     fields:
       user:
         resolver: true
+      parent:
+        resolver: true
       attachment:
         resolver: true
       likes:
@@ -98,10 +100,28 @@ models:
         resolver: true
       post:
         resolver: true
+  SavedPostsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   OnlineUser:
     model: github.com/plogto/core/graph/model.OnlineUser
     fields:
       user:
+        resolver: true
+  UsersEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  TagsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
         resolver: true
   PostsEdge:
     fields:

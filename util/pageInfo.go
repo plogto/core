@@ -9,7 +9,7 @@ import (
 )
 
 func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *model.PageInfoInput) {
-	var first int = constants.POSTS_PAGE_FIRST
+	var first int = constants.POSTS_PAGE_LIMIT
 	var after string
 
 	if params != nil {

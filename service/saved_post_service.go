@@ -9,7 +9,7 @@ import (
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, error) {
+func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -21,7 +21,7 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, err
 		return nil, errors.New("access denied")
 	}
 
-	postSave, _ := s.SavedPosts.GetPostSaveByUserIDAndPostID(user.ID, postID)
+	postSave, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
 	if postSave != nil {
 		s.SavedPosts.DeletePostSaveByID(postSave.ID)
 	} else {
@@ -33,17 +33,35 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.Post, err
 		s.SavedPosts.CreatePostSave(postSave)
 	}
 
-	return post, nil
+	return postSave, nil
 }
 
-func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput) (*model.Posts, error) {
-	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput) (*model.SavedPosts, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
 	if user == nil {
 		return nil, nil
 	}
 
 	pageInfoInput := util.ExtractPageInfo(input)
 	return s.SavedPosts.GetSavedPostsByUserIDAndPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+}
+
+func (s *Service) GetSavedPostByID(ctx context.Context, id string) (*model.SavedPost, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	savedPost, _ := s.SavedPosts.GetSavedPostByID(id)
+	post, err := s.Posts.GetPostByID(savedPost.PostID)
+
+	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, err
+	}
+
+	return savedPost, err
 }
 
 func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedPost, error) {
@@ -57,6 +75,12 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedP
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		return s.SavedPosts.GetPostSaveByUserIDAndPostID(user.ID, postID)
+		isPostSaved, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
+
+		if len(isPostSaved.ID) < 1 {
+			return nil, nil
+		}
+
+		return isPostSaved, err
 	}
 }

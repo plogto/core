@@ -17,7 +17,7 @@ func (r *likedPostResolver) User(ctx context.Context, obj *model.LikedPost) (*mo
 
 // Post is the resolver for the post field.
 func (r *likedPostResolver) Post(ctx context.Context, obj *model.LikedPost) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, obj.PostID)
+	return r.Service.GetPostByID(ctx, &obj.PostID)
 }
 
 // LikePost is the resolver for the likePost field.
@@ -26,7 +26,7 @@ func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.
 }
 
 // GetLikedPostsByPostID is the resolver for the getLikedPostsByPostId field.
-func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.LikedPosts, error) {
+func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, pageInfoInput *model.PageInfoInput) (*model.LikedPosts, error) {
 	return r.Service.GetLikedPostsByPostID(ctx, postID)
 }
 

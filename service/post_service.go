@@ -195,16 +195,20 @@ func (s *Service) GetPostsCount(ctx context.Context, userID string) (int, error)
 	return s.Posts.CountPostsByUserID(userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id string) (*model.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	post, _ := s.Posts.GetPostByID(id)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
 
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+	if id == nil {
 		return nil, nil
-	} else {
-		return post, nil
 	}
+
+	post, err := s.Posts.GetPostByID(*id)
+
+	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, err
+	}
+
+	return post, err
 }
 
 func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {

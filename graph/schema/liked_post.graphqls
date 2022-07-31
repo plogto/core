@@ -6,13 +6,20 @@ type LikedPost {
   updatedAt: Time
 }
 
-type LikedPosts {
-  likedPosts: [LikedPost]
-  pagination: Pagination
+type LikedPostsEdge {
+  cursor: String!
+  node: LikedPost
 }
 
+type LikedPosts {
+  totalCount: Int
+  edges: [LikedPostsEdge]
+  pageInfo: PageInfo!
+}
+
+
 extend type Query {
-  getLikedPostsByPostId(postId: String!, input: PaginationInput): LikedPosts
+  getLikedPostsByPostId(postId: String!, pageInfoInput: PageInfoInput): LikedPosts
 }
 
 extend type Mutation {

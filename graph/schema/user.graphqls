@@ -35,9 +35,12 @@ type User {
   updatedAt: Time
 }
 
+type UsersEdge {
+  node: User
+}
+
 type Users {
-  users: [User]
-  pagination: Pagination
+  edges: [UsersEdge]
 }
 
 input EditUserInput {

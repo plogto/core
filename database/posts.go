@@ -15,10 +15,11 @@ type Posts struct {
 
 func (p *Posts) GetPostByField(field string, value string) (*model.Post, error) {
 	var post model.Post
-	err := p.DB.Model(&post).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	if len(post.ID) < 1 {
-		return nil, nil
-	}
+	err := p.DB.Model(&post).
+		Where(fmt.Sprintf("%v = ?", field), value).
+		Where("deleted_at is ?", nil).
+		First()
+
 	return &post, err
 }
 
@@ -46,6 +47,7 @@ func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, l
 	for _, value := range posts {
 		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
+			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
@@ -64,6 +66,7 @@ func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, l
 func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
+	var endCursor string
 
 	query := p.DB.Model(&posts).
 		Where("parent_id= ?", parentID).
@@ -83,7 +86,9 @@ func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit int, afte
 		}})
 	}
 
-	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	return &model.Posts{
 		TotalCount: &totalCount,
@@ -97,6 +102,7 @@ func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit int, afte
 func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
+	var endCursor string
 
 	// TODO: extend this query for following users
 	query := p.DB.Model(&posts).
@@ -120,7 +126,9 @@ func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit int, after stri
 		}})
 	}
 
-	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	return &model.Posts{
 		TotalCount: &totalCount,
