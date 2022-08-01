@@ -18,7 +18,11 @@ func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *model.PageInfoInput
 		}
 
 		if params.After != nil {
-			after = ConvertCursorToDateTime(*params.After)
+			date := ConvertCursorToDateTime(*params.After)
+
+			if _, err := time.Parse(time.RFC3339, date); err == nil {
+				after = date
+			}
 		}
 	}
 
