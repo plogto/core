@@ -175,7 +175,8 @@ type ComplexityRoot struct {
 	}
 
 	PageInfo struct {
-		EndCursor func(childComplexity int) int
+		EndCursor   func(childComplexity int) int
+		HasNextPage func(childComplexity int) int
 	}
 
 	Post struct {
@@ -997,6 +998,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
 
 	case "Post.attachment":
 		if e.complexity.Post.Attachment == nil {
@@ -1861,6 +1869,7 @@ extend type Mutation {
 
 type PageInfo {
   endCursor: String!
+  hasNextPage: Boolean
 }
 
 input PageInfoInput {
@@ -3415,6 +3424,8 @@ func (ec *executionContext) fieldContext_Connections_pageInfo(ctx context.Contex
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
@@ -4098,6 +4109,8 @@ func (ec *executionContext) fieldContext_LikedPosts_pageInfo(ctx context.Context
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
@@ -6145,6 +6158,8 @@ func (ec *executionContext) fieldContext_Notifications_pageInfo(ctx context.Cont
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
@@ -6600,6 +6615,47 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *model.PageInfo) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PageInfo",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7470,6 +7526,8 @@ func (ec *executionContext) fieldContext_Posts_pageInfo(ctx context.Context, fie
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
@@ -9407,6 +9465,8 @@ func (ec *executionContext) fieldContext_SavedPosts_pageInfo(ctx context.Context
 			switch field.Name {
 			case "endCursor":
 				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
 		},
@@ -14086,6 +14146,10 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "hasNextPage":
+
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

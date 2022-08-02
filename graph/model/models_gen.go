@@ -76,7 +76,8 @@ type NotificationsEdge struct {
 }
 
 type PageInfo struct {
-	EndCursor string `json:"endCursor"`
+	EndCursor   string `json:"endCursor"`
+	HasNextPage *bool  `json:"hasNextPage"`
 }
 
 type PageInfoInput struct {
