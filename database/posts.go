@@ -54,11 +54,17 @@ func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, l
 
 	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
 
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
 	return &model.Posts{
 		TotalCount: &totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
 	}, err
 }
