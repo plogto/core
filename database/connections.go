@@ -39,8 +39,10 @@ func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, fi
 
 	for _, value := range connections {
 		edges = append(edges, &model.ConnectionsEdge{Node: &model.Connection{
-			ID:        value.ID,
-			CreatedAt: value.CreatedAt,
+			ID:          value.ID,
+			FollowerID:  value.FollowerID,
+			FollowingID: value.FollowingID,
+			CreatedAt:   value.CreatedAt,
 		}})
 	}
 
@@ -48,11 +50,17 @@ func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, fi
 		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
 	}
 
+	hasNextPage := false
+	if totalCount > filter.Limit {
+		hasNextPage = true
+	}
+
 	return &model.Connections{
 		TotalCount: &totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
 	}, err
 }
