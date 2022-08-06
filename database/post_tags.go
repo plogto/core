@@ -33,8 +33,8 @@ func (p *PostTags) GetTagsOrderByCountTags(limit int) (*model.Tags, error) {
 	for _, value := range tags {
 		edges = append(edges, &model.TagsEdge{Node: &model.Tag{
 			ID:        value.ID,
-			CreatedAt: value.CreatedAt,
 			Count:     value.Count,
+			CreatedAt: value.CreatedAt,
 		}})
 	}
 

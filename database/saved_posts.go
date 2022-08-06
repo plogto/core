@@ -36,7 +36,7 @@ func (s *SavedPosts) GetSavedPostByID(id string) (*model.SavedPost, error) {
 	return &postSave, err
 }
 
-func (s *SavedPosts) GetSavedPostsByUserIDAndPagination(userID string, limit int, after string) (*model.SavedPosts, error) {
+func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, after string) (*model.SavedPosts, error) {
 	var savedPosts []*model.SavedPost
 	var edges []*model.SavedPostsEdge
 	var endCursor string

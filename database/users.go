@@ -43,7 +43,7 @@ func (u *Users) GetUserByUsernameOrEmail(value string) (*model.User, error) {
 	return &user, err
 }
 
-func (u *Users) GetUsersByUsernameOrFullNameAndPagination(value string, limit int) (*model.Users, error) {
+func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(value string, limit int) (*model.Users, error) {
 	var users []*model.User
 	var edges []*model.UsersEdge
 

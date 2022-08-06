@@ -16,7 +16,7 @@ func (n *Notifications) GetNotificationByID(id string) (*model.Notification, err
 	return &notification, err
 }
 
-func (n *Notifications) GetNotificationsByReceiverIDAndPagination(receiverID string, limit int, after string) (*model.Notifications, error) {
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID string, limit int, after string) (*model.Notifications, error) {
 	var notifications []*model.Notification
 	var edges []*model.NotificationsEdge
 

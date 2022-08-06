@@ -19,7 +19,7 @@ type ConnectionFilter struct {
 	Status *int
 }
 
-func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetConnectionsByFieldAndPageInfo(field, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
 	var edges []*model.ConnectionsEdge
 	var endCursor string
@@ -65,16 +65,16 @@ func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, fi
 	}, err
 }
 
-func (c *Connections) GetFollowersByUserIDAndPagination(followerID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followerID, filter)
+func (c *Connections) GetFollowersByUserIDAndPageInfo(followerID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("following_id", followerID, filter)
 }
 
-func (c *Connections) GetFollowingByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("follower_id", followingID, filter)
+func (c *Connections) GetFollowingByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("follower_id", followingID, filter)
 }
 
-func (c *Connections) GetFollowRequestsByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followingID, filter)
+func (c *Connections) GetFollowRequestsByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("following_id", followingID, filter)
 }
 
 func (c *Connections) CreateConnection(connection *model.Connection) (*model.Connection, error) {

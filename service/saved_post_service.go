@@ -48,7 +48,7 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput)
 	}
 
 	pageInfoInput := util.ExtractPageInfo(input)
-	return s.SavedPosts.GetSavedPostsByUserIDAndPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }
 
 func (s *Service) GetSavedPostByID(ctx context.Context, id string) (*model.SavedPost, error) {

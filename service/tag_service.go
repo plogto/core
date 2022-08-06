@@ -13,7 +13,7 @@ import (
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
 	var limit = constants.TAGS_PAGE_LIMIT
 
-	return s.Tags.GetTagsByTagNameAndPagination(expression+"%", limit)
+	return s.Tags.GetTagsByTagNameAndPageInfo(expression+"%", limit)
 }
 
 func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
