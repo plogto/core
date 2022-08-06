@@ -12,7 +12,7 @@ type Tags struct {
 	DB *pg.DB
 }
 
-func (t *Tags) GetTagsByTagNameAndPagination(value string, limit int) (*model.Tags, error) {
+func (t *Tags) GetTagsByTagNameAndPageInfo(value string, limit int) (*model.Tags, error) {
 	var tags []*model.Tag
 	var edges []*model.TagsEdge
 
@@ -35,6 +35,7 @@ func (t *Tags) GetTagsByTagNameAndPagination(value string, limit int) (*model.Ta
 	for _, value := range tags {
 		edges = append(edges, &model.TagsEdge{Node: &model.Tag{
 			ID:        value.ID,
+			Count:     value.Count,
 			CreatedAt: value.CreatedAt,
 		}})
 	}

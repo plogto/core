@@ -33,7 +33,7 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInp
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.Notifications.GetNotificationsByReceiverIDAndPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }
 
 func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.Notification, error) {

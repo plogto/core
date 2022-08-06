@@ -161,20 +161,20 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	switch resultType {
 	case "followers":
-		return s.Connections.GetFollowersByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowersByUserIDAndPageInfo(followingUser.ID, database.ConnectionFilter{
 			Limit:  *pageInfoInput.First,
 			After:  *pageInfoInput.After,
 			Status: &connectedStatus,
 		})
 	case "following":
-		return s.Connections.GetFollowingByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowingByUserIDAndPageInfo(followingUser.ID, database.ConnectionFilter{
 			Limit:  *pageInfoInput.First,
 			After:  *pageInfoInput.After,
 			Status: &connectedStatus,
 		})
 	case "requests":
 		status := 1
-		return s.Connections.GetFollowRequestsByUserIDAndPagination(followingUser.ID, database.ConnectionFilter{
+		return s.Connections.GetFollowRequestsByUserIDAndPageInfo(followingUser.ID, database.ConnectionFilter{
 			Limit:  *pageInfoInput.First,
 			After:  *pageInfoInput.After,
 			Status: &status,

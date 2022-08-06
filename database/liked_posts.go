@@ -21,7 +21,7 @@ func (l *LikedPosts) CreatePostLike(postLike *model.LikedPost) (*model.LikedPost
 	return postLike, err
 }
 
-func (l *LikedPosts) GetLikedPostsByPostIDAndPagination(postID string, limit int, after string) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(postID string, limit int, after string) (*model.LikedPosts, error) {
 	var posts []*model.LikedPost
 	var edges []*model.LikedPostsEdge
 	var endCursor string

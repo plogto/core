@@ -157,8 +157,8 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*mod
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		// TODO: add inputPagination
-		return s.Posts.GetPostsByParentIDAndPagination(parentPost.ID, 50, "")
+		// TODO: add inputPageInfo
+		return s.Posts.GetPostsByParentIDAndPageInfo(parentPost.ID, 50, "")
 	}
 }
 
@@ -175,7 +175,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 
 		pageInfoInput := util.ExtractPageInfo(input)
 
-		return s.Posts.GetPostsByUserIDAndPagination(followingUser.ID, nil, *pageInfoInput.First, *pageInfoInput.After)
+		return s.Posts.GetPostsByUserIDAndPageInfo(followingUser.ID, nil, *pageInfoInput.First, *pageInfoInput.After)
 	}
 }
 
@@ -186,7 +186,7 @@ func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *
 		return nil, errors.New("tag not found")
 	} else {
 		pageInfoInput := util.ExtractPageInfo(input)
-		return s.Posts.GetPostsByTagIDAndPagination(tag.ID, *pageInfoInput.First, *pageInfoInput.After)
+		return s.Posts.GetPostsByTagIDAndPageInfo(tag.ID, *pageInfoInput.First, *pageInfoInput.After)
 	}
 
 }
@@ -219,5 +219,5 @@ func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PageInfoInp
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.Posts.GetTimelinePostsByPagination(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.Posts.GetTimelinePostsByPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }

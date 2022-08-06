@@ -23,7 +23,7 @@ func (p *Posts) GetPostByField(field string, value string) (*model.Post, error) 
 	return &post, err
 }
 
-func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
 
@@ -69,7 +69,7 @@ func (p *Posts) GetPostsByUserIDAndPagination(userID string, parentID *string, l
 	}, err
 }
 
-func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(parentID string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
 	var endCursor string
@@ -105,7 +105,7 @@ func (p *Posts) GetPostsByParentIDAndPagination(parentID string, limit int, afte
 	}, err
 }
 
-func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByTagIDAndPageInfo(tagID string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
 	var endCursor string
@@ -145,7 +145,7 @@ func (p *Posts) GetPostsByTagIDAndPagination(tagID string, limit int, after stri
 	}, err
 }
 
-func (p *Posts) GetTimelinePostsByPagination(userID string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetTimelinePostsByPageInfo(userID string, limit int, after string) (*model.Posts, error) {
 	var followingPosts []*model.Post
 	var userPosts []*model.Post
 	var posts []*model.Post

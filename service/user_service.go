@@ -25,7 +25,7 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	var limit = constants.USERS_PAGE_LIMIT
 
-	return s.Users.GetUsersByUsernameOrFullNameAndPagination(expression+"%", limit)
+	return s.Users.GetUsersByUsernameOrFullNameAndPageInfo(expression+"%", limit)
 }
 
 func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) bool {

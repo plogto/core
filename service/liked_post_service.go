@@ -69,8 +69,8 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		// TODO: add inputPagination
-		return s.LikedPosts.GetLikedPostsByPostIDAndPagination(postID, 50, "")
+		// TODO: add inputPageInfo
+		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(postID, 50, "")
 	}
 }
 
