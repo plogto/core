@@ -12,28 +12,28 @@ type SavedPosts struct {
 	DB *pg.DB
 }
 
-func (s *SavedPosts) CreatePostSave(postSave *model.SavedPost) (*model.SavedPost, error) {
-	_, err := s.DB.Model(postSave).
+func (s *SavedPosts) CreateSavedPost(savedPost *model.SavedPost) (*model.SavedPost, error) {
+	_, err := s.DB.Model(savedPost).
 		Where("user_id = ?user_id").
 		Where("post_id = ?post_id").
 		Where("deleted_at is ?", nil).
 		SelectOrInsert()
 
-	return postSave, err
+	return savedPost, err
 }
 
 func (s *SavedPosts) GetSavedPostByUserIDAndPostID(userID, postID string) (*model.SavedPost, error) {
-	var postSave model.SavedPost
-	err := s.DB.Model(&postSave).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
+	var savedPost model.SavedPost
+	err := s.DB.Model(&savedPost).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
 
-	return &postSave, err
+	return &savedPost, err
 }
 
 func (s *SavedPosts) GetSavedPostByID(id string) (*model.SavedPost, error) {
-	var postSave model.SavedPost
-	err := s.DB.Model(&postSave).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+	var savedPost model.SavedPost
+	err := s.DB.Model(&savedPost).Where("id = ?", id).Where("deleted_at is ?", nil).First()
 
-	return &postSave, err
+	return &savedPost, err
 }
 
 func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, after string) (*model.SavedPosts, error) {
@@ -86,13 +86,13 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, 
 	}, err
 }
 
-func (s *SavedPosts) DeletePostSaveByID(id string) (*model.SavedPost, error) {
+func (s *SavedPosts) DeleteSavedPostByID(id string) (*model.SavedPost, error) {
 	DeletedAt := time.Now()
-	var postSave = &model.SavedPost{
+	var savedPost = &model.SavedPost{
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := s.DB.Model(postSave).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+	_, err := s.DB.Model(savedPost).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 
-	return postSave, err
+	return savedPost, err
 }
