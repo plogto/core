@@ -21,19 +21,17 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost
 		return nil, errors.New("access denied")
 	}
 
-	postSave, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
-	if postSave != nil {
-		s.SavedPosts.DeletePostSaveByID(postSave.ID)
-	} else {
-		postSave := &model.SavedPost{
+	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
+
+	if util.IsEmpty(savedPost.ID) {
+		savedPost := &model.SavedPost{
 			UserID: user.ID,
 			PostID: postID,
 		}
-
-		s.SavedPosts.CreatePostSave(postSave)
+		return s.SavedPosts.CreateSavedPost(savedPost)
+	} else {
+		return s.SavedPosts.DeleteSavedPostByID(savedPost.ID)
 	}
-
-	return postSave, nil
 }
 
 func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput) (*model.SavedPosts, error) {
@@ -77,7 +75,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedP
 	} else {
 		isPostSaved, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
 
-		if len(isPostSaved.ID) < 1 {
+		if util.IsEmpty(isPostSaved.ID) {
 			return nil, nil
 		}
 
