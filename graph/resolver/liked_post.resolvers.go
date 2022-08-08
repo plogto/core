@@ -21,7 +21,7 @@ func (r *likedPostResolver) Post(ctx context.Context, obj *model.LikedPost) (*mo
 }
 
 // LikePost is the resolver for the likePost field.
-func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.Post, error) {
+func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.LikedPost, error) {
 	return r.Service.LikePost(ctx, postID)
 }
 

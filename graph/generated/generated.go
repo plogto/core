@@ -325,7 +325,7 @@ type MutationResolver interface {
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
 	SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error)
-	LikePost(ctx context.Context, postID string) (*model.Post, error)
+	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
 	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
@@ -1862,7 +1862,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): Post
+  likePost(postId: ID!): LikedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/main.graphqls", Input: `scalar Time
@@ -4678,9 +4678,9 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*model.LikedPost)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4692,35 +4692,17 @@ func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, 
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_Post_id(ctx, field)
-			case "status":
-				return ec.fieldContext_Post_status(ctx, field)
-			case "parent":
-				return ec.fieldContext_Post_parent(ctx, field)
-			case "child":
-				return ec.fieldContext_Post_child(ctx, field)
+				return ec.fieldContext_LikedPost_id(ctx, field)
 			case "user":
-				return ec.fieldContext_Post_user(ctx, field)
-			case "content":
-				return ec.fieldContext_Post_content(ctx, field)
-			case "attachment":
-				return ec.fieldContext_Post_attachment(ctx, field)
-			case "url":
-				return ec.fieldContext_Post_url(ctx, field)
-			case "likes":
-				return ec.fieldContext_Post_likes(ctx, field)
-			case "replies":
-				return ec.fieldContext_Post_replies(ctx, field)
-			case "isLiked":
-				return ec.fieldContext_Post_isLiked(ctx, field)
-			case "isSaved":
-				return ec.fieldContext_Post_isSaved(ctx, field)
+				return ec.fieldContext_LikedPost_user(ctx, field)
+			case "post":
+				return ec.fieldContext_LikedPost_post(ctx, field)
 			case "createdAt":
-				return ec.fieldContext_Post_createdAt(ctx, field)
+				return ec.fieldContext_LikedPost_createdAt(ctx, field)
 			case "updatedAt":
-				return ec.fieldContext_Post_updatedAt(ctx, field)
+				return ec.fieldContext_LikedPost_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type LikedPost", field.Name)
 		},
 	}
 	defer func() {

@@ -12,13 +12,14 @@ type LikedPosts struct {
 	DB *pg.DB
 }
 
-func (l *LikedPosts) CreatePostLike(postLike *model.LikedPost) (*model.LikedPost, error) {
-	_, err := l.DB.Model(postLike).
+func (l *LikedPosts) CreateLikedPost(likedPost *model.LikedPost) (*model.LikedPost, error) {
+	_, err := l.DB.Model(likedPost).
 		Where("user_id = ?user_id").
 		Where("post_id = ?post_id").
 		Where("deleted_at is ?", nil).
-		Returning("*").SelectOrInsert()
-	return postLike, err
+		SelectOrInsert()
+
+	return likedPost, err
 }
 
 func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(postID string, limit int, after string) (*model.LikedPosts, error) {
@@ -58,19 +59,19 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(postID string, limit int, 
 
 }
 
-func (l *LikedPosts) GetPostLikeByUserIDAndPostID(userID, postID string) (*model.LikedPost, error) {
-	var postLike model.LikedPost
-	err := l.DB.Model(&postLike).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
+func (l *LikedPosts) GetLikedPostByUserIDAndPostID(userID, postID string) (*model.LikedPost, error) {
+	var likedPost model.LikedPost
+	err := l.DB.Model(&likedPost).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
 
-	return &postLike, err
+	return &likedPost, err
 }
 
-func (l *LikedPosts) DeletePostLikeByID(id string) (*model.LikedPost, error) {
+func (l *LikedPosts) DeleteLikedPostByID(id string) (*model.LikedPost, error) {
 	DeletedAt := time.Now()
-	var postLike = &model.LikedPost{
+	var likedPost = &model.LikedPost{
 		ID:        id,
 		DeletedAt: &DeletedAt,
 	}
-	_, err := l.DB.Model(postLike).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
-	return postLike, err
+	_, err := l.DB.Model(likedPost).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+	return likedPost, err
 }
