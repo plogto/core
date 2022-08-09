@@ -36,5 +36,5 @@ extend type Query {
 }
 
 extend type Subscription {
-  getNotification: Notification
+  getNotification: NotificationsEdge
 }

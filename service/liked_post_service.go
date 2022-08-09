@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
@@ -31,8 +30,6 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 			UserID: user.ID,
 			PostID: postID,
 		})
-
-		fmt.Println(likedPost)
 
 		if !util.IsEmpty(likedPost.ID) {
 			var name string = constants.NOTIFICATION_LIKE_POST

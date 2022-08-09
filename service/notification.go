@@ -46,7 +46,7 @@ func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.No
 	return s.Notifications.GetNotificationByID(id)
 }
 
-func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
+func (s *Service) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
 	onlineUserContext, err := middleware.GetCurrentOnlineUserFromCTX(ctx)
 
 	if err != nil {
@@ -61,13 +61,13 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 		s.mu.Unlock()
 	}()
 
-	notification := make(chan *model.Notification, 1)
+	notificationEdge := make(chan *model.NotificationsEdge, 1)
 	s.mu.Lock()
 	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	s.OnlineNotifications[onlineUserContext.SocketID] = notification
+	s.OnlineNotifications[onlineUserContext.SocketID] = notificationEdge
 	s.mu.Unlock()
 
-	return notification, nil
+	return notificationEdge, nil
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
@@ -83,13 +83,18 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 			ReplyID:            args.ReplyID,
 		}
 
+		notificationEdge := &model.NotificationsEdge{
+			Cursor: util.ConvertCreateAtToCursor(*notification.CreatedAt),
+			Node:   notification,
+		}
+
 		s.Notifications.CreateNotification(notification)
 
 		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID)
 
 		if onlineUser != nil {
 			s.mu.Lock()
-			s.OnlineNotifications[onlineUser.SocketID] <- notification
+			s.OnlineNotifications[onlineUser.SocketID] <- notificationEdge
 			s.mu.Unlock()
 		}
 	}
