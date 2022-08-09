@@ -391,7 +391,7 @@ type SavedPostsEdgeResolver interface {
 }
 type SubscriptionResolver interface {
 	Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error)
-	GetNotification(ctx context.Context) (<-chan *model.Notification, error)
+	GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error)
 }
 type TagsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error)
@@ -1935,7 +1935,7 @@ extend type Query {
 }
 
 extend type Subscription {
-  getNotification: Notification
+  getNotification: NotificationsEdge
 }`, BuiltIn: false},
 	{Name: "../schema/online_user.graphqls", Input: `type OnlineUser {
   id: ID!
@@ -9738,7 +9738,7 @@ func (ec *executionContext) _Subscription_getNotification(ctx context.Context, f
 	}
 	return func(ctx context.Context) graphql.Marshaler {
 		select {
-		case res, ok := <-resTmp.(<-chan *model.Notification):
+		case res, ok := <-resTmp.(<-chan *model.NotificationsEdge):
 			if !ok {
 				return nil
 			}
@@ -9746,7 +9746,7 @@ func (ec *executionContext) _Subscription_getNotification(ctx context.Context, f
 				w.Write([]byte{'{'})
 				graphql.MarshalString(field.Alias).MarshalGQL(w)
 				w.Write([]byte{':'})
-				ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res).MarshalGQL(w)
+				ec.marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, field.Selections, res).MarshalGQL(w)
 				w.Write([]byte{'}'})
 			})
 		case <-ctx.Done():
@@ -9763,28 +9763,12 @@ func (ec *executionContext) fieldContext_Subscription_getNotification(ctx contex
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_Notification_id(ctx, field)
-			case "notificationType":
-				return ec.fieldContext_Notification_notificationType(ctx, field)
-			case "sender":
-				return ec.fieldContext_Notification_sender(ctx, field)
-			case "receiver":
-				return ec.fieldContext_Notification_receiver(ctx, field)
-			case "post":
-				return ec.fieldContext_Notification_post(ctx, field)
-			case "reply":
-				return ec.fieldContext_Notification_reply(ctx, field)
-			case "url":
-				return ec.fieldContext_Notification_url(ctx, field)
-			case "read":
-				return ec.fieldContext_Notification_read(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Notification_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Notification_updatedAt(ctx, field)
+			case "cursor":
+				return ec.fieldContext_NotificationsEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_NotificationsEdge_node(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type NotificationsEdge", field.Name)
 		},
 	}
 	return fc, nil

@@ -42,12 +42,18 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID strin
 
 	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
 
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
 	return &model.Notifications{
 		TotalCount:               &totalCount,
 		Edges:                    edges,
 		UnreadNotificationsCount: unreadNotificationsCount,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
 	}, err
 }

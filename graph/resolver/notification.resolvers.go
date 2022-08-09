@@ -52,7 +52,7 @@ func (r *queryResolver) GetNotifications(ctx context.Context, pageInfoInput *mod
 }
 
 // GetNotification is the resolver for the getNotification field.
-func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
+func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
 	return r.Service.GetNotification(ctx)
 }
 
