@@ -49,6 +49,7 @@ type ResolverRoot interface {
 	SavedPost() SavedPostResolver
 	SavedPostsEdge() SavedPostsEdgeResolver
 	Subscription() SubscriptionResolver
+	Tag() TagResolver
 	TagsEdge() TagsEdgeResolver
 	User() UserResolver
 	UsersEdge() UsersEdgeResolver
@@ -392,6 +393,9 @@ type SavedPostsEdgeResolver interface {
 type SubscriptionResolver interface {
 	Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error)
 	GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error)
+}
+type TagResolver interface {
+	Count(ctx context.Context, obj *model.Tag) (*int, error)
 }
 type TagsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error)
@@ -9876,7 +9880,7 @@ func (ec *executionContext) _Tag_count(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Count, nil
+		return ec.resolvers.Tag().Count(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9885,17 +9889,17 @@ func (ec *executionContext) _Tag_count(ctx context.Context, field graphql.Collec
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(int64)
+	res := resTmp.(*int)
 	fc.Result = res
-	return ec.marshalOInt2int64(ctx, field.Selections, res)
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_count(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Tag",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
 		},
@@ -15072,19 +15076,32 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = ec._Tag_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 
 			out.Values[i] = ec._Tag_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "count":
+			field := field
 
-			out.Values[i] = ec._Tag_count(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Tag_count(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._Tag_createdAt(ctx, field, obj)
@@ -16489,16 +16506,6 @@ func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface
 
 func (ec *executionContext) marshalOInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
 	res := graphql.MarshalInt32(v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOInt2int64(ctx context.Context, v interface{}) (int64, error) {
-	res, err := graphql.UnmarshalInt64(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOInt2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
-	res := graphql.MarshalInt64(v)
 	return res
 }
 
