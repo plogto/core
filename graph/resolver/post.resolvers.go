@@ -9,6 +9,7 @@ import (
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 // AddPost is the resolver for the addPost field.
@@ -66,14 +67,24 @@ func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*model.Sav
 	return r.Service.IsPostSaved(ctx, obj.ID)
 }
 
+// Cursor is the resolver for the cursor field.
+func (r *postsEdgeResolver) Cursor(ctx context.Context, obj *model.PostsEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *postsEdgeResolver) Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error) {
+	return r.Service.GetPostByID(ctx, &obj.Node.ID)
+}
+
 // GetPostsByUsername is the resolver for the getPostsByUsername field.
-func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetPostsByUsername(ctx, username, input)
+func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetPostsByUsername(ctx, username, pageInfoInput)
 }
 
 // GetPostsByTagName is the resolver for the getPostsByTagName field.
-func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetPostsByTagName(ctx, tagName, input)
+func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetPostsByTagName(ctx, tagName, pageInfoInput)
 }
 
 // GetPostByURL is the resolver for the getPostByUrl field.
@@ -82,11 +93,15 @@ func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Po
 }
 
 // GetTimelinePosts is the resolver for the getTimelinePosts field.
-func (r *queryResolver) GetTimelinePosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetTimelinePosts(ctx, input)
+func (r *queryResolver) GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetTimelinePosts(ctx, pageInfoInput)
 }
 
 // Post returns generated.PostResolver implementation.
 func (r *Resolver) Post() generated.PostResolver { return &postResolver{r} }
 
+// PostsEdge returns generated.PostsEdgeResolver implementation.
+func (r *Resolver) PostsEdge() generated.PostsEdgeResolver { return &postsEdgeResolver{r} }
+
 type postResolver struct{ *Resolver }
+type postsEdgeResolver struct{ *Resolver }

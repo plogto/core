@@ -23,7 +23,7 @@ type Service struct {
 	OnlineUsers         database.OnlineUsers
 	Notifications       database.Notifications
 	NotificationTypes   database.NotificationTypes
-	OnlineNotifications map[string]chan *model.Notification
+	OnlineNotifications map[string]chan *model.NotificationsEdge
 	mu                  sync.Mutex
 }
 
@@ -42,7 +42,7 @@ func New(service Service) *Service {
 		OnlineUsers:         service.OnlineUsers,
 		Notifications:       service.Notifications,
 		NotificationTypes:   service.NotificationTypes,
-		OnlineNotifications: map[string]chan *model.Notification{},
+		OnlineNotifications: map[string]chan *model.NotificationsEdge{},
 	}
 }
 

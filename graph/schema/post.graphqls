@@ -15,9 +15,15 @@ type Post {
   updatedAt: Time
 }
 
+type PostsEdge {
+  cursor: String!
+  node: Post
+}
+
 type Posts {
-  posts: [Post]
-  pagination: Pagination
+  totalCount: Int
+  edges: [PostsEdge]
+  pageInfo: PageInfo!
 }
 
 input addPostInput {
@@ -33,10 +39,10 @@ input editPostInput {
 }
 
 extend type Query {
-  getPostsByUsername(username: String!, input: PaginationInput): Posts
-  getPostsByTagName(tagName: String!, input: PaginationInput): Posts
+  getPostsByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
+  getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
-  getTimelinePosts(input: PaginationInput): Posts
+  getTimelinePosts(pageInfoInput: PageInfoInput): Posts
 }
 
 extend type Mutation {

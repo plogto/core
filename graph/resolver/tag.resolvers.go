@@ -6,6 +6,7 @@ package graph
 import (
 	"context"
 
+	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 )
 
@@ -15,6 +16,16 @@ func (r *queryResolver) GetTagByTagName(ctx context.Context, tagName string) (*m
 }
 
 // GetTrends is the resolver for the getTrends field.
-func (r *queryResolver) GetTrends(ctx context.Context, input *model.PaginationInput) (*model.Tags, error) {
-	return r.Service.GetTrends(ctx, input)
+func (r *queryResolver) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
+	return r.Service.GetTrends(ctx, first)
 }
+
+// Node is the resolver for the node field.
+func (r *tagsEdgeResolver) Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error) {
+	return r.Service.GetTagByID(ctx, obj.Node.ID)
+}
+
+// TagsEdge returns generated.TagsEdgeResolver implementation.
+func (r *Resolver) TagsEdge() generated.TagsEdgeResolver { return &tagsEdgeResolver{r} }
+
+type tagsEdgeResolver struct{ *Resolver }
