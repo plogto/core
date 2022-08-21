@@ -19,16 +19,22 @@ type Notification {
   updatedAt: Time
 }
 
+type NotificationsEdge {
+  cursor: String!
+  node: Notification
+}
+
 type Notifications {
-  notifications: [Notification]
+  totalCount: Int
+  edges: [NotificationsEdge]
   unreadNotificationsCount: Int
-  pagination: Pagination
+  pageInfo: PageInfo!
 }
 
 extend type Query {
-  getNotifications(input: PaginationInput): Notifications
+  getNotifications(pageInfoInput: PageInfoInput): Notifications
 }
 
 extend type Subscription {
-  getNotification: Notification
+  getNotification: NotificationsEdge
 }

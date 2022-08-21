@@ -15,44 +15,66 @@ type Connections struct {
 
 type ConnectionFilter struct {
 	Limit  int
-	Page   int
+	After  string
 	Status *int
 }
 
-func (c *Connections) GetConnectionsByFieldAndPagination(field, value string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetConnectionsByFieldAndPageInfo(field, value string, filter ConnectionFilter) (*model.Connections, error) {
 	var connections []*model.Connection
-	var offset = (filter.Page - 1) * filter.Limit
+	var edges []*model.ConnectionsEdge
+	var endCursor string
 
 	query := c.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
+
+	if len(filter.After) > 0 {
+		query.Where("created_at < ?", filter.After)
+	}
 
 	if filter.Status != nil {
 		query.Where("status = ?", *filter.Status)
 	}
 
-	query.Offset(offset).Limit(filter.Limit)
+	totalCount, err :=
+		query.Limit(filter.Limit).Order("created_at DESC").SelectAndCount()
 
-	totalDocs, err := query.Order("created_at DESC").Returning("*").SelectAndCount()
+	for _, value := range connections {
+		edges = append(edges, &model.ConnectionsEdge{Node: &model.Connection{
+			ID:          value.ID,
+			FollowerID:  value.FollowerID,
+			FollowingID: value.FollowingID,
+			CreatedAt:   value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > filter.Limit {
+		hasNextPage = true
+	}
 
 	return &model.Connections{
-		Pagination: util.GetPagination(&util.GetPaginationParams{
-			Limit:     filter.Limit,
-			Page:      filter.Page,
-			TotalDocs: totalDocs,
-		}),
-		Connections: connections,
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
 	}, err
 }
 
-func (c *Connections) GetFollowersByUserIDAndPagination(followerID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followerID, filter)
+func (c *Connections) GetFollowersByUserIDAndPageInfo(followerID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("following_id", followerID, filter)
 }
 
-func (c *Connections) GetFollowingByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("follower_id", followingID, filter)
+func (c *Connections) GetFollowingByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("follower_id", followingID, filter)
 }
 
-func (c *Connections) GetFollowRequestsByUserIDAndPagination(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPagination("following_id", followingID, filter)
+func (c *Connections) GetFollowRequestsByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
+	return c.GetConnectionsByFieldAndPageInfo("following_id", followingID, filter)
 }
 
 func (c *Connections) CreateConnection(connection *model.Connection) (*model.Connection, error) {
@@ -88,7 +110,6 @@ func (c *Connections) DeleteConnection(id string) (*model.Connection, error) {
 	return connection, err
 }
 
-func (c *Connections) CountConnectionByUserID(field, userID string, status int) (*int, error) {
-	count, err := c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
-	return &count, err
+func (c *Connections) CountConnectionByUserID(field, userID string, status int) (int, error) {
+	return c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
 }

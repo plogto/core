@@ -10,35 +10,56 @@ type Notifications struct {
 	DB *pg.DB
 }
 
-func (p *Notifications) GetNotificationsByReceiverIDAndPagination(receiverID string, limit, page int) (*model.Notifications, error) {
-	var notifications []*model.Notification
-	var offset = (page - 1) * limit
+func (n *Notifications) GetNotificationByID(id string) (*model.Notification, error) {
+	var notification model.Notification
+	err := n.DB.Model(&notification).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+	return &notification, err
+}
 
-	query := p.DB.Model(&notifications).
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID string, limit int, after string) (*model.Notifications, error) {
+	var notifications []*model.Notification
+	var edges []*model.NotificationsEdge
+
+	query := n.DB.Model(&notifications).
 		Where("receiver_id = ?", receiverID).
 		Where("deleted_at is ?", nil).
-		Order("created_at DESC").
-		Returning("*")
+		Order("created_at DESC")
 
-	query.Offset(offset).Limit(limit)
+	if len(after) > 0 {
+		query.Where("created_at < ?", after)
+	}
 
-	totalDocs, err := query.SelectAndCount()
+	totalCount, err := query.Limit(limit).SelectAndCount()
 
-	unreadNotificationsCount, _ := p.CountUnreadNotificationsByReceiverID(receiverID)
+	unreadNotificationsCount, _ := n.CountUnreadNotificationsByReceiverID(receiverID)
+
+	for _, value := range notifications {
+		edges = append(edges, &model.NotificationsEdge{Node: &model.Notification{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
 
 	return &model.Notifications{
-		Pagination: util.GetPagination(&util.GetPaginationParams{
-			Limit:     limit,
-			Page:      page,
-			TotalDocs: totalDocs,
-		}),
+		TotalCount:               &totalCount,
+		Edges:                    edges,
 		UnreadNotificationsCount: unreadNotificationsCount,
-		Notifications:            notifications,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
 	}, err
 }
 
-func (p *Notifications) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
-	count, err := p.DB.Model((*model.Notification)(nil)).
+func (n *Notifications) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
+	count, err := n.DB.Model((*model.Notification)(nil)).
 		Where("receiver_id = ?", receiverID).
 		Where("read = ?", false).
 		Where("deleted_at is ?", nil).

@@ -14,7 +14,7 @@ type Notification struct {
 	ReplyID            *string
 	URL                string
 	Read               *bool
-	CreatedAt          time.Time
-	UpdatedAt          time.Time
+	CreatedAt          *time.Time
+	UpdatedAt          *time.Time
 	DeletedAt          *time.Time `pg:"-,soft_delete"`
 }

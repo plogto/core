@@ -8,16 +8,17 @@ import (
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 // SavePost is the resolver for the savePost field.
-func (r *mutationResolver) SavePost(ctx context.Context, postID string) (*model.Post, error) {
+func (r *mutationResolver) SavePost(ctx context.Context, postID string) (*model.SavedPost, error) {
 	return r.Service.SavePost(ctx, postID)
 }
 
 // GetSavedPosts is the resolver for the getSavedPosts field.
-func (r *queryResolver) GetSavedPosts(ctx context.Context, input *model.PaginationInput) (*model.Posts, error) {
-	return r.Service.GetSavedPosts(ctx, input)
+func (r *queryResolver) GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error) {
+	return r.Service.GetSavedPosts(ctx, pageInfoInput)
 }
 
 // User is the resolver for the user field.
@@ -30,7 +31,23 @@ func (r *savedPostResolver) Post(ctx context.Context, obj *model.SavedPost) (*mo
 	return r.Service.GetPostByID(ctx, &obj.PostID)
 }
 
+// Cursor is the resolver for the cursor field.
+func (r *savedPostsEdgeResolver) Cursor(ctx context.Context, obj *model.SavedPostsEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *savedPostsEdgeResolver) Node(ctx context.Context, obj *model.SavedPostsEdge) (*model.SavedPost, error) {
+	return r.Service.GetSavedPostByID(ctx, obj.Node.ID)
+}
+
 // SavedPost returns generated.SavedPostResolver implementation.
 func (r *Resolver) SavedPost() generated.SavedPostResolver { return &savedPostResolver{r} }
 
+// SavedPostsEdge returns generated.SavedPostsEdgeResolver implementation.
+func (r *Resolver) SavedPostsEdge() generated.SavedPostsEdgeResolver {
+	return &savedPostsEdgeResolver{r}
+}
+
 type savedPostResolver struct{ *Resolver }
+type savedPostsEdgeResolver struct{ *Resolver }

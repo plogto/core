@@ -21,12 +21,12 @@ func (r *likedPostResolver) Post(ctx context.Context, obj *model.LikedPost) (*mo
 }
 
 // LikePost is the resolver for the likePost field.
-func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.Post, error) {
+func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*model.LikedPost, error) {
 	return r.Service.LikePost(ctx, postID)
 }
 
 // GetLikedPostsByPostID is the resolver for the getLikedPostsByPostId field.
-func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, input *model.PaginationInput) (*model.LikedPosts, error) {
+func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, pageInfoInput *model.PageInfoInput) (*model.LikedPosts, error) {
 	return r.Service.GetLikedPostsByPostID(ctx, postID)
 }
 
