@@ -5,9 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 )
 
 type CreateNotificationArgs struct {
@@ -24,28 +24,29 @@ type RemovePostNotificationsArgs struct {
 	PostID     string
 }
 
-func (s *Service) GetNotifications(ctx context.Context, input *model.PaginationInput) (*model.Notifications, error) {
-	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInput) (*model.Notifications, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	var limit int = constants.POSTS_PAGE_LIMIT
-	var page int = 1
-
-	if input != nil {
-		if input.Limit != nil {
-			limit = *input.Limit
-		}
-
-		if input.Page != nil && *input.Page > 0 {
-			page = *input.Page
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	posts, _ := s.Notifications.GetNotificationsByReceiverIDAndPagination(user.ID, limit, page)
+	pageInfoInput := util.ExtractPageInfo(input)
 
-	return posts, nil
+	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }
 
-func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notification, error) {
+func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.Notification, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return s.Notifications.GetNotificationByID(id)
+}
+
+func (s *Service) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
 	onlineUserContext, err := middleware.GetCurrentOnlineUserFromCTX(ctx)
 
 	if err != nil {
@@ -60,13 +61,13 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 		s.mu.Unlock()
 	}()
 
-	notification := make(chan *model.Notification, 1)
+	notificationEdge := make(chan *model.NotificationsEdge, 1)
 	s.mu.Lock()
 	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	s.OnlineNotifications[onlineUserContext.SocketID] = notification
+	s.OnlineNotifications[onlineUserContext.SocketID] = notificationEdge
 	s.mu.Unlock()
 
-	return notification, nil
+	return notificationEdge, nil
 }
 
 func (s *Service) CreateNotification(args CreateNotificationArgs) error {
@@ -82,13 +83,18 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 			ReplyID:            args.ReplyID,
 		}
 
+		notificationEdge := &model.NotificationsEdge{
+			Cursor: util.ConvertCreateAtToCursor(*notification.CreatedAt),
+			Node:   notification,
+		}
+
 		s.Notifications.CreateNotification(notification)
 
 		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID)
 
 		if onlineUser != nil {
 			s.mu.Lock()
-			s.OnlineNotifications[onlineUser.SocketID] <- notification
+			s.OnlineNotifications[onlineUser.SocketID] <- notificationEdge
 			s.mu.Unlock()
 		}
 	}

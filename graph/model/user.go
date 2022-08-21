@@ -21,8 +21,8 @@ type User struct {
 	Role            string
 	IsPrivate       bool `pg:",use_zero"`
 	IsVerified      bool `pg:",use_zero"`
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
+	CreatedAt       *time.Time
+	UpdatedAt       *time.Time
 	DeletedAt       *time.Time `pg:"-,soft_delete"`
 }
 

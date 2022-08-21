@@ -27,17 +27,20 @@ type User {
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int
-  followingCount: Int
-  followersCount: Int
-  followRequestsCount: Int
-  postsCount: Int
+  followingCount: Int!
+  followersCount: Int!
+  followRequestsCount: Int!
+  postsCount: Int!
   createdAt: Time
   updatedAt: Time
 }
 
+type UsersEdge {
+  node: User
+}
+
 type Users {
-  users: [User]
-  pagination: Pagination
+  edges: [UsersEdge]
 }
 
 input EditUserInput {

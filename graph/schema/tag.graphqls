@@ -6,12 +6,15 @@ type Tag {
   updatedAt: Time
 }
 
+type TagsEdge {
+  node: Tag
+}
+
 type Tags {
-  tags: [Tag]
-  pagination: Pagination
+  edges: [TagsEdge]
 }
 
 extend type Query {
   getTagByTagName(tagName: String!): Tag
-  getTrends(input: PaginationInput): Tags
+  getTrends(first: Int): Tags
 }
