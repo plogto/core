@@ -20,12 +20,21 @@ func (r *queryResolver) GetTrends(ctx context.Context, first *int) (*model.Tags,
 	return r.Service.GetTrends(ctx, first)
 }
 
+// Count is the resolver for the count field.
+func (r *tagResolver) Count(ctx context.Context, obj *model.Tag) (*int, error) {
+	return r.Service.CountPostTagsByTagID(ctx, obj.ID)
+}
+
 // Node is the resolver for the node field.
 func (r *tagsEdgeResolver) Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error) {
 	return r.Service.GetTagByID(ctx, obj.Node.ID)
 }
 
+// Tag returns generated.TagResolver implementation.
+func (r *Resolver) Tag() generated.TagResolver { return &tagResolver{r} }
+
 // TagsEdge returns generated.TagsEdgeResolver implementation.
 func (r *Resolver) TagsEdge() generated.TagsEdgeResolver { return &tagsEdgeResolver{r} }
 
+type tagResolver struct{ *Resolver }
 type tagsEdgeResolver struct{ *Resolver }
