@@ -23,9 +23,9 @@ func (p *PostTags) GetTagsOrderByCountTags(limit int) (*model.Tags, error) {
 		Join("INNER JOIN post_tags ON post_tags.tag_id = tag.id").
 		Join("INNER JOIN posts ON post_tags.post_id = posts.id").
 		Join("INNER JOIN users ON users.id = posts.user_id").
-		GroupExpr("post_tags.tag_id, tag.id").
 		Where("posts.deleted_at is ?", nil).
 		Where("users.is_private is false").
+		GroupExpr("post_tags.tag_id, tag.id").
 		Order("count DESC").
 		Limit(limit).
 		Select()
@@ -41,4 +41,19 @@ func (p *PostTags) GetTagsOrderByCountTags(limit int) (*model.Tags, error) {
 	return &model.Tags{
 		Edges: edges,
 	}, err
+}
+
+func (p *PostTags) CountPostTagsByTagID(tagId string) (*int, error) {
+	var postTag []*model.PostTag
+
+	totalCount, err := p.DB.Model(&postTag).
+		Join("INNER JOIN posts ON posts.id = post_tag.post_id").
+		Join("INNER JOIN users ON users.id = posts.user_id").
+		Where("post_tag.tag_id = ?", tagId).
+		Where("posts.deleted_at is ?", nil).
+		Where("users.is_private is false").
+		GroupExpr("post_tag.tag_id, post_tag.id").
+		Count()
+
+	return &totalCount, err
 }
