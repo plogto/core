@@ -27,6 +27,10 @@ func (u *Users) GetUserByID(id string) (*model.User, error) {
 	return &user, err
 }
 
+func (u *Users) GetUserByInvitationCode(invitationCode string) (*model.User, error) {
+	return u.GetUserByField("invitation_code", invitationCode)
+}
+
 func (u *Users) GetUserByEmail(email string) (*model.User, error) {
 	return u.GetUserByField("email", email)
 }

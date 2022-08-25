@@ -39,6 +39,8 @@ type Config struct {
 
 type ResolverRoot interface {
 	Connection() ConnectionResolver
+	InvitedUser() InvitedUserResolver
+	InvitedUsersEdge() InvitedUsersEdgeResolver
 	LikedPost() LikedPostResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
@@ -94,6 +96,25 @@ type ComplexityRoot struct {
 		ID     func(childComplexity int) int
 		Name   func(childComplexity int) int
 		Width  func(childComplexity int) int
+	}
+
+	InvitedUser struct {
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+		Invitee   func(childComplexity int) int
+		Inviter   func(childComplexity int) int
+		UpdatedAt func(childComplexity int) int
+	}
+
+	InvitedUsers struct {
+		Edges      func(childComplexity int) int
+		PageInfo   func(childComplexity int) int
+		TotalCount func(childComplexity int) int
+	}
+
+	InvitedUsersEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	LikedPost struct {
@@ -214,6 +235,7 @@ type ComplexityRoot struct {
 		GetFollowRequests      func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetFollowersByUsername func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetFollowingByUsername func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetInvitedUsers        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetLikedPostsByPostID  func(childComplexity int, postID string, pageInfoInput *model.PageInfoInput) int
 		GetNotifications       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetPostByURL           func(childComplexity int, url string) int
@@ -292,6 +314,7 @@ type ComplexityRoot struct {
 		FollowingCount      func(childComplexity int) int
 		FullName            func(childComplexity int) int
 		ID                  func(childComplexity int) int
+		InvitationCode      func(childComplexity int) int
 		IsPrivate           func(childComplexity int) int
 		IsVerified          func(childComplexity int) int
 		PostsCount          func(childComplexity int) int
@@ -313,6 +336,14 @@ type ComplexityRoot struct {
 type ConnectionResolver interface {
 	Following(ctx context.Context, obj *model.Connection) (*model.User, error)
 	Follower(ctx context.Context, obj *model.Connection) (*model.User, error)
+}
+type InvitedUserResolver interface {
+	Inviter(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
+	Invitee(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
+}
+type InvitedUsersEdgeResolver interface {
+	Cursor(ctx context.Context, obj *model.InvitedUsersEdge) (string, error)
+	Node(ctx context.Context, obj *model.InvitedUsersEdge) (*model.InvitedUser, error)
 }
 type LikedPostResolver interface {
 	User(ctx context.Context, obj *model.LikedPost) (*model.User, error)
@@ -367,6 +398,7 @@ type QueryResolver interface {
 	GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
+	GetInvitedUsers(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.InvitedUsers, error)
 	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfoInput *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
@@ -561,6 +593,76 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.File.Width(childComplexity), true
+
+	case "InvitedUser.createdAt":
+		if e.complexity.InvitedUser.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.InvitedUser.CreatedAt(childComplexity), true
+
+	case "InvitedUser.id":
+		if e.complexity.InvitedUser.ID == nil {
+			break
+		}
+
+		return e.complexity.InvitedUser.ID(childComplexity), true
+
+	case "InvitedUser.invitee":
+		if e.complexity.InvitedUser.Invitee == nil {
+			break
+		}
+
+		return e.complexity.InvitedUser.Invitee(childComplexity), true
+
+	case "InvitedUser.inviter":
+		if e.complexity.InvitedUser.Inviter == nil {
+			break
+		}
+
+		return e.complexity.InvitedUser.Inviter(childComplexity), true
+
+	case "InvitedUser.updatedAt":
+		if e.complexity.InvitedUser.UpdatedAt == nil {
+			break
+		}
+
+		return e.complexity.InvitedUser.UpdatedAt(childComplexity), true
+
+	case "InvitedUsers.edges":
+		if e.complexity.InvitedUsers.Edges == nil {
+			break
+		}
+
+		return e.complexity.InvitedUsers.Edges(childComplexity), true
+
+	case "InvitedUsers.pageInfo":
+		if e.complexity.InvitedUsers.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.InvitedUsers.PageInfo(childComplexity), true
+
+	case "InvitedUsers.totalCount":
+		if e.complexity.InvitedUsers.TotalCount == nil {
+			break
+		}
+
+		return e.complexity.InvitedUsers.TotalCount(childComplexity), true
+
+	case "InvitedUsersEdge.cursor":
+		if e.complexity.InvitedUsersEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.InvitedUsersEdge.Cursor(childComplexity), true
+
+	case "InvitedUsersEdge.node":
+		if e.complexity.InvitedUsersEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.InvitedUsersEdge.Node(childComplexity), true
 
 	case "LikedPost.createdAt":
 		if e.complexity.LikedPost.CreatedAt == nil {
@@ -1203,6 +1305,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetFollowingByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
 
+	case "Query.getInvitedUsers":
+		if e.complexity.Query.GetInvitedUsers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getInvitedUsers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetInvitedUsers(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+
 	case "Query.getLikedPostsByPostId":
 		if e.complexity.Query.GetLikedPostsByPostID == nil {
 			break
@@ -1609,6 +1723,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.ID(childComplexity), true
 
+	case "User.invitationCode":
+		if e.complexity.User.InvitationCode == nil {
+			break
+		}
+
+		return e.complexity.User.InvitationCode(childComplexity), true
+
 	case "User.isPrivate":
 		if e.complexity.User.IsPrivate == nil {
 			break
@@ -1774,6 +1895,7 @@ input RegisterInput {
   fullName: String!
   email: String!
   password: String!
+  invitationCode: String
 }
 
 type AuthToken {
@@ -1839,6 +1961,30 @@ type File {
 
 extend type Mutation {
   singleUploadFile(file: Upload!): File
+}
+`, BuiltIn: false},
+	{Name: "../schema/invited_users.graphqls", Input: `type InvitedUser {
+  id: ID!
+  inviter: User!
+  invitee: User!
+  createdAt: Time
+  updatedAt: Time
+}
+
+type InvitedUsersEdge {
+  cursor: String!
+  node: InvitedUser
+}
+
+type InvitedUsers {
+  totalCount: Int
+  edges: [InvitedUsersEdge]
+  pageInfo: PageInfo!
+}
+
+
+extend type Query {
+  getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
 }
 `, BuiltIn: false},
 	{Name: "../schema/liked_post.graphqls", Input: `type LikedPost {
@@ -2083,6 +2229,7 @@ type User {
   background: File
   email: String!
   fullName: String!
+  invitationCode: String!
   bio: String
   role: String!
   isPrivate: Boolean!
@@ -2467,6 +2614,21 @@ func (ec *executionContext) field_Query_getFollowingByUsername_args(ctx context.
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_getInvitedUsers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfoInput"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -2847,6 +3009,8 @@ func (ec *executionContext) fieldContext_AuthResponse_user(ctx context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -3063,6 +3227,8 @@ func (ec *executionContext) fieldContext_Connection_following(ctx context.Contex
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -3147,6 +3313,8 @@ func (ec *executionContext) fieldContext_Connection_follower(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -3700,6 +3868,539 @@ func (ec *executionContext) fieldContext_File_height(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _InvitedUser_id(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUser_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUser_inviter(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUser_inviter(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.InvitedUser().Inviter(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUser_inviter(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
+			case "primaryColor":
+				return ec.fieldContext_User_primaryColor(ctx, field)
+			case "avatar":
+				return ec.fieldContext_User_avatar(ctx, field)
+			case "background":
+				return ec.fieldContext_User_background(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "isPrivate":
+				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
+			case "connectionStatus":
+				return ec.fieldContext_User_connectionStatus(ctx, field)
+			case "followingCount":
+				return ec.fieldContext_User_followingCount(ctx, field)
+			case "followersCount":
+				return ec.fieldContext_User_followersCount(ctx, field)
+			case "followRequestsCount":
+				return ec.fieldContext_User_followRequestsCount(ctx, field)
+			case "postsCount":
+				return ec.fieldContext_User_postsCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUser_invitee(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUser_invitee(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.InvitedUser().Invitee(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUser_invitee(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUser",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
+			case "primaryColor":
+				return ec.fieldContext_User_primaryColor(ctx, field)
+			case "avatar":
+				return ec.fieldContext_User_avatar(ctx, field)
+			case "background":
+				return ec.fieldContext_User_background(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "isPrivate":
+				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
+			case "connectionStatus":
+				return ec.fieldContext_User_connectionStatus(ctx, field)
+			case "followingCount":
+				return ec.fieldContext_User_followingCount(ctx, field)
+			case "followersCount":
+				return ec.fieldContext_User_followersCount(ctx, field)
+			case "followRequestsCount":
+				return ec.fieldContext_User_followRequestsCount(ctx, field)
+			case "postsCount":
+				return ec.fieldContext_User_postsCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUser_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUser_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUser_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUser) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUser_updatedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.UpdatedAt, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*time.Time)
+	fc.Result = res
+	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUser_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUser",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Time does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUsers_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUsers) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUsers_totalCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.TotalCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUsers_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUsers",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUsers_edges(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUsers) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUsers_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.InvitedUsersEdge)
+	fc.Result = res
+	return ec.marshalOInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUsers_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUsers",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_InvitedUsersEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_InvitedUsersEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvitedUsersEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUsers_pageInfo(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUsers) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUsers_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUsers_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUsers",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUsersEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUsersEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUsersEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.InvitedUsersEdge().Cursor(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUsersEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUsersEdge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _InvitedUsersEdge_node(ctx context.Context, field graphql.CollectedField, obj *model.InvitedUsersEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_InvitedUsersEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.InvitedUsersEdge().Node(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.InvitedUser)
+	fc.Result = res
+	return ec.marshalOInvitedUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_InvitedUsersEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "InvitedUsersEdge",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_InvitedUser_id(ctx, field)
+			case "inviter":
+				return ec.fieldContext_InvitedUser_inviter(ctx, field)
+			case "invitee":
+				return ec.fieldContext_InvitedUser_invitee(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_InvitedUser_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_InvitedUser_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvitedUser", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_id(ctx, field)
 	if err != nil {
@@ -3799,6 +4500,8 @@ func (ec *executionContext) fieldContext_LikedPost_user(ctx context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -5085,6 +5788,8 @@ func (ec *executionContext) fieldContext_Mutation_editUser(ctx context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -5338,6 +6043,8 @@ func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -5422,6 +6129,8 @@ func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Conte
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -6932,6 +7641,8 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -7930,6 +8641,66 @@ func (ec *executionContext) fieldContext_Query_getFollowRequests(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getInvitedUsers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getInvitedUsers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetInvitedUsers(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.InvitedUsers)
+	fc.Result = res
+	return ec.marshalOInvitedUsers2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsers(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getInvitedUsers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_InvitedUsers_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_InvitedUsers_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_InvitedUsers_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type InvitedUsers", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getInvitedUsers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getLikedPostsByPostId(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getLikedPostsByPostId(ctx, field)
 	if err != nil {
@@ -8604,6 +9375,8 @@ func (ec *executionContext) fieldContext_Query_getUserInfo(ctx context.Context, 
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -8685,6 +9458,8 @@ func (ec *executionContext) fieldContext_Query_getUserByUsername(ctx context.Con
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -8777,6 +9552,8 @@ func (ec *executionContext) fieldContext_Query_checkUsername(ctx context.Context
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -8869,6 +9646,8 @@ func (ec *executionContext) fieldContext_Query_checkEmail(ctx context.Context, f
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -9137,6 +9916,8 @@ func (ec *executionContext) fieldContext_SavedPost_user(ctx context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -10494,6 +11275,50 @@ func (ec *executionContext) fieldContext_User_fullName(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _User_invitationCode(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_User_invitationCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.InvitationCode, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_User_invitationCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "User",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_bio(ctx, field)
 	if err != nil {
@@ -11063,6 +11888,8 @@ func (ec *executionContext) fieldContext_UsersEdge_node(ctx context.Context, fie
 				return ec.fieldContext_User_email(ctx, field)
 			case "fullName":
 				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
 			case "bio":
 				return ec.fieldContext_User_bio(ctx, field)
 			case "role":
@@ -13072,7 +13899,7 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"fullName", "email", "password"}
+	fieldsInOrder := [...]string{"fullName", "email", "password", "invitationCode"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -13100,6 +13927,14 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
 			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "invitationCode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
+			it.InvitationCode, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -13477,6 +14312,176 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._File_height(ctx, field, obj)
 
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var invitedUserImplementors = []string{"InvitedUser"}
+
+func (ec *executionContext) _InvitedUser(ctx context.Context, sel ast.SelectionSet, obj *model.InvitedUser) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invitedUserImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvitedUser")
+		case "id":
+
+			out.Values[i] = ec._InvitedUser_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "inviter":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InvitedUser_inviter(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "invitee":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InvitedUser_invitee(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "createdAt":
+
+			out.Values[i] = ec._InvitedUser_createdAt(ctx, field, obj)
+
+		case "updatedAt":
+
+			out.Values[i] = ec._InvitedUser_updatedAt(ctx, field, obj)
+
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var invitedUsersImplementors = []string{"InvitedUsers"}
+
+func (ec *executionContext) _InvitedUsers(ctx context.Context, sel ast.SelectionSet, obj *model.InvitedUsers) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invitedUsersImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvitedUsers")
+		case "totalCount":
+
+			out.Values[i] = ec._InvitedUsers_totalCount(ctx, field, obj)
+
+		case "edges":
+
+			out.Values[i] = ec._InvitedUsers_edges(ctx, field, obj)
+
+		case "pageInfo":
+
+			out.Values[i] = ec._InvitedUsers_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var invitedUsersEdgeImplementors = []string{"InvitedUsersEdge"}
+
+func (ec *executionContext) _InvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, obj *model.InvitedUsersEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, invitedUsersEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("InvitedUsersEdge")
+		case "cursor":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InvitedUsersEdge_cursor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "node":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._InvitedUsersEdge_node(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -14537,6 +15542,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "getInvitedUsers":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getInvitedUsers(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "getLikedPostsByPostId":
 			field := field
 
@@ -15291,6 +16316,13 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 		case "fullName":
 
 			out.Values[i] = ec._User_fullName(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "invitationCode":
+
+			out.Values[i] = ec._User_invitationCode(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
@@ -16523,6 +17555,68 @@ func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.Sele
 	}
 	res := graphql.MarshalInt(*v)
 	return res
+}
+
+func (ec *executionContext) marshalOInvitedUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUser(ctx context.Context, sel ast.SelectionSet, v *model.InvitedUser) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InvitedUser(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOInvitedUsers2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsers(ctx context.Context, sel ast.SelectionSet, v *model.InvitedUsers) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InvitedUsers(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, v []*model.InvitedUsersEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
+func (ec *executionContext) marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, v *model.InvitedUsersEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._InvitedUsersEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx context.Context, sel ast.SelectionSet, v *model.LikedPost) graphql.Marshaler {

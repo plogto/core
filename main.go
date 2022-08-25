@@ -68,6 +68,7 @@ func main() {
 		PostTags:          database.PostTags{DB: DB},
 		LikedPosts:        database.LikedPosts{DB: DB},
 		SavedPosts:        database.SavedPosts{DB: DB},
+		InvitedUsers:      database.InvitedUsers{DB: DB},
 		OnlineUsers:       database.OnlineUsers{DB: DB},
 		Notifications:     database.Notifications{DB: DB},
 		NotificationTypes: database.NotificationTypes{DB: DB},

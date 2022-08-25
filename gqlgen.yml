@@ -103,6 +103,19 @@ models:
         resolver: true
       post:
         resolver: true
+  InvitedUser:
+    model: github.com/plogto/core/graph/model.InvitedUser
+    fields:
+      inviter:
+        resolver: true
+      invitee:
+        resolver: true
+  InvitedUsersEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   SavedPostsEdge:
     fields:
       cursor:

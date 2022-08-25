@@ -22,6 +22,7 @@ type User {
   background: File
   email: String!
   fullName: String!
+  invitationCode: String!
   bio: String
   role: String!
   isPrivate: Boolean!
