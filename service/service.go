@@ -20,6 +20,7 @@ type Service struct {
 	PostTags            database.PostTags
 	LikedPosts          database.LikedPosts
 	SavedPosts          database.SavedPosts
+	InvitedUsers        database.InvitedUsers
 	OnlineUsers         database.OnlineUsers
 	Notifications       database.Notifications
 	NotificationTypes   database.NotificationTypes
@@ -39,6 +40,7 @@ func New(service Service) *Service {
 		PostAttachments:     service.PostAttachments,
 		LikedPosts:          service.LikedPosts,
 		SavedPosts:          service.SavedPosts,
+		InvitedUsers:        service.InvitedUsers,
 		OnlineUsers:         service.OnlineUsers,
 		Notifications:       service.Notifications,
 		NotificationTypes:   service.NotificationTypes,

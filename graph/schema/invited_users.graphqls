@@ -1,0 +1,23 @@
+type InvitedUser {
+  id: ID!
+  inviter: User!
+  invitee: User!
+  createdAt: Time
+  updatedAt: Time
+}
+
+type InvitedUsersEdge {
+  cursor: String!
+  node: InvitedUser
+}
+
+type InvitedUsers {
+  totalCount: Int
+  edges: [InvitedUsersEdge]
+  pageInfo: PageInfo!
+}
+
+
+extend type Query {
+  getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
+}

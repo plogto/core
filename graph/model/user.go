@@ -17,6 +17,7 @@ type User struct {
 	PrimaryColor    PrimaryColor
 	Email           string
 	FullName        string
+	InvitationCode  string
 	Bio             *string
 	Role            string
 	IsPrivate       bool `pg:",use_zero"`

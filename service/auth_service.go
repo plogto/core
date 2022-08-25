@@ -42,9 +42,10 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 	}
 
 	user := &model.User{
-		Email:    input.Email,
-		Username: util.RandomString(15),
-		FullName: input.FullName,
+		Email:          input.Email,
+		Username:       util.RandomString(15),
+		InvitationCode: util.RandomString(7),
+		FullName:       input.FullName,
 	}
 
 	newUser, err := s.Users.CreateUser(user)
@@ -65,6 +66,16 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 	if _, err := s.Passwords.AddPassword(password); err != nil {
 		log.Printf("error white adding password: %v", err)
 		return nil, err
+	}
+
+	if input.InvitationCode != nil {
+		if inviter, err := s.Users.GetUserByInvitationCode(*input.InvitationCode); err == nil {
+			s.InvitedUsers.CreateInvitedUser(&model.InvitedUser{
+				InviterID: inviter.ID,
+				InviteeID: newUser.ID,
+			})
+			// TODO: add credits
+		}
 	}
 
 	token, err := user.GenToken()

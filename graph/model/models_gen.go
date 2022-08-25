@@ -47,6 +47,17 @@ type EditUserInput struct {
 	IsPrivate       *bool            `json:"isPrivate"`
 }
 
+type InvitedUsers struct {
+	TotalCount *int                `json:"totalCount"`
+	Edges      []*InvitedUsersEdge `json:"edges"`
+	PageInfo   *PageInfo           `json:"pageInfo"`
+}
+
+type InvitedUsersEdge struct {
+	Cursor string       `json:"cursor"`
+	Node   *InvitedUser `json:"node"`
+}
+
 type LikedPosts struct {
 	TotalCount *int              `json:"totalCount"`
 	Edges      []*LikedPostsEdge `json:"edges"`
@@ -97,9 +108,10 @@ type PostsEdge struct {
 }
 
 type RegisterInput struct {
-	FullName string `json:"fullName"`
-	Email    string `json:"email"`
-	Password string `json:"password"`
+	FullName       string  `json:"fullName"`
+	Email          string  `json:"email"`
+	Password       string  `json:"password"`
+	InvitationCode *string `json:"invitationCode"`
 }
 
 type SavedPosts struct {
