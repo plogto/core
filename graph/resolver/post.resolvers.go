@@ -27,6 +27,11 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*mode
 	return r.Service.DeletePost(ctx, postID)
 }
 
+// Status is the resolver for the status field.
+func (r *postResolver) Status(ctx context.Context, obj *model.Post) (model.PostStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
+}
+
 // Parent is the resolver for the parent field.
 func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.ParentID)

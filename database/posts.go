@@ -26,6 +26,7 @@ func (p *Posts) GetPostByField(field string, value string) (*model.Post, error) 
 func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
+	var endCursor string
 
 	query := p.DB.Model(&posts).
 		Where("user_id = ?", userID).
@@ -52,7 +53,9 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 		}})
 	}
 
-	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	hasNextPage := false
 	if totalCount > limit {
@@ -150,6 +153,7 @@ func (p *Posts) GetTimelinePostsByPageInfo(userID string, limit int, after strin
 	var userPosts []*model.Post
 	var posts []*model.Post
 	var edges []*model.PostsEdge
+	var endCursor string
 
 	followingPostsQuery := p.DB.Model(&followingPosts).
 		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
@@ -187,7 +191,9 @@ func (p *Posts) GetTimelinePostsByPageInfo(userID string, limit int, after strin
 		}})
 	}
 
-	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	hasNextPage := false
 	if totalCount > limit {
