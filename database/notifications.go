@@ -19,6 +19,7 @@ func (n *Notifications) GetNotificationByID(id string) (*model.Notification, err
 func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID string, limit int, after string) (*model.Notifications, error) {
 	var notifications []*model.Notification
 	var edges []*model.NotificationsEdge
+	var endCursor string
 
 	query := n.DB.Model(&notifications).
 		Where("receiver_id = ?", receiverID).
@@ -40,7 +41,9 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID strin
 		}})
 	}
 
-	endCursor := util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
 
 	hasNextPage := false
 	if totalCount > limit {

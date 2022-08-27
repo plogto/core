@@ -1,0 +1,78 @@
+enum CreditTransactionStatus {
+  APPROVED
+  PENDING
+  FAILED
+  CANCELED
+}
+
+enum CreditTransactionDescriptionVariableType {
+  USER
+  TAG
+}
+
+enum CreditTransactionTypeName {
+  INVITE_USER
+  REGISTER_BY_INVITATION_CODE
+}
+
+type CreditTransactionDescriptionVariable {
+  id: ID!
+  type: CreditTransactionDescriptionVariableType!
+  key: String!
+  content: String!
+  url: String
+  image: String
+  createdAt: Time
+  updatedAt: Time
+}
+
+type CreditTransactionType {
+  id: ID!
+  name: CreditTransactionTypeName!
+  template: String!
+  createdAt: Time
+  updatedAt: Time
+}
+
+
+type CreditTransaction {
+  id: ID!
+  sender: User!
+  receiver: User!
+  amount: Float!
+  url: String!
+  description: String
+  descriptionVariables: [CreditTransactionDescriptionVariable]
+  status: CreditTransactionStatus!
+  type: CreditTransactionType
+  createdAt: Time
+  updatedAt: Time
+}
+
+type CreditTransactionsEdge {
+  cursor: String!
+  node: CreditTransaction
+}
+
+type CreditTransactions {
+  totalCount: Int
+  edges: [CreditTransactionsEdge]
+  pageInfo: PageInfo!
+}
+
+input CreateCreditTransactionInput {
+  senderId: ID!
+  receiverId: ID!
+  amount: Float!
+  description: String
+}
+
+
+extend type Query {
+  getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
+}
+
+extend type Mutation {
+  createCreditTransaction(input: CreateCreditTransactionInput!): CreditTransaction
+}
+

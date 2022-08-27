@@ -10,41 +10,47 @@ import (
 )
 
 type Service struct {
-	Users               database.Users
-	Passwords           database.Passwords
-	Posts               database.Posts
-	Files               database.Files
-	Connections         database.Connections
-	Tags                database.Tags
-	PostAttachments     database.PostAttachments
-	PostTags            database.PostTags
-	LikedPosts          database.LikedPosts
-	SavedPosts          database.SavedPosts
-	InvitedUsers        database.InvitedUsers
-	OnlineUsers         database.OnlineUsers
-	Notifications       database.Notifications
-	NotificationTypes   database.NotificationTypes
-	OnlineNotifications map[string]chan *model.NotificationsEdge
-	mu                  sync.Mutex
+	Users                                 database.Users
+	Passwords                             database.Passwords
+	Posts                                 database.Posts
+	Files                                 database.Files
+	Connections                           database.Connections
+	CreditTransactions                    database.CreditTransactions
+	CreditTransactionTypes                database.CreditTransactionTypes
+	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
+	Tags                                  database.Tags
+	PostAttachments                       database.PostAttachments
+	PostTags                              database.PostTags
+	LikedPosts                            database.LikedPosts
+	SavedPosts                            database.SavedPosts
+	InvitedUsers                          database.InvitedUsers
+	OnlineUsers                           database.OnlineUsers
+	Notifications                         database.Notifications
+	NotificationTypes                     database.NotificationTypes
+	OnlineNotifications                   map[string]chan *model.NotificationsEdge
+	mu                                    sync.Mutex
 }
 
 func New(service Service) *Service {
 	return &Service{
-		Users:               service.Users,
-		Passwords:           service.Passwords,
-		Posts:               service.Posts,
-		Files:               service.Files,
-		Connections:         service.Connections,
-		Tags:                service.Tags,
-		PostTags:            service.PostTags,
-		PostAttachments:     service.PostAttachments,
-		LikedPosts:          service.LikedPosts,
-		SavedPosts:          service.SavedPosts,
-		InvitedUsers:        service.InvitedUsers,
-		OnlineUsers:         service.OnlineUsers,
-		Notifications:       service.Notifications,
-		NotificationTypes:   service.NotificationTypes,
-		OnlineNotifications: map[string]chan *model.NotificationsEdge{},
+		Users:                                 service.Users,
+		Passwords:                             service.Passwords,
+		Posts:                                 service.Posts,
+		Files:                                 service.Files,
+		Connections:                           service.Connections,
+		CreditTransactions:                    service.CreditTransactions,
+		CreditTransactionTypes:                service.CreditTransactionTypes,
+		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
+		Tags:                                  service.Tags,
+		PostTags:                              service.PostTags,
+		PostAttachments:                       service.PostAttachments,
+		LikedPosts:                            service.LikedPosts,
+		SavedPosts:                            service.SavedPosts,
+		InvitedUsers:                          service.InvitedUsers,
+		OnlineUsers:                           service.OnlineUsers,
+		Notifications:                         service.Notifications,
+		NotificationTypes:                     service.NotificationTypes,
+		OnlineNotifications:                   map[string]chan *model.NotificationsEdge{},
 	}
 }
 

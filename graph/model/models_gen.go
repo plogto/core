@@ -35,6 +35,24 @@ type ConnectionsEdge struct {
 	Node   *Connection `json:"node"`
 }
 
+type CreateCreditTransactionInput struct {
+	SenderID    string  `json:"senderId"`
+	ReceiverID  string  `json:"receiverId"`
+	Amount      float64 `json:"amount"`
+	Description *string `json:"description"`
+}
+
+type CreditTransactions struct {
+	TotalCount *int                      `json:"totalCount"`
+	Edges      []*CreditTransactionsEdge `json:"edges"`
+	PageInfo   *PageInfo                 `json:"pageInfo"`
+}
+
+type CreditTransactionsEdge struct {
+	Cursor string             `json:"cursor"`
+	Node   *CreditTransaction `json:"node"`
+}
+
 type EditUserInput struct {
 	Username        *string          `json:"username"`
 	BackgroundColor *BackgroundColor `json:"backgroundColor"`
@@ -209,6 +227,174 @@ func (e BackgroundColor) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type CreditTransactionDescriptionVariableType string
+
+const (
+	CreditTransactionDescriptionVariableTypeUser CreditTransactionDescriptionVariableType = "USER"
+	CreditTransactionDescriptionVariableTypeTag  CreditTransactionDescriptionVariableType = "TAG"
+)
+
+var AllCreditTransactionDescriptionVariableType = []CreditTransactionDescriptionVariableType{
+	CreditTransactionDescriptionVariableTypeUser,
+	CreditTransactionDescriptionVariableTypeTag,
+}
+
+func (e CreditTransactionDescriptionVariableType) IsValid() bool {
+	switch e {
+	case CreditTransactionDescriptionVariableTypeUser, CreditTransactionDescriptionVariableTypeTag:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionDescriptionVariableType) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionDescriptionVariableType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionDescriptionVariableType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionDescriptionVariableType", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionDescriptionVariableType) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CreditTransactionStatus string
+
+const (
+	CreditTransactionStatusApproved CreditTransactionStatus = "APPROVED"
+	CreditTransactionStatusPending  CreditTransactionStatus = "PENDING"
+	CreditTransactionStatusFailed   CreditTransactionStatus = "FAILED"
+	CreditTransactionStatusCanceled CreditTransactionStatus = "CANCELED"
+)
+
+var AllCreditTransactionStatus = []CreditTransactionStatus{
+	CreditTransactionStatusApproved,
+	CreditTransactionStatusPending,
+	CreditTransactionStatusFailed,
+	CreditTransactionStatusCanceled,
+}
+
+func (e CreditTransactionStatus) IsValid() bool {
+	switch e {
+	case CreditTransactionStatusApproved, CreditTransactionStatusPending, CreditTransactionStatusFailed, CreditTransactionStatusCanceled:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionStatus) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionStatus", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CreditTransactionTypeName string
+
+const (
+	CreditTransactionTypeNameInviteUser               CreditTransactionTypeName = "INVITE_USER"
+	CreditTransactionTypeNameRegisterByInvitationCode CreditTransactionTypeName = "REGISTER_BY_INVITATION_CODE"
+)
+
+var AllCreditTransactionTypeName = []CreditTransactionTypeName{
+	CreditTransactionTypeNameInviteUser,
+	CreditTransactionTypeNameRegisterByInvitationCode,
+}
+
+func (e CreditTransactionTypeName) IsValid() bool {
+	switch e {
+	case CreditTransactionTypeNameInviteUser, CreditTransactionTypeNameRegisterByInvitationCode:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionTypeName) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionTypeName) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionTypeName(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionTypeName", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionTypeName) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type PostStatus string
+
+const (
+	PostStatusPublic  PostStatus = "PUBLIC"
+	PostStatusPrivate PostStatus = "PRIVATE"
+)
+
+var AllPostStatus = []PostStatus{
+	PostStatusPublic,
+	PostStatusPrivate,
+}
+
+func (e PostStatus) IsValid() bool {
+	switch e {
+	case PostStatusPublic, PostStatusPrivate:
+		return true
+	}
+	return false
+}
+
+func (e PostStatus) String() string {
+	return string(e)
+}
+
+func (e *PostStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = PostStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid PostStatus", str)
+	}
+	return nil
+}
+
+func (e PostStatus) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type PrimaryColor string
 
 const (
@@ -255,5 +441,46 @@ func (e *PrimaryColor) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PrimaryColor) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UserRole string
+
+const (
+	UserRoleAdmin UserRole = "ADMIN"
+	UserRoleUser  UserRole = "USER"
+)
+
+var AllUserRole = []UserRole{
+	UserRoleAdmin,
+	UserRoleUser,
+}
+
+func (e UserRole) IsValid() bool {
+	switch e {
+	case UserRoleAdmin, UserRoleUser:
+		return true
+	}
+	return false
+}
+
+func (e UserRole) String() string {
+	return string(e)
+}
+
+func (e *UserRole) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserRole(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserRole", str)
+	}
+	return nil
+}
+
+func (e UserRole) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

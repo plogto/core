@@ -1,6 +1,11 @@
+enum PostStatus {
+  PUBLIC
+  PRIVATE
+}
+
 type Post {
   id: ID!
-  status: String!
+  status: PostStatus!
   parent: Post
   child: Post
   user: User!

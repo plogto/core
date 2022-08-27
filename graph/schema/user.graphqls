@@ -1,4 +1,9 @@
-enum BackgroundColor{
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum BackgroundColor {
   LIGHT
   DIM
   DARK
@@ -24,7 +29,8 @@ type User {
   fullName: String!
   invitationCode: String!
   bio: String
-  role: String!
+  role: UserRole!
+  credits: Float!
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int

@@ -81,5 +81,7 @@ func (u *Users) CreateUser(user *model.User) (*model.User, error) {
 func (u *Users) UpdateUser(user *model.User) (*model.User, error) {
 	_, err := u.DB.Model(user).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
 
+	fmt.Println("UpdateUser", err)
+
 	return user, err
 }

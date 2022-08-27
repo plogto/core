@@ -116,6 +116,32 @@ models:
         resolver: true
       node:
         resolver: true
+  CreditTransactionDescriptionVariable:
+    model: github.com/plogto/core/graph/model.CreditTransactionDescriptionVariable
+    fields:
+      url:
+        resolver: true
+      image:
+        resolver: true
+  CreditTransactionType:
+    model: github.com/plogto/core/graph/model.CreditTransactionType
+  CreditTransaction:
+    model: github.com/plogto/core/graph/model.CreditTransaction
+    fields:
+      sender:
+        resolver: true
+      receiver:
+        resolver: true
+      type:
+        resolver: true
+      descriptionVariables:
+        resolver: true
+  CreditTransactionsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   SavedPostsEdge:
     fields:
       cursor:

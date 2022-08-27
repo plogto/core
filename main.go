@@ -58,20 +58,23 @@ func main() {
 	router.Use(customMiddleware.AuthMiddleware(users))
 
 	s := service.New(service.Service{
-		Users:             users,
-		Passwords:         database.Passwords{DB: DB},
-		Posts:             database.Posts{DB: DB},
-		Files:             database.Files{DB: DB},
-		Connections:       database.Connections{DB: DB},
-		Tags:              database.Tags{DB: DB},
-		PostAttachments:   database.PostAttachments{DB: DB},
-		PostTags:          database.PostTags{DB: DB},
-		LikedPosts:        database.LikedPosts{DB: DB},
-		SavedPosts:        database.SavedPosts{DB: DB},
-		InvitedUsers:      database.InvitedUsers{DB: DB},
-		OnlineUsers:       database.OnlineUsers{DB: DB},
-		Notifications:     database.Notifications{DB: DB},
-		NotificationTypes: database.NotificationTypes{DB: DB},
+		Users:                                 users,
+		Passwords:                             database.Passwords{DB: DB},
+		Posts:                                 database.Posts{DB: DB},
+		Files:                                 database.Files{DB: DB},
+		Connections:                           database.Connections{DB: DB},
+		CreditTransactions:                    database.CreditTransactions{DB: DB},
+		CreditTransactionTypes:                database.CreditTransactionTypes{DB: DB},
+		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{DB: DB},
+		Tags:                                  database.Tags{DB: DB},
+		PostAttachments:                       database.PostAttachments{DB: DB},
+		PostTags:                              database.PostTags{DB: DB},
+		LikedPosts:                            database.LikedPosts{DB: DB},
+		SavedPosts:                            database.SavedPosts{DB: DB},
+		InvitedUsers:                          database.InvitedUsers{DB: DB},
+		OnlineUsers:                           database.OnlineUsers{DB: DB},
+		Notifications:                         database.Notifications{DB: DB},
+		NotificationTypes:                     database.NotificationTypes{DB: DB},
 	})
 
 	s.OnlineUsers.DeleteAllOnlineUsers()
