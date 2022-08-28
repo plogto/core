@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/plogto/core/graph/model"
@@ -74,7 +75,35 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 				InviterID: inviter.ID,
 				InviteeID: newUser.ID,
 			})
-			// TODO: add credits
+			// transfer credits
+			inviteUserCreditTransactionType, _ := s.CreditTransactionTypes.GetCreditTransactionTypeByName(model.CreditTransactionTypeNameInviteUser)
+			fmt.Println("inviteUserCreditTransactionType", inviteUserCreditTransactionType)
+			inviterTransactionCredit, _ := s.TransferCreditFromAdmin(model.CreditTransaction{
+				Amount:                  1,
+				ReceiverID:              inviter.ID,
+				CreditTransactionTypeID: &inviteUserCreditTransactionType.ID,
+				Status:                  model.CreditTransactionStatusApproved,
+			})
+			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+				CreditTransactionID: inviterTransactionCredit.ID,
+				Type:                model.CreditTransactionDescriptionVariableTypeUser,
+				Key:                 "invited_user",
+				ContentID:           newUser.ID,
+			})
+
+			registerByInvitationCodeCreditTransactionType, _ := s.CreditTransactionTypes.GetCreditTransactionTypeByName(model.CreditTransactionTypeNameRegisterByInvitationCode)
+			inviteeTransactionCredit, _ := s.TransferCreditFromAdmin(model.CreditTransaction{
+				Amount:                  1,
+				ReceiverID:              newUser.ID,
+				CreditTransactionTypeID: &registerByInvitationCodeCreditTransactionType.ID,
+				Status:                  model.CreditTransactionStatusApproved,
+			})
+			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+				CreditTransactionID: inviteeTransactionCredit.ID,
+				Type:                model.CreditTransactionDescriptionVariableTypeUser,
+				Key:                 "inviter_user",
+				ContentID:           inviter.ID,
+			})
 		}
 	}
 
