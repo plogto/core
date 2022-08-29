@@ -14,7 +14,6 @@ type CreditTransactions struct {
 
 func (c *CreditTransactions) CreateCreditTransaction(creditTransaction *model.CreditTransaction) (*model.CreditTransaction, error) {
 	_, err := c.DB.Model(creditTransaction).Returning("*").Insert()
-	fmt.Println("CreateCreditTransaction", err)
 	return creditTransaction, err
 }
 
@@ -44,7 +43,7 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(userID str
 	query := c.DB.Model(&creditTransactions).
 		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 			q = q.Where("sender_id = ?", userID).
-				WhereOr("receiver_id = ?", false)
+				WhereOr("receiver_id = ?", userID)
 			return q, nil
 		}).
 		Where("deleted_at is ?", nil).

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
 	"github.com/plogto/core/graph/model"
@@ -77,7 +76,6 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 			})
 			// transfer credits
 			inviteUserCreditTransactionType, _ := s.CreditTransactionTypes.GetCreditTransactionTypeByName(model.CreditTransactionTypeNameInviteUser)
-			fmt.Println("inviteUserCreditTransactionType", inviteUserCreditTransactionType)
 			inviterTransactionCredit, _ := s.TransferCreditFromAdmin(model.CreditTransaction{
 				Amount:                  1,
 				ReceiverID:              inviter.ID,
