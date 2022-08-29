@@ -7,12 +7,12 @@ import (
 	"github.com/plogto/core/middleware"
 )
 
-func (s *Service) GetCreditTransactionTypeByID(ctx context.Context, id *string) (*model.CreditTransactionType, error) {
+func (s *Service) GetCreditTransactionTemplateByID(ctx context.Context, id *string) (*model.CreditTransactionTemplate, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if id == nil || err != nil {
 		return nil, nil
 	}
 
-	return s.CreditTransactionTypes.GetCreditTransactionTypeByID(*id)
+	return s.CreditTransactionTemplates.GetCreditTransactionTemplateByID(*id)
 }

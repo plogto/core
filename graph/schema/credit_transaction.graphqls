@@ -10,9 +10,16 @@ enum CreditTransactionDescriptionVariableType {
   TAG
 }
 
-enum CreditTransactionTypeName {
+enum CreditTransactionTemplateName {
   INVITE_USER
   REGISTER_BY_INVITATION_CODE
+}
+
+enum CreditTransactionType {
+  ORDER
+  TRANSFER
+  COMMISSION
+  FUND
 }
 
 type CreditTransactionDescriptionVariable {
@@ -22,31 +29,33 @@ type CreditTransactionDescriptionVariable {
   content: String!
   url: String
   image: String
-  createdAt: Time
-  updatedAt: Time
 }
 
-type CreditTransactionType {
+type CreditTransactionTemplate {
   id: ID!
-  name: CreditTransactionTypeName!
-  template: String!
-  createdAt: Time
-  updatedAt: Time
+  name: CreditTransactionTemplateName!
+  content: String!
 }
 
-
-type CreditTransaction {
+type CreditTransactionInfo {
   id: ID!
-  sender: User!
-  receiver: User!
-  amount: Float!
-  url: String!
   description: String
   descriptionVariables: [CreditTransactionDescriptionVariable]
   status: CreditTransactionStatus!
-  type: CreditTransactionType
+  template: CreditTransactionTemplate
   createdAt: Time
   updatedAt: Time
+}
+
+type CreditTransaction {
+  id: ID!
+  user: User!
+  recipient: User!
+  amount: Float!
+  type: CreditTransactionType
+  url: String!
+  info: CreditTransactionInfo!
+  relevantTransaction: CreditTransaction
 }
 
 type CreditTransactionsEdge {

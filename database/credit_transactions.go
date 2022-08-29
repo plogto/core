@@ -41,16 +41,13 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(userID str
 	var endCursor string
 
 	query := c.DB.Model(&creditTransactions).
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("sender_id = ?", userID).
-				WhereOr("receiver_id = ?", userID)
-			return q, nil
-		}).
+		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.credit_transaction_id = credit_transactions.id").
+		Where("user_id = ?", userID).
 		Where("deleted_at is ?", nil).
 		Order("created_at DESC")
 
 	if len(after) > 0 {
-		query.Where("created_at < ?", after)
+		query.Where("credit_transaction_infos.created_at < ?", after)
 	}
 
 	totalCount, err := query.Limit(limit).SelectAndCount()
@@ -79,4 +76,16 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(userID str
 			HasNextPage: &hasNextPage,
 		},
 	}, err
+}
+
+func (c *CreditTransactions) GetCreditsByUserID(userID string) (float64, error) {
+	var creditTransactions []*model.CreditTransaction
+
+	err := c.DB.Model(&creditTransactions).
+		ColumnExpr("sum(amount) as amount").
+		Where("user_id = ?", userID).
+		Where("deleted_at is ?", nil).
+		Select()
+
+	return creditTransactions[0].Amount, err
 }

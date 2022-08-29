@@ -12,24 +12,24 @@ import (
 	"github.com/plogto/core/util"
 )
 
-// Sender is the resolver for the sender field.
-func (r *creditTransactionResolver) Sender(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.SenderID)
+// User is the resolver for the user field.
+func (r *creditTransactionResolver) User(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: User - user"))
 }
 
-// Receiver is the resolver for the receiver field.
-func (r *creditTransactionResolver) Receiver(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.ReceiverID)
+// Recipient is the resolver for the recipient field.
+func (r *creditTransactionResolver) Recipient(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
+	panic(fmt.Errorf("not implemented: Recipient - recipient"))
 }
 
-// DescriptionVariables is the resolver for the descriptionVariables field.
-func (r *creditTransactionResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransaction) ([]*model.CreditTransactionDescriptionVariable, error) {
-	return r.Service.GetCreditTransactionDescriptionVariablesByCreditTransactionID(ctx, &obj.ID)
+// Info is the resolver for the info field.
+func (r *creditTransactionResolver) Info(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionInfo, error) {
+	panic(fmt.Errorf("not implemented: Info - info"))
 }
 
-// Type is the resolver for the type field.
-func (r *creditTransactionResolver) Type(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionType, error) {
-	return r.Service.GetCreditTransactionTypeByID(ctx, obj.CreditTransactionTypeID)
+// RelevantTransaction is the resolver for the relevantTransaction field.
+func (r *creditTransactionResolver) RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error) {
+	panic(fmt.Errorf("not implemented: RelevantTransaction - relevantTransaction"))
 }
 
 // Content is the resolver for the content field.
@@ -48,6 +48,21 @@ func (r *creditTransactionDescriptionVariableResolver) URL(ctx context.Context, 
 func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error) {
 	descriptionVariable, err := r.Service.GeDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
 	return descriptionVariable.Image, err
+}
+
+// DescriptionVariables is the resolver for the descriptionVariables field.
+func (r *creditTransactionInfoResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*model.CreditTransactionDescriptionVariable, error) {
+	panic(fmt.Errorf("not implemented: DescriptionVariables - descriptionVariables"))
+}
+
+// Template is the resolver for the template field.
+func (r *creditTransactionInfoResolver) Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error) {
+	panic(fmt.Errorf("not implemented: Template - template"))
+}
+
+// Content is the resolver for the content field.
+func (r *creditTransactionTemplateResolver) Content(ctx context.Context, obj *model.CreditTransactionTemplate) (string, error) {
+	panic(fmt.Errorf("not implemented: Content - content"))
 }
 
 // Cursor is the resolver for the cursor field.
@@ -80,6 +95,16 @@ func (r *Resolver) CreditTransactionDescriptionVariable() generated.CreditTransa
 	return &creditTransactionDescriptionVariableResolver{r}
 }
 
+// CreditTransactionInfo returns generated.CreditTransactionInfoResolver implementation.
+func (r *Resolver) CreditTransactionInfo() generated.CreditTransactionInfoResolver {
+	return &creditTransactionInfoResolver{r}
+}
+
+// CreditTransactionTemplate returns generated.CreditTransactionTemplateResolver implementation.
+func (r *Resolver) CreditTransactionTemplate() generated.CreditTransactionTemplateResolver {
+	return &creditTransactionTemplateResolver{r}
+}
+
 // CreditTransactionsEdge returns generated.CreditTransactionsEdgeResolver implementation.
 func (r *Resolver) CreditTransactionsEdge() generated.CreditTransactionsEdgeResolver {
 	return &creditTransactionsEdgeResolver{r}
@@ -87,4 +112,6 @@ func (r *Resolver) CreditTransactionsEdge() generated.CreditTransactionsEdgeReso
 
 type creditTransactionResolver struct{ *Resolver }
 type creditTransactionDescriptionVariableResolver struct{ *Resolver }
+type creditTransactionInfoResolver struct{ *Resolver }
+type creditTransactionTemplateResolver struct{ *Resolver }
 type creditTransactionsEdgeResolver struct{ *Resolver }

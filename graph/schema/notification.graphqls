@@ -2,8 +2,6 @@ type NotificationType {
   id: ID!
   name: String!
   template: String!
-  createdAt: Time
-  updatedAt: Time
 }
 
 type Notification {

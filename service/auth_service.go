@@ -74,33 +74,46 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 				InviterID: inviter.ID,
 				InviteeID: newUser.ID,
 			})
+
+			if err != nil {
+				return nil, errors.New(err.Error())
+			}
+
 			// transfer credits
-			inviteUserCreditTransactionType, _ := s.CreditTransactionTypes.GetCreditTransactionTypeByName(model.CreditTransactionTypeNameInviteUser)
-			inviterTransactionCredit, _ := s.TransferCreditFromAdmin(model.CreditTransaction{
-				Amount:                  1,
-				ReceiverID:              inviter.ID,
-				CreditTransactionTypeID: &inviteUserCreditTransactionType.ID,
-				Status:                  model.CreditTransactionStatusApproved,
-			})
-			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
-				CreditTransactionID: inviterTransactionCredit.ID,
-				Type:                model.CreditTransactionDescriptionVariableTypeUser,
-				Key:                 "invited_user",
-				ContentID:           newUser.ID,
+			inviterTransactionCreditInfo, err := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
+				ReceiverID:   inviter.ID,
+				Status:       model.CreditTransactionStatusApproved,
+				Type:         model.CreditTransactionTypeOrder,
+				TemplateName: model.CreditTransactionTemplateNameInviteUser,
 			})
 
-			registerByInvitationCodeCreditTransactionType, _ := s.CreditTransactionTypes.GetCreditTransactionTypeByName(model.CreditTransactionTypeNameRegisterByInvitationCode)
-			inviteeTransactionCredit, _ := s.TransferCreditFromAdmin(model.CreditTransaction{
-				Amount:                  1,
-				ReceiverID:              newUser.ID,
-				CreditTransactionTypeID: &registerByInvitationCodeCreditTransactionType.ID,
-				Status:                  model.CreditTransactionStatusApproved,
-			})
+			if err != nil {
+				return nil, errors.New(err.Error())
+			}
+
 			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
-				CreditTransactionID: inviteeTransactionCredit.ID,
-				Type:                model.CreditTransactionDescriptionVariableTypeUser,
-				Key:                 "inviter_user",
-				ContentID:           inviter.ID,
+				CreditTransactionInfoID: inviterTransactionCreditInfo.ID,
+				Type:                    model.CreditTransactionDescriptionVariableTypeUser,
+				Key:                     "invited_user",
+				ContentID:               newUser.ID,
+			})
+
+			inviteeTransactionCreditInfo, err := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
+				ReceiverID:   newUser.ID,
+				Status:       model.CreditTransactionStatusApproved,
+				Type:         model.CreditTransactionTypeOrder,
+				TemplateName: model.CreditTransactionTemplateNameRegisterByInvitationCode,
+			})
+
+			if err != nil {
+				return nil, errors.New(err.Error())
+			}
+
+			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+				CreditTransactionInfoID: inviteeTransactionCreditInfo.ID,
+				Type:                    model.CreditTransactionDescriptionVariableTypeUser,
+				Key:                     "inviter_user",
+				ContentID:               inviter.ID,
 			})
 		}
 	}

@@ -313,44 +313,89 @@ func (e CreditTransactionStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
-type CreditTransactionTypeName string
+type CreditTransactionTemplateName string
 
 const (
-	CreditTransactionTypeNameInviteUser               CreditTransactionTypeName = "INVITE_USER"
-	CreditTransactionTypeNameRegisterByInvitationCode CreditTransactionTypeName = "REGISTER_BY_INVITATION_CODE"
+	CreditTransactionTemplateNameInviteUser               CreditTransactionTemplateName = "INVITE_USER"
+	CreditTransactionTemplateNameRegisterByInvitationCode CreditTransactionTemplateName = "REGISTER_BY_INVITATION_CODE"
 )
 
-var AllCreditTransactionTypeName = []CreditTransactionTypeName{
-	CreditTransactionTypeNameInviteUser,
-	CreditTransactionTypeNameRegisterByInvitationCode,
+var AllCreditTransactionTemplateName = []CreditTransactionTemplateName{
+	CreditTransactionTemplateNameInviteUser,
+	CreditTransactionTemplateNameRegisterByInvitationCode,
 }
 
-func (e CreditTransactionTypeName) IsValid() bool {
+func (e CreditTransactionTemplateName) IsValid() bool {
 	switch e {
-	case CreditTransactionTypeNameInviteUser, CreditTransactionTypeNameRegisterByInvitationCode:
+	case CreditTransactionTemplateNameInviteUser, CreditTransactionTemplateNameRegisterByInvitationCode:
 		return true
 	}
 	return false
 }
 
-func (e CreditTransactionTypeName) String() string {
+func (e CreditTransactionTemplateName) String() string {
 	return string(e)
 }
 
-func (e *CreditTransactionTypeName) UnmarshalGQL(v interface{}) error {
+func (e *CreditTransactionTemplateName) UnmarshalGQL(v interface{}) error {
 	str, ok := v.(string)
 	if !ok {
 		return fmt.Errorf("enums must be strings")
 	}
 
-	*e = CreditTransactionTypeName(str)
+	*e = CreditTransactionTemplateName(str)
 	if !e.IsValid() {
-		return fmt.Errorf("%s is not a valid CreditTransactionTypeName", str)
+		return fmt.Errorf("%s is not a valid CreditTransactionTemplateName", str)
 	}
 	return nil
 }
 
-func (e CreditTransactionTypeName) MarshalGQL(w io.Writer) {
+func (e CreditTransactionTemplateName) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type CreditTransactionType string
+
+const (
+	CreditTransactionTypeOrder      CreditTransactionType = "ORDER"
+	CreditTransactionTypeTransfer   CreditTransactionType = "TRANSFER"
+	CreditTransactionTypeCommission CreditTransactionType = "COMMISSION"
+	CreditTransactionTypeFund       CreditTransactionType = "FUND"
+)
+
+var AllCreditTransactionType = []CreditTransactionType{
+	CreditTransactionTypeOrder,
+	CreditTransactionTypeTransfer,
+	CreditTransactionTypeCommission,
+	CreditTransactionTypeFund,
+}
+
+func (e CreditTransactionType) IsValid() bool {
+	switch e {
+	case CreditTransactionTypeOrder, CreditTransactionTypeTransfer, CreditTransactionTypeCommission, CreditTransactionTypeFund:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionType) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionType) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionType(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionType", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
