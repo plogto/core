@@ -17,6 +17,12 @@ type CreateCreditTransactionInput struct {
 	Status      model.CreditTransactionStatus
 }
 
+type DescriptionVariable struct {
+	Content string
+	Url     *string
+	Image   *string
+}
+
 func (s *Service) GetCreditTransactionByID(ctx context.Context, id *string) (*model.CreditTransaction, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
@@ -76,4 +82,24 @@ func (s *Service) TransferCreditFromAdmin(creditTransaction model.CreditTransact
 	creditTransaction.SenderID = bankUser.ID
 
 	return s.CreateCreditTransaction(creditTransaction)
+}
+
+func (s *Service) GeDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType model.CreditTransactionDescriptionVariableType, contentID string) (DescriptionVariable, error) {
+	var descriptionVariable DescriptionVariable
+	switch creditTransactionDescriptionVariableType {
+	case model.CreditTransactionDescriptionVariableTypeUser:
+		user, _ := s.Users.GetUserByID(contentID)
+		descriptionVariable = DescriptionVariable{
+			Content: user.FullName,
+			Url:     &user.Username,
+			Image:   user.Avatar,
+		}
+	case model.CreditTransactionDescriptionVariableTypeTag:
+		tag, _ := s.Tags.GetTagByID(contentID)
+		descriptionVariable = DescriptionVariable{
+			Content: tag.Name,
+			Url:     &tag.Name,
+		}
+	}
+	return descriptionVariable, nil
 }

@@ -15,8 +15,14 @@ func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionV
 	return c.GetCreditTransactionDescriptionVariableByField("id", id)
 }
 
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByCreditTransactionID(creditTransactionID string) (*model.CreditTransactionDescriptionVariable, error) {
-	return c.GetCreditTransactionDescriptionVariableByField("credit_transaction_id", creditTransactionID)
+func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionID(creditTransactionID string) ([]*model.CreditTransactionDescriptionVariable, error) {
+	var creditTransactionDescriptionVariables []*model.CreditTransactionDescriptionVariable
+	err := c.DB.Model(&creditTransactionDescriptionVariables).
+		Where("credit_transaction_id = ?", creditTransactionID).
+		Where("deleted_at is ?", nil).
+		First()
+
+	return creditTransactionDescriptionVariables, err
 }
 
 func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByField(field string, value string) (*model.CreditTransactionDescriptionVariable, error) {
@@ -31,6 +37,5 @@ func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionV
 
 func (c *CreditTransactionDescriptionVariables) CreateCreditTransactionDescriptionVariable(creditTransactionDescriptionVariable *model.CreditTransactionDescriptionVariable) (*model.CreditTransactionDescriptionVariable, error) {
 	_, err := c.DB.Model(creditTransactionDescriptionVariable).Returning("*").Insert()
-	fmt.Println("CreateCreditTransactionDescriptionVariable", err)
 	return creditTransactionDescriptionVariable, err
 }

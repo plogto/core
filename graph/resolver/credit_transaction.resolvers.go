@@ -24,27 +24,30 @@ func (r *creditTransactionResolver) Receiver(ctx context.Context, obj *model.Cre
 
 // DescriptionVariables is the resolver for the descriptionVariables field.
 func (r *creditTransactionResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransaction) ([]*model.CreditTransactionDescriptionVariable, error) {
-	panic(fmt.Errorf("not implemented: DescriptionVariables - descriptionVariables"))
+	return r.Service.GetCreditTransactionDescriptionVariablesByCreditTransactionID(ctx, &obj.ID)
 }
 
 // Type is the resolver for the type field.
 func (r *creditTransactionResolver) Type(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionType, error) {
-	panic(fmt.Errorf("not implemented: Type - type"))
+	return r.Service.GetCreditTransactionTypeByID(ctx, obj.CreditTransactionTypeID)
 }
 
 // Content is the resolver for the content field.
 func (r *creditTransactionDescriptionVariableResolver) Content(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (string, error) {
-	panic(fmt.Errorf("not implemented: Content - content"))
+	descriptionVariable, err := r.Service.GeDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Content, err
 }
 
 // URL is the resolver for the url field.
 func (r *creditTransactionDescriptionVariableResolver) URL(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error) {
-	panic(fmt.Errorf("not implemented: URL - url"))
+	descriptionVariable, err := r.Service.GeDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Url, err
 }
 
 // Image is the resolver for the image field.
 func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error) {
-	panic(fmt.Errorf("not implemented: Image - image"))
+	descriptionVariable, err := r.Service.GeDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Image, err
 }
 
 // Cursor is the resolver for the cursor field.
