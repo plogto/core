@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -59,6 +58,11 @@ func (r *userResolver) Background(ctx context.Context, obj *model.User) (*model.
 	}
 }
 
+// Credits is the resolver for the credits field.
+func (r *userResolver) Credits(ctx context.Context, obj *model.User) (float64, error) {
+	return r.Service.GetCreditsByUserID(ctx, &obj.ID)
+}
+
 // ConnectionStatus is the resolver for the connectionStatus field.
 func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*int, error) {
 	return r.Service.GetConnectionStatus(ctx, obj.ID)
@@ -97,13 +101,3 @@ func (r *Resolver) UsersEdge() generated.UsersEdgeResolver { return &usersEdgeRe
 
 type userResolver struct{ *Resolver }
 type usersEdgeResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//  - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//    it when you're done.
-//  - You have helper methods in this file. Move them out to keep these resolver files clean.
-func (r *userResolver) Credits(ctx context.Context, obj *model.User) (float64, error) {
-	panic(fmt.Errorf("not implemented: Credits - credits"))
-}

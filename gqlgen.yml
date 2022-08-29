@@ -58,6 +58,8 @@ models:
         resolver: true
       postsCount:
         resolver: true
+      credits:
+        resolver: true
   Post:
     model: github.com/plogto/core/graph/model.Post
     fields:
@@ -123,18 +125,25 @@ models:
         resolver: true
       image:
         resolver: true
-  CreditTransactionType:
-    model: github.com/plogto/core/graph/model.CreditTransactionType
+  CreditTransactionTemplate:
+    model: github.com/plogto/core/graph/model.CreditTransactionTemplate
+  CreditTransactionInfo:
+    model: github.com/plogto/core/graph/model.CreditTransactionInfo
+    fields:
+      template:
+        resolver: true
+      descriptionVariables:
+        resolver: true
   CreditTransaction:
     model: github.com/plogto/core/graph/model.CreditTransaction
     fields:
-      sender:
+      user:
         resolver: true
-      receiver:
+      recipient:
         resolver: true
-      type:
+      info:
         resolver: true
-      descriptionVariables:
+      commission:
         resolver: true
   CreditTransactionsEdge:
     fields:

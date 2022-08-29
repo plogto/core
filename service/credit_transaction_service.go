@@ -9,18 +9,33 @@ import (
 	"github.com/plogto/core/util"
 )
 
-type CreateCreditTransactionInput struct {
-	SenderID    string
-	ReceiverID  string
-	Amount      float64
-	Description *string
-	Status      model.CreditTransactionStatus
+type CreateCreditTransactionParams struct {
+	SenderID                    string
+	ReceiverID                  string
+	Amount                      *float64
+	Description                 *string
+	Status                      model.CreditTransactionStatus
+	Type                        model.CreditTransactionType
+	TemplateName                *model.CreditTransactionTemplateName
+	RelevantCreditTransactionID *string
 }
 
-type DescriptionVariable struct {
-	Content string
-	Url     *string
-	Image   *string
+type TransferCreditFromAdminParams struct {
+	ReceiverID   string
+	Amount       *float64
+	Status       model.CreditTransactionStatus
+	Type         model.CreditTransactionType
+	TemplateName model.CreditTransactionTemplateName
+}
+
+func (s *Service) GetCreditsByUserID(ctx context.Context, userID *string) (float64, error) {
+	_, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if userID == nil || err != nil {
+		return 0, nil
+	}
+
+	return s.CreditTransactions.GetCreditsByUserID(*userID)
 }
 
 func (s *Service) GetCreditTransactionByID(ctx context.Context, id *string) (*model.CreditTransaction, error) {
@@ -45,18 +60,45 @@ func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageIn
 	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
 }
 
-func (s *Service) CreateCreditTransaction(creditTransaction model.CreditTransaction) (*model.CreditTransaction, error) {
-	receiver, _ := s.Users.GetUserByID(creditTransaction.ReceiverID)
-	receiver.Credits = receiver.Credits + creditTransaction.Amount
-	s.Users.UpdateUser(receiver)
+func (s *Service) CreateCreditTransaction(creditTransactionParams CreateCreditTransactionParams) (*model.CreditTransactionInfo, error) {
+	var amount float64
+	var creditTransactionTemplateID string
 
-	sender, _ := s.Users.GetUserByID(creditTransaction.SenderID)
-	sender.Credits = sender.Credits - creditTransaction.Amount
-	s.Users.UpdateUser(sender)
+	if creditTransactionParams.TemplateName != nil {
+		creditTransactionTemplate, _ := s.CreditTransactionTemplates.GetCreditTransactionTemplateByName(*creditTransactionParams.TemplateName)
+		creditTransactionTemplateID = creditTransactionTemplate.ID
+		amount = *creditTransactionTemplate.Amount
+	}
 
-	creditTransaction.Url = util.RandomString(24)
+	if creditTransactionParams.Amount != nil {
+		amount = *creditTransactionParams.Amount
+	}
 
-	return s.CreditTransactions.CreateCreditTransaction(&creditTransaction)
+	creditTransactionInfo, err := s.CreditTransactionInfos.CreateCreditTransactionInfo(&model.CreditTransactionInfo{
+		Description:                 creditTransactionParams.Description,
+		CreditTransactionTemplateID: &creditTransactionTemplateID,
+		Status:                      creditTransactionParams.Status,
+	})
+
+	s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
+		UserID:                  creditTransactionParams.SenderID,
+		RecipientID:             creditTransactionParams.ReceiverID,
+		Amount:                  -amount,
+		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Type:                    creditTransactionParams.Type,
+		Url:                     util.RandomString(24),
+	})
+
+	s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
+		UserID:                  creditTransactionParams.ReceiverID,
+		RecipientID:             creditTransactionParams.SenderID,
+		Amount:                  amount,
+		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Type:                    creditTransactionParams.Type,
+		Url:                     util.RandomString(24),
+	})
+
+	return creditTransactionInfo, err
 }
 
 func (s *Service) GetBankAccount() (*model.User, error) {
@@ -64,24 +106,39 @@ func (s *Service) GetBankAccount() (*model.User, error) {
 	return s.Users.GetUserByUsername(username)
 }
 
-func (s *Service) GenerateCredits(amount float64) (*model.User, error) {
+func (s *Service) GenerateCredits(amount float64) (*model.CreditTransaction, error) {
 	bankUser, _ := s.GetBankAccount()
 
-	if amount > 0 {
-		bankUser.Credits += amount
-		return s.Users.UpdateUser(bankUser)
-	}
+	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(&model.CreditTransactionInfo{
+		Status: model.CreditTransactionStatusApproved,
+	})
 
-	return nil, nil
+	return s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
+		UserID:                  bankUser.ID,
+		RecipientID:             bankUser.ID,
+		Amount:                  amount,
+		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Type:                    model.CreditTransactionTypeFund,
+		Url:                     util.RandomString(24),
+	})
 }
 
-func (s *Service) TransferCreditFromAdmin(creditTransaction model.CreditTransaction) (*model.CreditTransaction, error) {
-	s.GenerateCredits(creditTransaction.Amount)
-
+func (s *Service) TransferCreditFromAdmin(transferCreditFromAdminParams TransferCreditFromAdminParams) (*model.CreditTransactionInfo, error) {
 	bankUser, _ := s.GetBankAccount()
-	creditTransaction.SenderID = bankUser.ID
 
-	return s.CreateCreditTransaction(creditTransaction)
+	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(bankUser.ID)
+
+	if bankUserCredits <= 0 {
+		s.GenerateCredits(100)
+	}
+
+	return s.CreateCreditTransaction(CreateCreditTransactionParams{
+		SenderID:     bankUser.ID,
+		ReceiverID:   transferCreditFromAdminParams.ReceiverID,
+		Status:       model.CreditTransactionStatusApproved,
+		TemplateName: &transferCreditFromAdminParams.TemplateName,
+		Type:         model.CreditTransactionTypeOrder,
+	})
 }
 
 func (s *Service) GeDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType model.CreditTransactionDescriptionVariableType, contentID string) (DescriptionVariable, error) {

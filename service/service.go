@@ -16,7 +16,8 @@ type Service struct {
 	Files                                 database.Files
 	Connections                           database.Connections
 	CreditTransactions                    database.CreditTransactions
-	CreditTransactionTypes                database.CreditTransactionTypes
+	CreditTransactionTemplates            database.CreditTransactionTemplates
+	CreditTransactionInfos                database.CreditTransactionInfos
 	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
 	Tags                                  database.Tags
 	PostAttachments                       database.PostAttachments
@@ -39,7 +40,8 @@ func New(service Service) *Service {
 		Files:                                 service.Files,
 		Connections:                           service.Connections,
 		CreditTransactions:                    service.CreditTransactions,
-		CreditTransactionTypes:                service.CreditTransactionTypes,
+		CreditTransactionTemplates:            service.CreditTransactionTemplates,
+		CreditTransactionInfos:                service.CreditTransactionInfos,
 		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
 		Tags:                                  service.Tags,
 		PostTags:                              service.PostTags,

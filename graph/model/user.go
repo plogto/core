@@ -20,9 +20,8 @@ type User struct {
 	InvitationCode  string
 	Bio             *string
 	Role            UserRole
-	Credits         float64 `pg:",use_zero"`
-	IsPrivate       bool    `pg:",use_zero"`
-	IsVerified      bool    `pg:",use_zero"`
+	IsPrivate       bool `pg:",use_zero"`
+	IsVerified      bool `pg:",use_zero"`
 	CreatedAt       *time.Time
 	UpdatedAt       *time.Time
 	DeletedAt       *time.Time `pg:"-,soft_delete"`
