@@ -41,10 +41,10 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(userID str
 	var endCursor string
 
 	query := c.DB.Model(&creditTransactions).
-		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.credit_transaction_id = credit_transactions.id").
-		Where("user_id = ?", userID).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC")
+		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id").
+		Where("credit_transaction.user_id = ?", userID).
+		Where("credit_transaction.deleted_at is ?", nil).
+		Order("credit_transaction_infos.created_at DESC")
 
 	if len(after) > 0 {
 		query.Where("credit_transaction_infos.created_at < ?", after)

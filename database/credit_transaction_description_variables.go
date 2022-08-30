@@ -15,12 +15,12 @@ func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionV
 	return c.GetCreditTransactionDescriptionVariableByField("id", id)
 }
 
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionID(creditTransactionID string) ([]*model.CreditTransactionDescriptionVariable, error) {
+func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(creditTransactionInfoID string) ([]*model.CreditTransactionDescriptionVariable, error) {
 	var creditTransactionDescriptionVariables []*model.CreditTransactionDescriptionVariable
 	err := c.DB.Model(&creditTransactionDescriptionVariables).
-		Where("credit_transaction_id = ?", creditTransactionID).
+		Where("credit_transaction_info_id = ?", creditTransactionInfoID).
 		Where("deleted_at is ?", nil).
-		First()
+		Select()
 
 	return creditTransactionDescriptionVariables, err
 }
