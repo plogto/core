@@ -42,7 +42,6 @@ type ResolverRoot interface {
 	CreditTransaction() CreditTransactionResolver
 	CreditTransactionDescriptionVariable() CreditTransactionDescriptionVariableResolver
 	CreditTransactionInfo() CreditTransactionInfoResolver
-	CreditTransactionTemplate() CreditTransactionTemplateResolver
 	CreditTransactionsEdge() CreditTransactionsEdgeResolver
 	InvitedUser() InvitedUserResolver
 	InvitedUsersEdge() InvitedUsersEdgeResolver
@@ -189,21 +188,20 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser              func(childComplexity int, userID string) int
-		AddPost                 func(childComplexity int, input model.AddPostInput) int
-		ChangePassword          func(childComplexity int, input model.ChangePasswordInput) int
-		CreateCreditTransaction func(childComplexity int, input model.CreateCreditTransactionInput) int
-		DeletePost              func(childComplexity int, postID string) int
-		EditPost                func(childComplexity int, postID string, input model.EditPostInput) int
-		EditUser                func(childComplexity int, input model.EditUserInput) int
-		FollowUser              func(childComplexity int, userID string) int
-		LikePost                func(childComplexity int, postID string) int
-		Register                func(childComplexity int, input model.RegisterInput) int
-		RejectUser              func(childComplexity int, userID string) int
-		SavePost                func(childComplexity int, postID string) int
-		SingleUploadFile        func(childComplexity int, file graphql.Upload) int
-		Test                    func(childComplexity int, input model.TestInput) int
-		UnfollowUser            func(childComplexity int, userID string) int
+		AcceptUser       func(childComplexity int, userID string) int
+		AddPost          func(childComplexity int, input model.AddPostInput) int
+		ChangePassword   func(childComplexity int, input model.ChangePasswordInput) int
+		DeletePost       func(childComplexity int, postID string) int
+		EditPost         func(childComplexity int, postID string, input model.EditPostInput) int
+		EditUser         func(childComplexity int, input model.EditUserInput) int
+		FollowUser       func(childComplexity int, userID string) int
+		LikePost         func(childComplexity int, postID string) int
+		Register         func(childComplexity int, input model.RegisterInput) int
+		RejectUser       func(childComplexity int, userID string) int
+		SavePost         func(childComplexity int, postID string) int
+		SingleUploadFile func(childComplexity int, file graphql.Upload) int
+		Test             func(childComplexity int, input model.TestInput) int
+		UnfollowUser     func(childComplexity int, userID string) int
 	}
 
 	Notification struct {
@@ -407,9 +405,6 @@ type CreditTransactionInfoResolver interface {
 
 	Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
 }
-type CreditTransactionTemplateResolver interface {
-	Content(ctx context.Context, obj *model.CreditTransactionTemplate) (string, error)
-}
 type CreditTransactionsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error)
 	Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*model.CreditTransaction, error)
@@ -433,7 +428,6 @@ type MutationResolver interface {
 	UnfollowUser(ctx context.Context, userID string) (*model.Connection, error)
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
-	CreateCreditTransaction(ctx context.Context, input model.CreateCreditTransactionInput) (*model.CreditTransaction, error)
 	SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error)
 	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
@@ -1054,18 +1048,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.ChangePassword(childComplexity, args["input"].(model.ChangePasswordInput)), true
-
-	case "Mutation.createCreditTransaction":
-		if e.complexity.Mutation.CreateCreditTransaction == nil {
-			break
-		}
-
-		args, err := ec.field_Mutation_createCreditTransaction_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Mutation.CreateCreditTransaction(childComplexity, args["input"].(model.CreateCreditTransactionInput)), true
 
 	case "Mutation.deletePost":
 		if e.complexity.Mutation.DeletePost == nil {
@@ -2104,7 +2086,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
 		ec.unmarshalInputChangePasswordInput,
-		ec.unmarshalInputCreateCreditTransactionInput,
 		ec.unmarshalInputEditUserInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputPageInfoInput,
@@ -2324,20 +2305,8 @@ type CreditTransactions {
   pageInfo: PageInfo!
 }
 
-input CreateCreditTransactionInput {
-  senderId: ID!
-  receiverId: ID!
-  amount: Float!
-  description: String
-}
-
-
 extend type Query {
   getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
-}
-
-extend type Mutation {
-  createCreditTransaction(input: CreateCreditTransactionInput!): CreditTransaction
 }
 
 `, BuiltIn: false},
@@ -2724,21 +2693,6 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNChangePasswordInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Mutation_createCreditTransaction_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.CreateCreditTransactionInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNCreateCreditTransactionInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreateCreditTransactionInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5283,7 +5237,7 @@ func (ec *executionContext) _CreditTransactionTemplate_content(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreditTransactionTemplate().Content(rctx, obj)
+		return obj.Content, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5304,8 +5258,8 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_content(ctx c
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionTemplate",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -7150,76 +7104,6 @@ func (ec *executionContext) fieldContext_Mutation_rejectUser(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_rejectUser_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Mutation_createCreditTransaction(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Mutation_createCreditTransaction(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateCreditTransaction(rctx, fc.Args["input"].(model.CreateCreditTransactionInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.CreditTransaction)
-	fc.Result = res
-	return ec.marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransaction(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Mutation_createCreditTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Mutation",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_CreditTransaction_id(ctx, field)
-			case "user":
-				return ec.fieldContext_CreditTransaction_user(ctx, field)
-			case "recipient":
-				return ec.fieldContext_CreditTransaction_recipient(ctx, field)
-			case "amount":
-				return ec.fieldContext_CreditTransaction_amount(ctx, field)
-			case "type":
-				return ec.fieldContext_CreditTransaction_type(ctx, field)
-			case "url":
-				return ec.fieldContext_CreditTransaction_url(ctx, field)
-			case "info":
-				return ec.fieldContext_CreditTransaction_info(ctx, field)
-			case "relevantTransaction":
-				return ec.fieldContext_CreditTransaction_relevantTransaction(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type CreditTransaction", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Mutation_createCreditTransaction_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -15692,58 +15576,6 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputCreateCreditTransactionInput(ctx context.Context, obj interface{}) (model.CreateCreditTransactionInput, error) {
-	var it model.CreateCreditTransactionInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"senderId", "receiverId", "amount", "description"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "senderId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("senderId"))
-			it.SenderID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "receiverId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("receiverId"))
-			it.ReceiverID, err = ec.unmarshalNID2string(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "amount":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("amount"))
-			it.Amount, err = ec.unmarshalNFloat2float64(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "description":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("description"))
-			it.Description, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
 func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj interface{}) (model.EditUserInput, error) {
 	var it model.EditUserInput
 	asMap := map[string]interface{}{}
@@ -16617,35 +16449,22 @@ func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel 
 			out.Values[i] = ec._CreditTransactionTemplate_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "name":
 
 			out.Values[i] = ec._CreditTransactionTemplate_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "content":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CreditTransactionTemplate_content(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._CreditTransactionTemplate_content(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -17155,12 +16974,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_rejectUser(ctx, field)
-			})
-
-		case "createCreditTransaction":
-
-			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
-				return ec._Mutation_createCreditTransaction(ctx, field)
 			})
 
 		case "singleUploadFile":
@@ -19402,11 +19215,6 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 
 func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx context.Context, v interface{}) (model.ChangePasswordInput, error) {
 	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNCreateCreditTransactionInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreateCreditTransactionInput(ctx context.Context, v interface{}) (model.CreateCreditTransactionInput, error) {
-	res, err := ec.unmarshalInputCreateCreditTransactionInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
