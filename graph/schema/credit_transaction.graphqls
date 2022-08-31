@@ -69,19 +69,7 @@ type CreditTransactions {
   pageInfo: PageInfo!
 }
 
-input CreateCreditTransactionInput {
-  senderId: ID!
-  receiverId: ID!
-  amount: Float!
-  description: String
-}
-
-
 extend type Query {
   getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
-}
-
-extend type Mutation {
-  createCreditTransaction(input: CreateCreditTransactionInput!): CreditTransaction
 }
 

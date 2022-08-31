@@ -35,13 +35,6 @@ type ConnectionsEdge struct {
 	Node   *Connection `json:"node"`
 }
 
-type CreateCreditTransactionInput struct {
-	SenderID    string  `json:"senderId"`
-	ReceiverID  string  `json:"receiverId"`
-	Amount      float64 `json:"amount"`
-	Description *string `json:"description"`
-}
-
 type CreditTransactions struct {
 	TotalCount *int                      `json:"totalCount"`
 	Edges      []*CreditTransactionsEdge `json:"edges"`

@@ -141,7 +141,7 @@ func (s *Service) TransferCreditFromAdmin(transferCreditFromAdminParams Transfer
 	})
 }
 
-func (s *Service) GeDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType model.CreditTransactionDescriptionVariableType, contentID string) (DescriptionVariable, error) {
+func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType model.CreditTransactionDescriptionVariableType, contentID string) (DescriptionVariable, error) {
 	var descriptionVariable DescriptionVariable
 	switch creditTransactionDescriptionVariableType {
 	case model.CreditTransactionDescriptionVariableTypeUser:

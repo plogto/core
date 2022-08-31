@@ -15,12 +15,12 @@ type CreateCreditTransactionDescriptionVariableInput struct {
 	Status      model.CreditTransactionStatus
 }
 
-func (s *Service) GetCreditTransactionDescriptionVariablesByCreditTransactionID(ctx context.Context, creditTransactionID *string) ([]*model.CreditTransactionDescriptionVariable, error) {
+func (s *Service) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID *string) ([]*model.CreditTransactionDescriptionVariable, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	if creditTransactionID == nil || err != nil {
+	if creditTransactionInfoID == nil || err != nil {
 		return nil, nil
 	}
 
-	return s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariablesByCreditTransactionID(*creditTransactionID)
+	return s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(*creditTransactionInfoID)
 }
