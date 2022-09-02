@@ -30,6 +30,11 @@ func (r *queryResolver) GetUserByUsername(ctx context.Context, username string) 
 	return r.Service.GetUserByUsername(ctx, username)
 }
 
+// GetUserByInvitationCode is the resolver for the getUserByInvitationCode field.
+func (r *queryResolver) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
+	return r.Service.GetUserByInvitationCode(ctx, invitationCode)
+}
+
 // CheckUsername is the resolver for the checkUsername field.
 func (r *queryResolver) CheckUsername(ctx context.Context, username string) (*model.User, error) {
 	return r.Service.CheckUsername(ctx, username)

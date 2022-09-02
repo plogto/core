@@ -279,27 +279,28 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CheckEmail             func(childComplexity int, email string) int
-		CheckUsername          func(childComplexity int, username string) int
-		GetCreditTransactions  func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetFollowRequests      func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetFollowersByUsername func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetFollowingByUsername func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetInvitedUsers        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetLikedPostsByPostID  func(childComplexity int, postID string, pageInfoInput *model.PageInfoInput) int
-		GetNotifications       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetPostByURL           func(childComplexity int, url string) int
-		GetPostsByTagName      func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
-		GetPostsByUsername     func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetSavedPosts          func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetTagByTagName        func(childComplexity int, tagName string) int
-		GetTimelinePosts       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetTrends              func(childComplexity int, first *int) int
-		GetUserByUsername      func(childComplexity int, username string) int
-		GetUserInfo            func(childComplexity int) int
-		Login                  func(childComplexity int, input model.LoginInput) int
-		Search                 func(childComplexity int, expression string) int
-		Test                   func(childComplexity int, input model.TestInput) int
+		CheckEmail              func(childComplexity int, email string) int
+		CheckUsername           func(childComplexity int, username string) int
+		GetCreditTransactions   func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetFollowRequests       func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetFollowersByUsername  func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetFollowingByUsername  func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetInvitedUsers         func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetLikedPostsByPostID   func(childComplexity int, postID string, pageInfoInput *model.PageInfoInput) int
+		GetNotifications        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetPostByURL            func(childComplexity int, url string) int
+		GetPostsByTagName       func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
+		GetPostsByUsername      func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetSavedPosts           func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetTagByTagName         func(childComplexity int, tagName string) int
+		GetTimelinePosts        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetTrends               func(childComplexity int, first *int) int
+		GetUserByInvitationCode func(childComplexity int, invitationCode string) int
+		GetUserByUsername       func(childComplexity int, username string) int
+		GetUserInfo             func(childComplexity int) int
+		Login                   func(childComplexity int, input model.LoginInput) int
+		Search                  func(childComplexity int, expression string) int
+		Test                    func(childComplexity int, input model.TestInput) int
 	}
 
 	SavedPost struct {
@@ -485,6 +486,7 @@ type QueryResolver interface {
 	GetTrends(ctx context.Context, first *int) (*model.Tags, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
+	GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error)
 	CheckUsername(ctx context.Context, username string) (*model.User, error)
 	CheckEmail(ctx context.Context, email string) (*model.User, error)
 }
@@ -1702,6 +1704,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetTrends(childComplexity, args["first"].(*int)), true
 
+	case "Query.getUserByInvitationCode":
+		if e.complexity.Query.GetUserByInvitationCode == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getUserByInvitationCode_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetUserByInvitationCode(childComplexity, args["invitationCode"].(string)), true
+
 	case "Query.getUserByUsername":
 		if e.complexity.Query.GetUserByUsername == nil {
 			break
@@ -2640,6 +2654,7 @@ input ChangePasswordInput {
 extend type Query {
   getUserInfo: User
   getUserByUsername(username: String!): User
+  getUserByInvitationCode(invitationCode: String!): User
   checkUsername(username: String!): User
   checkEmail(email: String!): User
 }
@@ -3172,6 +3187,21 @@ func (ec *executionContext) field_Query_getTrends_args(ctx context.Context, rawA
 		}
 	}
 	args["first"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getUserByInvitationCode_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["invitationCode"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["invitationCode"] = arg0
 	return args, nil
 }
 
@@ -11296,6 +11326,102 @@ func (ec *executionContext) fieldContext_Query_getUserByUsername(ctx context.Con
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_getUserByInvitationCode(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getUserByInvitationCode(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetUserByInvitationCode(rctx, fc.Args["invitationCode"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.User)
+	fc.Result = res
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getUserByInvitationCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
+			case "primaryColor":
+				return ec.fieldContext_User_primaryColor(ctx, field)
+			case "avatar":
+				return ec.fieldContext_User_avatar(ctx, field)
+			case "background":
+				return ec.fieldContext_User_background(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "credits":
+				return ec.fieldContext_User_credits(ctx, field)
+			case "isPrivate":
+				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
+			case "connectionStatus":
+				return ec.fieldContext_User_connectionStatus(ctx, field)
+			case "followingCount":
+				return ec.fieldContext_User_followingCount(ctx, field)
+			case "followersCount":
+				return ec.fieldContext_User_followersCount(ctx, field)
+			case "followRequestsCount":
+				return ec.fieldContext_User_followRequestsCount(ctx, field)
+			case "postsCount":
+				return ec.fieldContext_User_postsCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getUserByInvitationCode_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_checkUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_checkUsername(ctx, field)
 	if err != nil {
@@ -18101,6 +18227,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getUserByUsername(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getUserByInvitationCode":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getUserByInvitationCode(ctx, field)
 				return res
 			}
 
