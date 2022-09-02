@@ -22,6 +22,10 @@ func (s *Service) GetUserByUsername(ctx context.Context, username string) (*mode
 	return s.Users.GetUserByUsername(username)
 }
 
+func (s *Service) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
+	return s.Users.GetUserByInvitationCode(invitationCode)
+}
+
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	var limit = constants.USERS_PAGE_LIMIT
 
