@@ -11,25 +11,34 @@ import (
 )
 
 func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
-	return middleware.GetCurrentUserFromCTX(ctx)
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	return user, nil
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	return s.Users.GetUserByID(id)
+	user, _ := s.Users.GetUserByID(id)
+
+	return user, nil
 }
 
 func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	return s.Users.GetUserByUsername(username)
+	user, _ := s.Users.GetUserByUsername(username)
+
+	return user, nil
 }
 
 func (s *Service) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
-	return s.Users.GetUserByInvitationCode(invitationCode)
+	user, _ := s.Users.GetUserByInvitationCode(invitationCode)
+
+	return user, nil
 }
 
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	var limit = constants.USERS_PAGE_LIMIT
+	users, _ := s.Users.GetUsersByUsernameOrFullNameAndPageInfo(expression+"%", limit)
 
-	return s.Users.GetUsersByUsernameOrFullNameAndPageInfo(expression+"%", limit)
+	return users, nil
 }
 
 func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) bool {
@@ -114,7 +123,9 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		return nil, nil
 	}
 
-	return s.Users.UpdateUser(user)
+	updatedUser, _ := s.Users.UpdateUser(user)
+
+	return updatedUser, nil
 }
 
 func (s *Service) ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error) {
@@ -159,7 +170,9 @@ func (s *Service) CheckUsername(ctx context.Context, username string) (*model.Us
 		return nil, errors.New(err.Error())
 	}
 
-	return s.Users.GetUserByUsername(username)
+	user, _ := s.Users.GetUserByUsername(username)
+
+	return user, nil
 }
 
 func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, error) {
@@ -169,5 +182,7 @@ func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, er
 		return nil, errors.New(err.Error())
 	}
 
-	return s.Users.GetUserByEmail(email)
+	user, _ := s.Users.GetUserByEmail(email)
+
+	return user, nil
 }
