@@ -13,25 +13,25 @@ import (
 func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	return user, nil
+	return s.PrepareUser(user), nil
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	user, _ := s.Users.GetUserByID(id)
 
-	return user, nil
+	return s.PrepareUser(user), nil
 }
 
 func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
 	user, _ := s.Users.GetUserByUsername(username)
 
-	return user, nil
+	return s.PrepareUser(user), nil
 }
 
 func (s *Service) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
 	user, _ := s.Users.GetUserByInvitationCode(invitationCode)
 
-	return user, nil
+	return s.PrepareUser(user), nil
 }
 
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
@@ -125,7 +125,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 
 	updatedUser, _ := s.Users.UpdateUser(user)
 
-	return updatedUser, nil
+	return s.PrepareUser(updatedUser), nil
 }
 
 func (s *Service) ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error) {
@@ -172,7 +172,7 @@ func (s *Service) CheckUsername(ctx context.Context, username string) (*model.Us
 
 	user, _ := s.Users.GetUserByUsername(username)
 
-	return user, nil
+	return s.PrepareUser(user), nil
 }
 
 func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, error) {
@@ -184,5 +184,13 @@ func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, er
 
 	user, _ := s.Users.GetUserByEmail(email)
 
-	return user, nil
+	return s.PrepareUser(user), nil
+}
+
+func (s *Service) PrepareUser(user *model.User) *model.User {
+	if user == nil || len(user.ID) == 0 {
+		return nil
+	}
+
+	return user
 }
