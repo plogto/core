@@ -10,6 +10,11 @@ input RegisterInput {
   invitationCode: String
 }
 
+input OAuthGoogleInput {
+  credential: String!
+  invitationCode: String
+}
+
 type AuthToken {
   token: String!
   expiredAt: Time!
@@ -22,6 +27,7 @@ type AuthResponse {
 
 extend type Query {
   login(input: LoginInput!): AuthResponse
+  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
 
 extend type Mutation {

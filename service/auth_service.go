@@ -3,10 +3,13 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
+	"os"
 
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
+	"google.golang.org/api/idtoken"
 )
 
 func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
@@ -25,18 +28,10 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 		return nil, errors.New("username or password is not valid")
 	}
 
-	token, err := user.GenToken()
-	if err != nil {
-		return nil, errors.New("something went wrong")
-	}
-
-	return &model.AuthResponse{
-		AuthToken: token,
-		User:      user,
-	}, nil
+	return s.PrepareAuthToken(user)
 }
 
-func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error) {
+func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAuth bool) (*model.AuthResponse, error) {
 	if _, err := s.Users.GetUserByUsernameOrEmail(input.Email); err == nil {
 		return nil, errors.New("email has already been taken")
 	}
@@ -54,18 +49,20 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		return nil, err
 	}
 
-	password := &model.Password{
-		UserID: newUser.ID,
-	}
+	if !isOAuth {
+		password := &model.Password{
+			UserID: newUser.ID,
+		}
 
-	if err = password.HashPassword(input.Password); err != nil {
-		log.Printf("error while hashing password: %v", err)
-		return nil, errors.New("something went wrong")
-	}
+		if err = password.HashPassword(input.Password); err != nil {
+			log.Printf("error while hashing password: %v", err)
+			return nil, errors.New("something went wrong")
+		}
 
-	if _, err := s.Passwords.AddPassword(password); err != nil {
-		log.Printf("error white adding password: %v", err)
-		return nil, err
+		if _, err := s.Passwords.AddPassword(password); err != nil {
+			log.Printf("error white adding password: %v", err)
+			return nil, err
+		}
 	}
 
 	if input.InvitationCode != nil {
@@ -118,6 +115,35 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput) (*mod
 		}
 	}
 
+	return s.PrepareAuthToken(user)
+}
+
+func (s *Service) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error) {
+	payload, err := idtoken.Validate(context.Background(), input.Credential, os.Getenv("GOOGLE_OAUTH_CLIENT_ID"))
+
+	if err != nil {
+		log.Printf("error while validating the token: %v", err)
+		return nil, errors.New("something went wrong")
+	}
+
+	email := fmt.Sprintf("%v", payload.Claims["email"])
+
+	user, _ := s.Users.GetUserByEmail(email)
+	if s.PrepareUser(user) != nil {
+		return s.PrepareAuthToken(user)
+	}
+
+	inputRegister := model.RegisterInput{
+		FullName:       fmt.Sprintf("%v", payload.Claims["name"]),
+		Email:          email,
+		InvitationCode: &input.Credential,
+		Password:       "",
+	}
+
+	return s.Register(ctx, inputRegister, true)
+}
+
+func (s *Service) PrepareAuthToken(user *model.User) (*model.AuthResponse, error) {
 	token, err := user.GenToken()
 	if err != nil {
 		log.Printf("error while generating the token: %v", err)
