@@ -299,6 +299,7 @@ type ComplexityRoot struct {
 		GetUserByUsername       func(childComplexity int, username string) int
 		GetUserInfo             func(childComplexity int) int
 		Login                   func(childComplexity int, input model.LoginInput) int
+		OAuthGoogle             func(childComplexity int, input model.OAuthGoogleInput) int
 		Search                  func(childComplexity int, expression string) int
 		Test                    func(childComplexity int, input model.TestInput) int
 	}
@@ -469,6 +470,7 @@ type PostsEdgeResolver interface {
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
+	OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error)
 	GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
@@ -1747,6 +1749,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Login(childComplexity, args["input"].(model.LoginInput)), true
 
+	case "Query.oAuthGoogle":
+		if e.complexity.Query.OAuthGoogle == nil {
+			break
+		}
+
+		args, err := ec.field_Query_oAuthGoogle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.OAuthGoogle(childComplexity, args["input"].(model.OAuthGoogleInput)), true
+
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
 			break
@@ -2102,6 +2116,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputEditUserInput,
 		ec.unmarshalInputLoginInput,
+		ec.unmarshalInputOAuthGoogleInput,
 		ec.unmarshalInputPageInfoInput,
 		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputTestInput,
@@ -2196,6 +2211,11 @@ input RegisterInput {
   invitationCode: String
 }
 
+input OAuthGoogleInput {
+  credential: String!
+  invitationCode: String
+}
+
 type AuthToken {
   token: String!
   expiredAt: Time!
@@ -2208,6 +2228,7 @@ type AuthResponse {
 
 extend type Query {
   login(input: LoginInput!): AuthResponse
+  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
 
 extend type Mutation {
@@ -3227,6 +3248,21 @@ func (ec *executionContext) field_Query_login_args(ctx context.Context, rawArgs 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_oAuthGoogle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.OAuthGoogleInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -10223,6 +10259,64 @@ func (ec *executionContext) fieldContext_Query_login(ctx context.Context, field 
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_oAuthGoogle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().OAuthGoogle(rctx, fc.Args["input"].(model.OAuthGoogleInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthResponse)
+	fc.Result = res
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "authToken":
+				return ec.fieldContext_AuthResponse_authToken(ctx, field)
+			case "user":
+				return ec.fieldContext_AuthResponse_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_oAuthGoogle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_getFollowersByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_getFollowersByUsername(ctx, field)
 	if err != nil {
@@ -15830,6 +15924,42 @@ func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOAuthGoogleInput(ctx context.Context, obj interface{}) (model.OAuthGoogleInput, error) {
+	var it model.OAuthGoogleInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"credential", "invitationCode"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "credential":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credential"))
+			it.Credential, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "invitationCode":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
+			it.InvitationCode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputPageInfoInput(ctx context.Context, obj interface{}) (model.PageInfoInput, error) {
 	var it model.PageInfoInput
 	asMap := map[string]interface{}{}
@@ -17897,6 +18027,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "oAuthGoogle":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_oAuthGoogle(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "getFollowersByUsername":
 			field := field
 
@@ -19485,6 +19635,11 @@ func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋ
 		return graphql.Null
 	}
 	return ec._NotificationType(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx context.Context, v interface{}) (model.OAuthGoogleInput, error) {
+	res, err := ec.unmarshalInputOAuthGoogleInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
