@@ -196,6 +196,7 @@ type ComplexityRoot struct {
 		EditUser         func(childComplexity int, input model.EditUserInput) int
 		FollowUser       func(childComplexity int, userID string) int
 		LikePost         func(childComplexity int, postID string) int
+		OAuthGoogle      func(childComplexity int, input model.OAuthGoogleInput) int
 		Register         func(childComplexity int, input model.RegisterInput) int
 		RejectUser       func(childComplexity int, userID string) int
 		SavePost         func(childComplexity int, postID string) int
@@ -299,7 +300,6 @@ type ComplexityRoot struct {
 		GetUserByUsername       func(childComplexity int, username string) int
 		GetUserInfo             func(childComplexity int) int
 		Login                   func(childComplexity int, input model.LoginInput) int
-		OAuthGoogle             func(childComplexity int, input model.OAuthGoogleInput) int
 		Search                  func(childComplexity int, expression string) int
 		Test                    func(childComplexity int, input model.TestInput) int
 	}
@@ -426,6 +426,7 @@ type LikedPostResolver interface {
 type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error)
+	OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error)
 	FollowUser(ctx context.Context, userID string) (*model.Connection, error)
 	UnfollowUser(ctx context.Context, userID string) (*model.Connection, error)
 	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
@@ -470,7 +471,6 @@ type PostsEdgeResolver interface {
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
-	OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error)
 	GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
@@ -1113,6 +1113,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.LikePost(childComplexity, args["postId"].(string)), true
 
+	case "Mutation.oAuthGoogle":
+		if e.complexity.Mutation.OAuthGoogle == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_oAuthGoogle_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.OAuthGoogle(childComplexity, args["input"].(model.OAuthGoogleInput)), true
+
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
 			break
@@ -1749,18 +1761,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Login(childComplexity, args["input"].(model.LoginInput)), true
 
-	case "Query.oAuthGoogle":
-		if e.complexity.Query.OAuthGoogle == nil {
-			break
-		}
-
-		args, err := ec.field_Query_oAuthGoogle_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.OAuthGoogle(childComplexity, args["input"].(model.OAuthGoogleInput)), true
-
 	case "Query.search":
 		if e.complexity.Query.Search == nil {
 			break
@@ -2228,11 +2228,11 @@ type AuthResponse {
 
 extend type Query {
   login(input: LoginInput!): AuthResponse
-  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
 
 extend type Mutation {
   register(input: RegisterInput!): AuthResponse
+  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
 `, BuiltIn: false},
 	{Name: "../schema/connection.graphqls", Input: `type Connection {
@@ -2821,6 +2821,21 @@ func (ec *executionContext) field_Mutation_likePost_args(ctx context.Context, ra
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_oAuthGoogle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 model.OAuthGoogleInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_register_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -3248,21 +3263,6 @@ func (ec *executionContext) field_Query_login_args(ctx context.Context, rawArgs 
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
 		arg0, err = ec.unmarshalNLoginInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLoginInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
-func (ec *executionContext) field_Query_oAuthGoogle_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.OAuthGoogleInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -6912,6 +6912,64 @@ func (ec *executionContext) fieldContext_Mutation_register(ctx context.Context, 
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_oAuthGoogle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().OAuthGoogle(rctx, fc.Args["input"].(model.OAuthGoogleInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.AuthResponse)
+	fc.Result = res
+	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "authToken":
+				return ec.fieldContext_AuthResponse_authToken(ctx, field)
+			case "user":
+				return ec.fieldContext_AuthResponse_user(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_oAuthGoogle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_followUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_followUser(ctx, field)
 	if err != nil {
@@ -10253,64 +10311,6 @@ func (ec *executionContext) fieldContext_Query_login(ctx context.Context, field 
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_login_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Query_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_oAuthGoogle(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().OAuthGoogle(rctx, fc.Args["input"].(model.OAuthGoogleInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*model.AuthResponse)
-	fc.Result = res
-	return ec.marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_Query_oAuthGoogle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Query",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "authToken":
-				return ec.fieldContext_AuthResponse_authToken(ctx, field)
-			case "user":
-				return ec.fieldContext_AuthResponse_user(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type AuthResponse", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_oAuthGoogle_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -17208,6 +17208,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 				return ec._Mutation_register(ctx, field)
 			})
 
+		case "oAuthGoogle":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_oAuthGoogle(ctx, field)
+			})
+
 		case "followUser":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -18017,26 +18023,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_login(ctx, field)
-				return res
-			}
-
-			rrm := func(ctx context.Context) graphql.Marshaler {
-				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return rrm(innerCtx)
-			})
-		case "oAuthGoogle":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Query_oAuthGoogle(ctx, field)
 				return res
 			}
 

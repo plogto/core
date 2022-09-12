@@ -14,12 +14,12 @@ func (r *mutationResolver) Register(ctx context.Context, input model.RegisterInp
 	return r.Service.Register(ctx, input, false)
 }
 
+// OAuthGoogle is the resolver for the oAuthGoogle field.
+func (r *mutationResolver) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error) {
+	return r.Service.OAuthGoogle(ctx, input)
+}
+
 // Login is the resolver for the login field.
 func (r *queryResolver) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
 	return r.Service.Login(ctx, input)
-}
-
-// OAuthGoogle is the resolver for the oAuthGoogle field.
-func (r *queryResolver) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error) {
-	return r.Service.OAuthGoogle(ctx, input)
 }
