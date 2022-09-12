@@ -27,9 +27,9 @@ type AuthResponse {
 
 extend type Query {
   login(input: LoginInput!): AuthResponse
-  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
 
 extend type Mutation {
   register(input: RegisterInput!): AuthResponse
+  oAuthGoogle(input: OAuthGoogleInput!): AuthResponse
 }
