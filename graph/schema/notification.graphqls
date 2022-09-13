@@ -33,6 +33,10 @@ extend type Query {
   getNotifications(pageInfoInput: PageInfoInput): Notifications
 }
 
+extend type Mutation {
+  readNotifications: Boolean
+}
+
 extend type Subscription {
   getNotification: NotificationsEdge
 }

@@ -117,3 +117,18 @@ func (n *Notifications) RemovePostNotifications(notification *model.Notification
 	_, err := query.Set("deleted_at = ?deleted_at").Returning("*").Update()
 	return notification, err
 }
+
+func (n *Notifications) UpdateReadNotifications(receiverID string) (bool, error) {
+	var notifications []*model.Notification
+
+	query := n.DB.Model(&notifications).
+		Where("receiver_id = ?", receiverID)
+
+	_, err := query.Set("read = ?", true).Returning("*").Update()
+
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}

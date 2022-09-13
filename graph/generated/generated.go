@@ -188,21 +188,22 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser       func(childComplexity int, userID string) int
-		AddPost          func(childComplexity int, input model.AddPostInput) int
-		ChangePassword   func(childComplexity int, input model.ChangePasswordInput) int
-		DeletePost       func(childComplexity int, postID string) int
-		EditPost         func(childComplexity int, postID string, input model.EditPostInput) int
-		EditUser         func(childComplexity int, input model.EditUserInput) int
-		FollowUser       func(childComplexity int, userID string) int
-		LikePost         func(childComplexity int, postID string) int
-		OAuthGoogle      func(childComplexity int, input model.OAuthGoogleInput) int
-		Register         func(childComplexity int, input model.RegisterInput) int
-		RejectUser       func(childComplexity int, userID string) int
-		SavePost         func(childComplexity int, postID string) int
-		SingleUploadFile func(childComplexity int, file graphql.Upload) int
-		Test             func(childComplexity int, input model.TestInput) int
-		UnfollowUser     func(childComplexity int, userID string) int
+		AcceptUser        func(childComplexity int, userID string) int
+		AddPost           func(childComplexity int, input model.AddPostInput) int
+		ChangePassword    func(childComplexity int, input model.ChangePasswordInput) int
+		DeletePost        func(childComplexity int, postID string) int
+		EditPost          func(childComplexity int, postID string, input model.EditPostInput) int
+		EditUser          func(childComplexity int, input model.EditUserInput) int
+		FollowUser        func(childComplexity int, userID string) int
+		LikePost          func(childComplexity int, postID string) int
+		OAuthGoogle       func(childComplexity int, input model.OAuthGoogleInput) int
+		ReadNotifications func(childComplexity int) int
+		Register          func(childComplexity int, input model.RegisterInput) int
+		RejectUser        func(childComplexity int, userID string) int
+		SavePost          func(childComplexity int, postID string) int
+		SingleUploadFile  func(childComplexity int, file graphql.Upload) int
+		Test              func(childComplexity int, input model.TestInput) int
+		UnfollowUser      func(childComplexity int, userID string) int
 	}
 
 	Notification struct {
@@ -433,6 +434,7 @@ type MutationResolver interface {
 	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
 	SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error)
 	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
+	ReadNotifications(ctx context.Context) (*bool, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
 	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
@@ -1124,6 +1126,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.OAuthGoogle(childComplexity, args["input"].(model.OAuthGoogleInput)), true
+
+	case "Mutation.readNotifications":
+		if e.complexity.Mutation.ReadNotifications == nil {
+			break
+		}
+
+		return e.complexity.Mutation.ReadNotifications(childComplexity), true
 
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
@@ -2475,6 +2484,10 @@ type Notifications {
 
 extend type Query {
   getNotifications(pageInfoInput: PageInfoInput): Notifications
+}
+
+extend type Mutation {
+  readNotifications: Boolean 
 }
 
 extend type Subscription {
@@ -7356,6 +7369,47 @@ func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, 
 	if fc.Args, err = ec.field_Mutation_likePost_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_readNotifications(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_readNotifications(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ReadNotifications(rctx)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*bool)
+	fc.Result = res
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_readNotifications(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
 	}
 	return fc, nil
 }
@@ -17248,6 +17302,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_likePost(ctx, field)
+			})
+
+		case "readNotifications":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_readNotifications(ctx, field)
 			})
 
 		case "addPost":

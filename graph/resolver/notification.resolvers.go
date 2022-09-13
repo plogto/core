@@ -11,6 +11,11 @@ import (
 	"github.com/plogto/core/util"
 )
 
+// ReadNotifications is the resolver for the readNotifications field.
+func (r *mutationResolver) ReadNotifications(ctx context.Context) (*bool, error) {
+	return r.Service.ReadNotifications(ctx)
+}
+
 // NotificationType is the resolver for the notificationType field.
 func (r *notificationResolver) NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error) {
 	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID)

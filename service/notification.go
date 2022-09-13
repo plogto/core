@@ -140,3 +140,15 @@ func (s *Service) RemoveNotifications(args RemovePostNotificationsArgs) error {
 
 	return nil
 }
+
+func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
+	user, err := middleware.GetCurrentUserFromCTX(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	status, _ := s.Notifications.UpdateReadNotifications(user.ID)
+
+	return &status, nil
+}
