@@ -1,0 +1,59 @@
+enum TicketStatus {
+  OPEN
+  CLOSED
+  APPROVED
+  SOLVED
+}
+
+type Ticket {
+  id: ID!
+  user: User!
+  subject: String!
+  status: TicketStatus!
+  url: String
+  createdAt: Time
+  updatedAt: Time
+}
+
+type TicketMessage {
+  id: ID!
+  sender: User!
+  ticket: Ticket!
+  message: String!
+  read: Boolean
+  createdAt: Time
+  updatedAt: Time
+}
+
+type TicketsEdge {
+  cursor: String!
+  node: Ticket
+}
+
+type Tickets {
+  totalCount: Int
+  edges: [TicketsEdge]
+  pageInfo: PageInfo!
+}
+
+type TicketMessagesEdge {
+  cursor: String!
+  node: TicketMessage
+}
+
+type TicketMessages {
+  totalCount: Int
+  edges: [TicketMessagesEdge]
+  pageInfo: PageInfo!
+}
+
+extend type Query {
+  getTickets(pageInfoInput: PageInfoInput): Tickets
+  getTicketMessagesByTicketUrl(ticketUrl: String!, pageInfoInput: PageInfoInput): TicketMessages
+}
+
+extend type Mutation {
+  createTicket(subject: String!, message: String!): Ticket
+  addTicketMessage(ticketId: ID!, message: String!): TicketMessage
+  readTicketMessages(ticketId: ID!): TicketMessages
+}

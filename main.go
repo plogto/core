@@ -67,6 +67,8 @@ func main() {
 		CreditTransactionInfos:                database.CreditTransactionInfos{DB: DB},
 		CreditTransactionTemplates:            database.CreditTransactionTemplates{DB: DB},
 		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{DB: DB},
+		Tickets:                               database.Tickets{DB: DB},
+		TicketMessages:                        database.TicketMessages{DB: DB},
 		Tags:                                  database.Tags{DB: DB},
 		PostAttachments:                       database.PostAttachments{DB: DB},
 		PostTags:                              database.PostTags{DB: DB},

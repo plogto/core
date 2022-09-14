@@ -162,6 +162,28 @@ type TestInput struct {
 	Content *string `json:"content"`
 }
 
+type TicketMessages struct {
+	TotalCount *int                  `json:"totalCount"`
+	Edges      []*TicketMessagesEdge `json:"edges"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
+}
+
+type TicketMessagesEdge struct {
+	Cursor string         `json:"cursor"`
+	Node   *TicketMessage `json:"node"`
+}
+
+type Tickets struct {
+	TotalCount *int           `json:"totalCount"`
+	Edges      []*TicketsEdge `json:"edges"`
+	PageInfo   *PageInfo      `json:"pageInfo"`
+}
+
+type TicketsEdge struct {
+	Cursor string  `json:"cursor"`
+	Node   *Ticket `json:"node"`
+}
+
 type Users struct {
 	Edges []*UsersEdge `json:"edges"`
 }
@@ -484,6 +506,51 @@ func (e *PrimaryColor) UnmarshalGQL(v interface{}) error {
 }
 
 func (e PrimaryColor) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type TicketStatus string
+
+const (
+	TicketStatusOpen     TicketStatus = "OPEN"
+	TicketStatusClosed   TicketStatus = "CLOSED"
+	TicketStatusApproved TicketStatus = "APPROVED"
+	TicketStatusSolved   TicketStatus = "SOLVED"
+)
+
+var AllTicketStatus = []TicketStatus{
+	TicketStatusOpen,
+	TicketStatusClosed,
+	TicketStatusApproved,
+	TicketStatusSolved,
+}
+
+func (e TicketStatus) IsValid() bool {
+	switch e {
+	case TicketStatusOpen, TicketStatusClosed, TicketStatusApproved, TicketStatusSolved:
+		return true
+	}
+	return false
+}
+
+func (e TicketStatus) String() string {
+	return string(e)
+}
+
+func (e *TicketStatus) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TicketStatus(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TicketStatus", str)
+	}
+	return nil
+}
+
+func (e TicketStatus) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
