@@ -1,0 +1,92 @@
+package graph
+
+// This file will be automatically regenerated based on the schema, any resolver implementations
+// will be copied through when generating and any unknown code will be moved to the end.
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/plogto/core/graph/generated"
+	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
+)
+
+// CreateTicket is the resolver for the createTicket field.
+func (r *mutationResolver) CreateTicket(ctx context.Context, subject string, message string) (*model.Ticket, error) {
+	return r.Service.CreateTicket(ctx, subject, message)
+}
+
+// AddTicketMessage is the resolver for the addTicketMessage field.
+func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string, message string) (*model.TicketMessage, error) {
+	return r.Service.AddTicketMessage(ctx, ticketID, message)
+}
+
+// ReadTicketMessages is the resolver for the readTicketMessages field.
+func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID string) (*model.TicketMessages, error) {
+	panic(fmt.Errorf("not implemented: ReadTicketMessages - readTicketMessages"))
+}
+
+// GetTickets is the resolver for the getTickets field.
+func (r *queryResolver) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error) {
+	return r.Service.GetTickets(ctx, pageInfoInput)
+}
+
+// GetTicketMessagesByTicketURL is the resolver for the getTicketMessagesByTicketUrl field.
+func (r *queryResolver) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfoInput *model.PageInfoInput) (*model.TicketMessages, error) {
+	return r.Service.GetTicketMessagesByTicketURL(ctx, ticketURL, pageInfoInput)
+}
+
+// User is the resolver for the user field.
+func (r *ticketResolver) User(ctx context.Context, obj *model.Ticket) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID)
+}
+
+// Sender is the resolver for the sender field.
+func (r *ticketMessageResolver) Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.SenderID)
+}
+
+// Ticket is the resolver for the ticket field.
+func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.TicketID)
+}
+
+// Cursor is the resolver for the cursor field.
+func (r *ticketMessagesEdgeResolver) Cursor(ctx context.Context, obj *model.TicketMessagesEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *ticketMessagesEdgeResolver) Node(ctx context.Context, obj *model.TicketMessagesEdge) (*model.TicketMessage, error) {
+	return r.Service.GetTicketMessageByID(ctx, obj.Node.ID)
+}
+
+// Cursor is the resolver for the cursor field.
+func (r *ticketsEdgeResolver) Cursor(ctx context.Context, obj *model.TicketsEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(*obj.Node.UpdatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *ticketsEdgeResolver) Node(ctx context.Context, obj *model.TicketsEdge) (*model.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.Node.ID)
+}
+
+// Ticket returns generated.TicketResolver implementation.
+func (r *Resolver) Ticket() generated.TicketResolver { return &ticketResolver{r} }
+
+// TicketMessage returns generated.TicketMessageResolver implementation.
+func (r *Resolver) TicketMessage() generated.TicketMessageResolver { return &ticketMessageResolver{r} }
+
+// TicketMessagesEdge returns generated.TicketMessagesEdgeResolver implementation.
+func (r *Resolver) TicketMessagesEdge() generated.TicketMessagesEdgeResolver {
+	return &ticketMessagesEdgeResolver{r}
+}
+
+// TicketsEdge returns generated.TicketsEdgeResolver implementation.
+func (r *Resolver) TicketsEdge() generated.TicketsEdgeResolver { return &ticketsEdgeResolver{r} }
+
+type ticketResolver struct{ *Resolver }
+type ticketMessageResolver struct{ *Resolver }
+type ticketMessagesEdgeResolver struct{ *Resolver }
+type ticketsEdgeResolver struct{ *Resolver }
