@@ -83,12 +83,12 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 			ReplyID:            args.ReplyID,
 		}
 
+		s.Notifications.CreateNotification(notification)
+
 		notificationEdge := &model.NotificationsEdge{
 			Cursor: util.ConvertCreateAtToCursor(*notification.CreatedAt),
 			Node:   notification,
 		}
-
-		s.Notifications.CreateNotification(notification)
 
 		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID)
 
