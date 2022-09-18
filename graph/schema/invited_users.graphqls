@@ -17,7 +17,6 @@ type InvitedUsers {
   pageInfo: PageInfo!
 }
 
-
 extend type Query {
   getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
 }

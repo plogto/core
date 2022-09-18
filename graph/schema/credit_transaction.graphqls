@@ -72,4 +72,3 @@ type CreditTransactions {
 extend type Query {
   getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
 }
-

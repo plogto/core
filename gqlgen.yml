@@ -156,6 +156,12 @@ models:
     fields:
       user:
         resolver: true
+      lastMessage:
+        resolver: true
+  TicketMessages:
+    fields:
+      ticket:
+        resolver: true
   TicketsEdge:
     fields:
       cursor:
@@ -167,7 +173,7 @@ models:
     fields:
       sender:
         resolver: true
-      ticket:
+      attachment:
         resolver: true
   TicketMessagesEdge:
     fields:

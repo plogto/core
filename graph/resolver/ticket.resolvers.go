@@ -13,13 +13,13 @@ import (
 )
 
 // CreateTicket is the resolver for the createTicket field.
-func (r *mutationResolver) CreateTicket(ctx context.Context, subject string, message string) (*model.Ticket, error) {
-	return r.Service.CreateTicket(ctx, subject, message)
+func (r *mutationResolver) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error) {
+	return r.Service.CreateTicket(ctx, input)
 }
 
 // AddTicketMessage is the resolver for the addTicketMessage field.
-func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string, message string) (*model.TicketMessage, error) {
-	return r.Service.AddTicketMessage(ctx, ticketID, message)
+func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error) {
+	return r.Service.AddTicketMessage(ctx, ticketID, input)
 }
 
 // ReadTicketMessages is the resolver for the readTicketMessages field.
@@ -28,13 +28,13 @@ func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID stri
 }
 
 // GetTickets is the resolver for the getTickets field.
-func (r *queryResolver) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error) {
-	return r.Service.GetTickets(ctx, pageInfoInput)
+func (r *queryResolver) GetTickets(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Tickets, error) {
+	return r.Service.GetTickets(ctx, pageInfo)
 }
 
 // GetTicketMessagesByTicketURL is the resolver for the getTicketMessagesByTicketUrl field.
-func (r *queryResolver) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfoInput *model.PageInfoInput) (*model.TicketMessages, error) {
-	return r.Service.GetTicketMessagesByTicketURL(ctx, ticketURL, pageInfoInput)
+func (r *queryResolver) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfo *model.PageInfoInput) (*model.TicketMessages, error) {
+	return r.Service.GetTicketMessagesByTicketURL(ctx, ticketURL, pageInfo)
 }
 
 // User is the resolver for the user field.
@@ -42,14 +42,24 @@ func (r *ticketResolver) User(ctx context.Context, obj *model.Ticket) (*model.Us
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
+// LastMessage is the resolver for the lastMessage field.
+func (r *ticketResolver) LastMessage(ctx context.Context, obj *model.Ticket) (*model.TicketMessage, error) {
+	return r.Service.GetLastTicketMessageByTicketID(ctx, obj.ID)
+}
+
 // Sender is the resolver for the sender field.
 func (r *ticketMessageResolver) Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error) {
 	return r.Service.GetUserByID(ctx, obj.SenderID)
 }
 
+// Attachment is the resolver for the attachment field.
+func (r *ticketMessageResolver) Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error) {
+	return r.Service.GetTicketMessageAttachmentsByTicketMessageID(ctx, obj.ID)
+}
+
 // Ticket is the resolver for the ticket field.
-func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error) {
-	return r.Service.GetTicketByID(ctx, obj.TicketID)
+func (r *ticketMessagesResolver) Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.Edges[0].Node.TicketID)
 }
 
 // Cursor is the resolver for the cursor field.
@@ -78,6 +88,11 @@ func (r *Resolver) Ticket() generated.TicketResolver { return &ticketResolver{r}
 // TicketMessage returns generated.TicketMessageResolver implementation.
 func (r *Resolver) TicketMessage() generated.TicketMessageResolver { return &ticketMessageResolver{r} }
 
+// TicketMessages returns generated.TicketMessagesResolver implementation.
+func (r *Resolver) TicketMessages() generated.TicketMessagesResolver {
+	return &ticketMessagesResolver{r}
+}
+
 // TicketMessagesEdge returns generated.TicketMessagesEdgeResolver implementation.
 func (r *Resolver) TicketMessagesEdge() generated.TicketMessagesEdgeResolver {
 	return &ticketMessagesEdgeResolver{r}
@@ -88,5 +103,6 @@ func (r *Resolver) TicketsEdge() generated.TicketsEdgeResolver { return &tickets
 
 type ticketResolver struct{ *Resolver }
 type ticketMessageResolver struct{ *Resolver }
+type ticketMessagesResolver struct{ *Resolver }
 type ticketMessagesEdgeResolver struct{ *Resolver }
 type ticketsEdgeResolver struct{ *Resolver }

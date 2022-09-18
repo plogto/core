@@ -7,7 +7,6 @@ type Connection {
   updatedAt: Time
 }
 
-
 type ConnectionsEdge {
   cursor: String!
   node: Connection
@@ -20,8 +19,14 @@ type Connections {
 }
 
 extend type Query {
-  getFollowersByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
-  getFollowingByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
+  getFollowersByUsername(
+    username: String!
+    pageInfoInput: PageInfoInput
+  ): Connections
+  getFollowingByUsername(
+    username: String!
+    pageInfoInput: PageInfoInput
+  ): Connections
   getFollowRequests(pageInfoInput: PageInfoInput): Connections
 }
 

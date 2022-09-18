@@ -59,6 +59,7 @@ type ResolverRoot interface {
 	TagsEdge() TagsEdgeResolver
 	Ticket() TicketResolver
 	TicketMessage() TicketMessageResolver
+	TicketMessages() TicketMessagesResolver
 	TicketMessagesEdge() TicketMessagesEdgeResolver
 	TicketsEdge() TicketsEdgeResolver
 	User() UserResolver
@@ -194,9 +195,9 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptUser         func(childComplexity int, userID string) int
 		AddPost            func(childComplexity int, input model.AddPostInput) int
-		AddTicketMessage   func(childComplexity int, ticketID string, message string) int
+		AddTicketMessage   func(childComplexity int, ticketID string, input model.AddTicketMessageInput) int
 		ChangePassword     func(childComplexity int, input model.ChangePasswordInput) int
-		CreateTicket       func(childComplexity int, subject string, message string) int
+		CreateTicket       func(childComplexity int, input model.CreateTicketInput) int
 		DeletePost         func(childComplexity int, postID string) int
 		EditPost           func(childComplexity int, postID string, input model.EditPostInput) int
 		EditUser           func(childComplexity int, input model.EditUserInput) int
@@ -302,8 +303,8 @@ type ComplexityRoot struct {
 		GetPostsByUsername           func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetSavedPosts                func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetTagByTagName              func(childComplexity int, tagName string) int
-		GetTicketMessagesByTicketURL func(childComplexity int, ticketURL string, pageInfoInput *model.PageInfoInput) int
-		GetTickets                   func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetTicketMessagesByTicketURL func(childComplexity int, ticketURL string, pageInfo *model.PageInfoInput) int
+		GetTickets                   func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetTimelinePosts             func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetTrends                    func(childComplexity int, first *int) int
 		GetUserByInvitationCode      func(childComplexity int, invitationCode string) int
@@ -364,28 +365,30 @@ type ComplexityRoot struct {
 	}
 
 	Ticket struct {
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Status    func(childComplexity int) int
-		Subject   func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		Url       func(childComplexity int) int
-		User      func(childComplexity int) int
+		CreatedAt   func(childComplexity int) int
+		ID          func(childComplexity int) int
+		LastMessage func(childComplexity int) int
+		Status      func(childComplexity int) int
+		Subject     func(childComplexity int) int
+		UpdatedAt   func(childComplexity int) int
+		Url         func(childComplexity int) int
+		User        func(childComplexity int) int
 	}
 
 	TicketMessage struct {
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		Message   func(childComplexity int) int
-		Read      func(childComplexity int) int
-		Sender    func(childComplexity int) int
-		Ticket    func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
+		Attachment func(childComplexity int) int
+		CreatedAt  func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Message    func(childComplexity int) int
+		Read       func(childComplexity int) int
+		Sender     func(childComplexity int) int
+		UpdatedAt  func(childComplexity int) int
 	}
 
 	TicketMessages struct {
 		Edges      func(childComplexity int) int
 		PageInfo   func(childComplexity int) int
+		Ticket     func(childComplexity int) int
 		TotalCount func(childComplexity int) int
 	}
 
@@ -490,8 +493,8 @@ type MutationResolver interface {
 	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
 	DeletePost(ctx context.Context, postID string) (*model.Post, error)
 	SavePost(ctx context.Context, postID string) (*model.SavedPost, error)
-	CreateTicket(ctx context.Context, subject string, message string) (*model.Ticket, error)
-	AddTicketMessage(ctx context.Context, ticketID string, message string) (*model.TicketMessage, error)
+	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
+	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
 	ReadTicketMessages(ctx context.Context, ticketID string) (*model.TicketMessages, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
@@ -542,8 +545,8 @@ type QueryResolver interface {
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
 	GetTrends(ctx context.Context, first *int) (*model.Tags, error)
-	GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error)
-	GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfoInput *model.PageInfoInput) (*model.TicketMessages, error)
+	GetTickets(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Tickets, error)
+	GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfo *model.PageInfoInput) (*model.TicketMessages, error)
 	GetUserInfo(ctx context.Context) (*model.User, error)
 	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
 	GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error)
@@ -570,10 +573,16 @@ type TagsEdgeResolver interface {
 }
 type TicketResolver interface {
 	User(ctx context.Context, obj *model.Ticket) (*model.User, error)
+
+	LastMessage(ctx context.Context, obj *model.Ticket) (*model.TicketMessage, error)
 }
 type TicketMessageResolver interface {
 	Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error)
-	Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error)
+
+	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error)
+}
+type TicketMessagesResolver interface {
+	Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error)
 }
 type TicketMessagesEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketMessagesEdge) (string, error)
@@ -1124,7 +1133,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(string), args["message"].(string)), true
+		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(string), args["input"].(model.AddTicketMessageInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -1148,7 +1157,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.CreateTicket(childComplexity, args["subject"].(string), args["message"].(string)), true
+		return e.complexity.Mutation.CreateTicket(childComplexity, args["input"].(model.CreateTicketInput)), true
 
 	case "Mutation.deletePost":
 		if e.complexity.Mutation.DeletePost == nil {
@@ -1820,7 +1829,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTicketMessagesByTicketURL(childComplexity, args["ticketUrl"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetTicketMessagesByTicketURL(childComplexity, args["ticketUrl"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getTickets":
 		if e.complexity.Query.GetTickets == nil {
@@ -1832,7 +1841,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTickets(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetTickets(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getTimelinePosts":
 		if e.complexity.Query.GetTimelinePosts == nil {
@@ -2098,6 +2107,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Ticket.ID(childComplexity), true
 
+	case "Ticket.lastMessage":
+		if e.complexity.Ticket.LastMessage == nil {
+			break
+		}
+
+		return e.complexity.Ticket.LastMessage(childComplexity), true
+
 	case "Ticket.status":
 		if e.complexity.Ticket.Status == nil {
 			break
@@ -2132,6 +2148,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Ticket.User(childComplexity), true
+
+	case "TicketMessage.attachment":
+		if e.complexity.TicketMessage.Attachment == nil {
+			break
+		}
+
+		return e.complexity.TicketMessage.Attachment(childComplexity), true
 
 	case "TicketMessage.createdAt":
 		if e.complexity.TicketMessage.CreatedAt == nil {
@@ -2168,13 +2191,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TicketMessage.Sender(childComplexity), true
 
-	case "TicketMessage.ticket":
-		if e.complexity.TicketMessage.Ticket == nil {
-			break
-		}
-
-		return e.complexity.TicketMessage.Ticket(childComplexity), true
-
 	case "TicketMessage.updatedAt":
 		if e.complexity.TicketMessage.UpdatedAt == nil {
 			break
@@ -2195,6 +2211,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.TicketMessages.PageInfo(childComplexity), true
+
+	case "TicketMessages.ticket":
+		if e.complexity.TicketMessages.Ticket == nil {
+			break
+		}
+
+		return e.complexity.TicketMessages.Ticket(childComplexity), true
 
 	case "TicketMessages.totalCount":
 		if e.complexity.TicketMessages.TotalCount == nil {
@@ -2421,7 +2444,9 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAddTicketMessageInput,
 		ec.unmarshalInputChangePasswordInput,
+		ec.unmarshalInputCreateTicketInput,
 		ec.unmarshalInputEditUserInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputOAuthGoogleInput,
@@ -2552,7 +2577,6 @@ extend type Mutation {
   updatedAt: Time
 }
 
-
 type ConnectionsEdge {
   cursor: String!
   node: Connection
@@ -2565,8 +2589,14 @@ type Connections {
 }
 
 extend type Query {
-  getFollowersByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
-  getFollowingByUsername(username: String!, pageInfoInput: PageInfoInput): Connections
+  getFollowersByUsername(
+    username: String!
+    pageInfoInput: PageInfoInput
+  ): Connections
+  getFollowingByUsername(
+    username: String!
+    pageInfoInput: PageInfoInput
+  ): Connections
   getFollowRequests(pageInfoInput: PageInfoInput): Connections
 }
 
@@ -2651,7 +2681,6 @@ type CreditTransactions {
 extend type Query {
   getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
 }
-
 `, BuiltIn: false},
 	{Name: "../schema/file.graphqls", Input: `scalar Upload
 
@@ -2685,7 +2714,6 @@ type InvitedUsers {
   pageInfo: PageInfo!
 }
 
-
 extend type Query {
   getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
 }
@@ -2709,9 +2737,11 @@ type LikedPosts {
   pageInfo: PageInfo!
 }
 
-
 extend type Query {
-  getLikedPostsByPostId(postId: String!, pageInfoInput: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(
+    postId: String!
+    pageInfoInput: PageInfoInput
+  ): LikedPosts
 }
 
 extend type Mutation {
@@ -2791,7 +2821,8 @@ extend type Mutation {
 
 extend type Subscription {
   getNotification: NotificationsEdge
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/online_user.graphqls", Input: `type OnlineUser {
   id: ID!
   userId: ID!
@@ -2800,7 +2831,8 @@ extend type Subscription {
   userAgent: String!
   createdAt: Time
   updatedAt: Time
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/post.graphqls", Input: `enum PostStatus {
   PUBLIC
   PRIVATE
@@ -2893,7 +2925,8 @@ extend type Mutation {
 
 extend type Query {
   search(expression: String!): Search
-}`, BuiltIn: false},
+}
+`, BuiltIn: false},
 	{Name: "../schema/tag.graphqls", Input: `type Tag {
   id: ID!
   name: String!
@@ -2928,6 +2961,7 @@ type Ticket {
   subject: String!
   status: TicketStatus!
   url: String
+  lastMessage: TicketMessage!
   createdAt: Time
   updatedAt: Time
 }
@@ -2935,9 +2969,9 @@ type Ticket {
 type TicketMessage {
   id: ID!
   sender: User!
-  ticket: Ticket!
   message: String!
   read: Boolean
+  attachment: [File!]
   createdAt: Time
   updatedAt: Time
 }
@@ -2960,18 +2994,33 @@ type TicketMessagesEdge {
 
 type TicketMessages {
   totalCount: Int
+  ticket: Ticket
   edges: [TicketMessagesEdge]
   pageInfo: PageInfo!
 }
 
+input CreateTicketInput {
+  subject: String!
+  message: String!
+  attachment: [String]
+}
+
+input AddTicketMessageInput {
+  message: String!
+  attachment: [String]
+}
+
 extend type Query {
-  getTickets(pageInfoInput: PageInfoInput): Tickets
-  getTicketMessagesByTicketUrl(ticketUrl: String!, pageInfoInput: PageInfoInput): TicketMessages
+  getTickets(pageInfo: PageInfoInput): Tickets
+  getTicketMessagesByTicketUrl(
+    ticketUrl: String!
+    pageInfo: PageInfoInput
+  ): TicketMessages
 }
 
 extend type Mutation {
-  createTicket(subject: String!, message: String!): Ticket
-  addTicketMessage(ticketId: ID!, message: String!): TicketMessage
+  createTicket(input: CreateTicketInput!): Ticket
+  addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
   readTicketMessages(ticketId: ID!): TicketMessages
 }
 `, BuiltIn: false},
@@ -3106,15 +3155,15 @@ func (ec *executionContext) field_Mutation_addTicketMessage_args(ctx context.Con
 		}
 	}
 	args["ticketId"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["message"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg1 model.AddTicketMessageInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg1, err = ec.unmarshalNAddTicketMessageInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddTicketMessageInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["message"] = arg1
+	args["input"] = arg1
 	return args, nil
 }
 
@@ -3136,24 +3185,15 @@ func (ec *executionContext) field_Mutation_changePassword_args(ctx context.Conte
 func (ec *executionContext) field_Mutation_createTicket_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
-	if tmp, ok := rawArgs["subject"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+	var arg0 model.CreateTicketInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNCreateTicketInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreateTicketInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["subject"] = arg0
-	var arg1 string
-	if tmp, ok := rawArgs["message"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-		arg1, err = ec.unmarshalNString2string(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["message"] = arg1
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -3644,14 +3684,14 @@ func (ec *executionContext) field_Query_getTicketMessagesByTicketUrl_args(ctx co
 	}
 	args["ticketUrl"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3659,14 +3699,14 @@ func (ec *executionContext) field_Query_getTickets_args(ctx context.Context, raw
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -8199,7 +8239,7 @@ func (ec *executionContext) _Mutation_createTicket(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().CreateTicket(rctx, fc.Args["subject"].(string), fc.Args["message"].(string))
+		return ec.resolvers.Mutation().CreateTicket(rctx, fc.Args["input"].(model.CreateTicketInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8231,6 +8271,8 @@ func (ec *executionContext) fieldContext_Mutation_createTicket(ctx context.Conte
 				return ec.fieldContext_Ticket_status(ctx, field)
 			case "url":
 				return ec.fieldContext_Ticket_url(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Ticket_lastMessage(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -8267,7 +8309,7 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(string), fc.Args["message"].(string))
+		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(string), fc.Args["input"].(model.AddTicketMessageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8293,12 +8335,12 @@ func (ec *executionContext) fieldContext_Mutation_addTicketMessage(ctx context.C
 				return ec.fieldContext_TicketMessage_id(ctx, field)
 			case "sender":
 				return ec.fieldContext_TicketMessage_sender(ctx, field)
-			case "ticket":
-				return ec.fieldContext_TicketMessage_ticket(ctx, field)
 			case "message":
 				return ec.fieldContext_TicketMessage_message(ctx, field)
 			case "read":
 				return ec.fieldContext_TicketMessage_read(ctx, field)
+			case "attachment":
+				return ec.fieldContext_TicketMessage_attachment(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TicketMessage_createdAt(ctx, field)
 			case "updatedAt":
@@ -8359,6 +8401,8 @@ func (ec *executionContext) fieldContext_Mutation_readTicketMessages(ctx context
 			switch field.Name {
 			case "totalCount":
 				return ec.fieldContext_TicketMessages_totalCount(ctx, field)
+			case "ticket":
+				return ec.fieldContext_TicketMessages_ticket(ctx, field)
 			case "edges":
 				return ec.fieldContext_TicketMessages_edges(ctx, field)
 			case "pageInfo":
@@ -11964,7 +12008,7 @@ func (ec *executionContext) _Query_getTickets(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTickets(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetTickets(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12024,7 +12068,7 @@ func (ec *executionContext) _Query_getTicketMessagesByTicketUrl(ctx context.Cont
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTicketMessagesByTicketURL(rctx, fc.Args["ticketUrl"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetTicketMessagesByTicketURL(rctx, fc.Args["ticketUrl"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12048,6 +12092,8 @@ func (ec *executionContext) fieldContext_Query_getTicketMessagesByTicketUrl(ctx 
 			switch field.Name {
 			case "totalCount":
 				return ec.fieldContext_TicketMessages_totalCount(ctx, field)
+			case "ticket":
+				return ec.fieldContext_TicketMessages_ticket(ctx, field)
 			case "edges":
 				return ec.fieldContext_TicketMessages_edges(ctx, field)
 			case "pageInfo":
@@ -14023,6 +14069,66 @@ func (ec *executionContext) fieldContext_Ticket_url(ctx context.Context, field g
 	return fc, nil
 }
 
+func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Ticket_lastMessage(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Ticket().LastMessage(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.TicketMessage)
+	fc.Result = res
+	return ec.marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Ticket",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_TicketMessage_id(ctx, field)
+			case "sender":
+				return ec.fieldContext_TicketMessage_sender(ctx, field)
+			case "message":
+				return ec.fieldContext_TicketMessage_message(ctx, field)
+			case "read":
+				return ec.fieldContext_TicketMessage_read(ctx, field)
+			case "attachment":
+				return ec.fieldContext_TicketMessage_attachment(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_TicketMessage_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_TicketMessage_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type TicketMessage", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_createdAt(ctx, field)
 	if err != nil {
@@ -14237,66 +14343,6 @@ func (ec *executionContext) fieldContext_TicketMessage_sender(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_TicketMessage_ticket(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.TicketMessage().Ticket(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(*model.Ticket)
-	fc.Result = res
-	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "TicketMessage",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_Ticket_id(ctx, field)
-			case "user":
-				return ec.fieldContext_Ticket_user(ctx, field)
-			case "subject":
-				return ec.fieldContext_Ticket_subject(ctx, field)
-			case "status":
-				return ec.fieldContext_Ticket_status(ctx, field)
-			case "url":
-				return ec.fieldContext_Ticket_url(ctx, field)
-			case "createdAt":
-				return ec.fieldContext_Ticket_createdAt(ctx, field)
-			case "updatedAt":
-				return ec.fieldContext_Ticket_updatedAt(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Ticket", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _TicketMessage_message(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_message(ctx, field)
 	if err != nil {
@@ -14377,6 +14423,57 @@ func (ec *executionContext) fieldContext_TicketMessage_read(ctx context.Context,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TicketMessage_attachment(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TicketMessage().Attachment(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.File)
+	fc.Result = res
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TicketMessage_attachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TicketMessage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_File_id(ctx, field)
+			case "name":
+				return ec.fieldContext_File_name(ctx, field)
+			case "width":
+				return ec.fieldContext_File_width(ctx, field)
+			case "height":
+				return ec.fieldContext_File_height(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type File", field.Name)
 		},
 	}
 	return fc, nil
@@ -14500,6 +14597,65 @@ func (ec *executionContext) fieldContext_TicketMessages_totalCount(ctx context.C
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TicketMessages_ticket(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessages) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TicketMessages_ticket(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TicketMessages().Ticket(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Ticket)
+	fc.Result = res
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TicketMessages_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TicketMessages",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Ticket_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Ticket_user(ctx, field)
+			case "subject":
+				return ec.fieldContext_Ticket_subject(ctx, field)
+			case "status":
+				return ec.fieldContext_Ticket_status(ctx, field)
+			case "url":
+				return ec.fieldContext_Ticket_url(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Ticket_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Ticket_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Ticket", field.Name)
 		},
 	}
 	return fc, nil
@@ -14686,12 +14842,12 @@ func (ec *executionContext) fieldContext_TicketMessagesEdge_node(ctx context.Con
 				return ec.fieldContext_TicketMessage_id(ctx, field)
 			case "sender":
 				return ec.fieldContext_TicketMessage_sender(ctx, field)
-			case "ticket":
-				return ec.fieldContext_TicketMessage_ticket(ctx, field)
 			case "message":
 				return ec.fieldContext_TicketMessage_message(ctx, field)
 			case "read":
 				return ec.fieldContext_TicketMessage_read(ctx, field)
+			case "attachment":
+				return ec.fieldContext_TicketMessage_attachment(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_TicketMessage_createdAt(ctx, field)
 			case "updatedAt":
@@ -14931,6 +15087,8 @@ func (ec *executionContext) fieldContext_TicketsEdge_node(ctx context.Context, f
 				return ec.fieldContext_Ticket_status(ctx, field)
 			case "url":
 				return ec.fieldContext_Ticket_url(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Ticket_lastMessage(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -17771,6 +17929,42 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddTicketMessageInput(ctx context.Context, obj interface{}) (model.AddTicketMessageInput, error) {
+	var it model.AddTicketMessageInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"message", "attachment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "message":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attachment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
+			it.Attachment, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Context, obj interface{}) (model.ChangePasswordInput, error) {
 	var it model.ChangePasswordInput
 	asMap := map[string]interface{}{}
@@ -17798,6 +17992,50 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newPassword"))
 			it.NewPassword, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputCreateTicketInput(ctx context.Context, obj interface{}) (model.CreateTicketInput, error) {
+	var it model.CreateTicketInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"subject", "message", "attachment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "subject":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
+			it.Subject, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "message":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
+			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attachment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
+			it.Attachment, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -20955,6 +21193,26 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 
 			out.Values[i] = ec._Ticket_url(ctx, field, obj)
 
+		case "lastMessage":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Ticket_lastMessage(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._Ticket_createdAt(ctx, field, obj)
@@ -21011,26 +21269,6 @@ func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.Selectio
 				return innerFunc(ctx)
 
 			})
-		case "ticket":
-			field := field
-
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._TicketMessage_ticket(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
-			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "message":
 
 			out.Values[i] = ec._TicketMessage_message(ctx, field, obj)
@@ -21042,6 +21280,23 @@ func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._TicketMessage_read(ctx, field, obj)
 
+		case "attachment":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TicketMessage_attachment(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._TicketMessage_createdAt(ctx, field, obj)
@@ -21075,6 +21330,23 @@ func (ec *executionContext) _TicketMessages(ctx context.Context, sel ast.Selecti
 
 			out.Values[i] = ec._TicketMessages_totalCount(ctx, field, obj)
 
+		case "ticket":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TicketMessages_ticket(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "edges":
 
 			out.Values[i] = ec._TicketMessages_edges(ctx, field, obj)
@@ -21084,7 +21356,7 @@ func (ec *executionContext) _TicketMessages(ctx context.Context, sel ast.Selecti
 			out.Values[i] = ec._TicketMessages_pageInfo(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -21884,6 +22156,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAddTicketMessageInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddTicketMessageInput(ctx context.Context, v interface{}) (model.AddTicketMessageInput, error) {
+	res, err := ec.unmarshalInputAddTicketMessageInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) marshalNAuthToken2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAuthToken(ctx context.Context, sel ast.SelectionSet, v *model.AuthToken) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -21921,6 +22198,11 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 
 func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐChangePasswordInput(ctx context.Context, v interface{}) (model.ChangePasswordInput, error) {
 	res, err := ec.unmarshalInputChangePasswordInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreateTicketInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreateTicketInput(ctx context.Context, v interface{}) (model.CreateTicketInput, error) {
+	res, err := ec.unmarshalInputCreateTicketInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
@@ -22121,18 +22403,18 @@ func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋg
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v model.Ticket) graphql.Marshaler {
-	return ec._Ticket(ctx, sel, &v)
+func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v model.TicketMessage) graphql.Marshaler {
+	return ec._TicketMessage(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._Ticket(ctx, sel, v)
+	return ec._TicketMessage(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNTicketStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketStatus(ctx context.Context, v interface{}) (model.TicketStatus, error) {
@@ -23190,6 +23472,38 @@ func (ec *executionContext) marshalOString2ᚕstringᚄ(ctx context.Context, sel
 		if e == graphql.Null {
 			return graphql.Null
 		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) unmarshalOString2ᚕᚖstring(ctx context.Context, v interface{}) ([]*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*string, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOString2ᚖstring(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalOString2ᚕᚖstring(ctx context.Context, sel ast.SelectionSet, v []*string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	for i := range v {
+		ret[i] = ec.marshalOString2ᚖstring(ctx, sel, v[i])
 	}
 
 	return ret
