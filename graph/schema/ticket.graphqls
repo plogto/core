@@ -11,6 +11,7 @@ type Ticket {
   subject: String!
   status: TicketStatus!
   url: String
+  lastMessage: TicketMessage!
   createdAt: Time
   updatedAt: Time
 }
@@ -18,9 +19,9 @@ type Ticket {
 type TicketMessage {
   id: ID!
   sender: User!
-  ticket: Ticket!
   message: String!
   read: Boolean
+  attachment: [File!]
   createdAt: Time
   updatedAt: Time
 }
@@ -43,17 +44,32 @@ type TicketMessagesEdge {
 
 type TicketMessages {
   totalCount: Int
+  ticket: Ticket
   edges: [TicketMessagesEdge]
   pageInfo: PageInfo!
 }
 
+input CreateTicketInput {
+  subject: String!
+  message: String!
+  attachment: [String]
+}
+
+input AddTicketMessageInput {
+  message: String!
+  attachment: [String]
+}
+
 extend type Query {
-  getTickets(pageInfoInput: PageInfoInput): Tickets
-  getTicketMessagesByTicketUrl(ticketUrl: String!, pageInfoInput: PageInfoInput): TicketMessages
+  getTickets(pageInfo: PageInfoInput): Tickets
+  getTicketMessagesByTicketUrl(
+    ticketUrl: String!
+    pageInfo: PageInfoInput
+  ): TicketMessages
 }
 
 extend type Mutation {
-  createTicket(subject: String!, message: String!): Ticket
-  addTicketMessage(ticketId: ID!, message: String!): TicketMessage
+  createTicket(input: CreateTicketInput!): Ticket
+  addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
   readTicketMessages(ticketId: ID!): TicketMessages
 }

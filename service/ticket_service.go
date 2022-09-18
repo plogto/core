@@ -8,12 +8,12 @@ import (
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) CreateTicket(ctx context.Context, subject string, message string) (*model.Ticket, error) {
+func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	ticket := &model.Ticket{
 		UserID:  user.ID,
-		Subject: subject,
-		Url:     util.RandomString(9),
+		Subject: input.Subject,
+		Url:     util.RandomHexString(9),
 	}
 
 	s.Tickets.CreateTicket(ticket)
@@ -22,7 +22,7 @@ func (s *Service) CreateTicket(ctx context.Context, subject string, message stri
 		s.TicketMessages.CreateTicketMessage(&model.TicketMessage{
 			SenderID: user.ID,
 			TicketID: ticket.ID,
-			Message:  message,
+			Message:  input.Message,
 		})
 	}
 
@@ -33,14 +33,14 @@ func (s *Service) GetTicketByID(ctx context.Context, id string) (*model.Ticket, 
 	return s.Tickets.GetTicketByID(id)
 }
 
-func (s *Service) GetTickets(ctx context.Context, input *model.PageInfoInput) (*model.Tickets, error) {
+func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	pageInfoInput := util.ExtractPageInfo(input)
+	pageInfo := util.ExtractPageInfo(pageInfoInput)
 
 	if user.Role == model.UserRoleAdmin {
-		return s.Tickets.GetTicketsByUserIDAndPageInfo(&user.ID, *pageInfoInput.First, *pageInfoInput.After)
+		return s.Tickets.GetTicketsByUserIDAndPageInfo(nil, *pageInfo.First, *pageInfo.After)
 	}
 
-	return s.Tickets.GetTicketsByUserIDAndPageInfo(&user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.Tickets.GetTicketsByUserIDAndPageInfo(&user.ID, *pageInfo.First, *pageInfo.After)
 }

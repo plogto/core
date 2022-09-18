@@ -35,6 +35,23 @@ func (f *Files) GetFilesByPostId(postID string) ([]*model.File, error) {
 	return files, err
 }
 
+func (f *Files) GetFilesByTicketMessageID(ticketMessageID string) ([]*model.File, error) {
+	var files []*model.File
+	err := f.DB.Model(&files).
+		ColumnExpr("file.*").
+		ColumnExpr("ticket_message_attachments.ticket_message_id").
+		Join("INNER JOIN ticket_message_attachments ON ticket_message_attachments.file_id = file.id").
+		GroupExpr("ticket_message_attachments.ticket_message_id, file.id").
+		Where("ticket_message_attachments.ticket_message_id = ?", ticketMessageID).
+		Where("file.deleted_at is ?", nil).
+		Where("ticket_message_attachments.deleted_at is ?", nil).
+		Returning("*").Select()
+
+	fmt.Println(err)
+
+	return files, err
+}
+
 func (f *Files) GetFileByHash(hash string) (*model.File, error) {
 	return f.GetFileByField("hash", hash)
 }

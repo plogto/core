@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type AddTicketMessageInput struct {
+	Message    string    `json:"message"`
+	Attachment []*string `json:"attachment"`
+}
+
 type AuthResponse struct {
 	AuthToken *AuthToken `json:"authToken"`
 	User      *User      `json:"user"`
@@ -33,6 +38,12 @@ type Connections struct {
 type ConnectionsEdge struct {
 	Cursor string      `json:"cursor"`
 	Node   *Connection `json:"node"`
+}
+
+type CreateTicketInput struct {
+	Subject    string    `json:"subject"`
+	Message    string    `json:"message"`
+	Attachment []*string `json:"attachment"`
 }
 
 type CreditTransactions struct {
@@ -164,6 +175,7 @@ type TestInput struct {
 
 type TicketMessages struct {
 	TotalCount *int                  `json:"totalCount"`
+	Ticket     *Ticket               `json:"ticket"`
 	Edges      []*TicketMessagesEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 }

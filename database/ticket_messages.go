@@ -40,6 +40,7 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ticketID string,
 	for _, value := range ticketMessages {
 		edges = append(edges, &model.TicketMessagesEdge{Node: &model.TicketMessage{
 			ID:        value.ID,
+			TicketID:  value.TicketID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
@@ -59,6 +60,15 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ticketID string,
 
 func (t *TicketMessages) GetTicketMessageByID(id string) (*model.TicketMessage, error) {
 	return t.GetTicketMessageByField("id", id)
+}
+
+func (t *TicketMessages) GetLastTicketMessageByTicketID(ticketID string) (*model.TicketMessage, error) {
+	var ticketMessage model.TicketMessage
+	err := t.DB.Model(&ticketMessage).Where("ticket_id = ?", ticketID).Where("deleted_at is ?", nil).Order("created_at DESC").First()
+	if len(ticketMessage.ID) < 1 {
+		return nil, nil
+	}
+	return &ticketMessage, err
 }
 
 func (t *TicketMessages) CreateTicketMessage(ticketMessage *model.TicketMessage) (*model.TicketMessage, error) {

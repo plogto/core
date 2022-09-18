@@ -27,11 +27,15 @@ func (t *Tickets) GetTicketsByUserIDAndPageInfo(userID *string, limit int, after
 	var endCursor string
 
 	query := t.DB.Model(&tickets).
-		Where("user_id = ?", userID).
 		Where("deleted_at is ?", nil).
 		Order("updated_at DESC")
 
+	if userID != nil {
+		query.Where("user_id = ?", userID)
+	}
+
 	if len(after) > 0 {
+
 		query.Where("updated_at < ?", after)
 	}
 
