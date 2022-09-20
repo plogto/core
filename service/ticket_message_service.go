@@ -56,5 +56,9 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 
 	ticket, _ := s.Tickets.GetTicketByURL(ticketURL)
 
+	if user.Role == model.UserRoleUser && user.ID != ticket.UserID {
+		return nil, nil
+	}
+
 	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, *pageInfo.First, *pageInfo.After)
 }
