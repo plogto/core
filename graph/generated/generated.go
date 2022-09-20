@@ -496,7 +496,7 @@ type MutationResolver interface {
 	SavePost(ctx context.Context, postID string) (*model.SavedPost, error)
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
 	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
-	ReadTicketMessages(ctx context.Context, ticketID string) (*model.TicketMessages, error)
+	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
@@ -3032,7 +3032,7 @@ extend type Query {
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
   addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
-  readTicketMessages(ticketId: ID!): TicketMessages
+  readTicketMessages(ticketId: ID!): Boolean
 }
 `, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `enum UserRole {
@@ -8399,9 +8399,9 @@ func (ec *executionContext) _Mutation_readTicketMessages(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessages)
+	res := resTmp.(*bool)
 	fc.Result = res
-	return ec.marshalOTicketMessages2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessages(ctx, field.Selections, res)
+	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_readTicketMessages(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8411,17 +8411,7 @@ func (ec *executionContext) fieldContext_Mutation_readTicketMessages(ctx context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "totalCount":
-				return ec.fieldContext_TicketMessages_totalCount(ctx, field)
-			case "ticket":
-				return ec.fieldContext_TicketMessages_ticket(ctx, field)
-			case "edges":
-				return ec.fieldContext_TicketMessages_edges(ctx, field)
-			case "pageInfo":
-				return ec.fieldContext_TicketMessages_pageInfo(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type TicketMessages", field.Name)
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	defer func() {

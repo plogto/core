@@ -62,3 +62,17 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 
 	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, *pageInfo.First, *pageInfo.After)
 }
+
+func (s *Service) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	if user == nil {
+		return nil, nil
+	}
+
+	ticket, _ := s.Tickets.GetTicketByID(ticketID)
+
+	status, _ := s.TicketMessages.UpdateReadTicketMessagesByUserIDAndTicketID(user.ID, ticket.ID)
+
+	return &status, nil
+}
