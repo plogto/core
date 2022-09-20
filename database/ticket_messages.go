@@ -78,3 +78,19 @@ func (t *TicketMessages) CreateTicketMessage(ticketMessage *model.TicketMessage)
 	}
 	return ticketMessage, err
 }
+
+func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(userID, ticketID string) (bool, error) {
+	var ticketMessages []*model.TicketMessage
+
+	query := t.DB.Model(&ticketMessages).
+		Where("sender_id = ?", userID).
+		Where("ticket_id = ?", ticketID)
+
+	_, err := query.Set("read = ?", true).Returning("*").Update()
+
+	if err != nil {
+		return false, nil
+	}
+
+	return true, nil
+}

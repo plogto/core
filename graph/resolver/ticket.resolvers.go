@@ -5,7 +5,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -23,8 +22,8 @@ func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string
 }
 
 // ReadTicketMessages is the resolver for the readTicketMessages field.
-func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID string) (*model.TicketMessages, error) {
-	panic(fmt.Errorf("not implemented: ReadTicketMessages - readTicketMessages"))
+func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {
+	return r.Service.ReadTicketMessages(ctx, ticketID)
 }
 
 // GetTickets is the resolver for the getTickets field.
