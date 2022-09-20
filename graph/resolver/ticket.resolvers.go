@@ -52,6 +52,11 @@ func (r *ticketMessageResolver) Sender(ctx context.Context, obj *model.TicketMes
 	return r.Service.GetUserByID(ctx, obj.SenderID)
 }
 
+// Ticket is the resolver for the ticket field.
+func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.TicketID)
+}
+
 // Attachment is the resolver for the attachment field.
 func (r *ticketMessageResolver) Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error) {
 	return r.Service.GetTicketMessageAttachmentsByTicketMessageID(ctx, obj.ID)
