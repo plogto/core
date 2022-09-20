@@ -10,6 +10,5 @@ type PostAttachment struct {
 	PostID    string
 	FileID    string
 	CreatedAt *time.Time
-	UpdatedAt *time.Time
 	DeletedAt *time.Time `pg:"-,soft_delete"`
 }

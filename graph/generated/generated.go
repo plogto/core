@@ -382,6 +382,7 @@ type ComplexityRoot struct {
 		Message    func(childComplexity int) int
 		Read       func(childComplexity int) int
 		Sender     func(childComplexity int) int
+		Ticket     func(childComplexity int) int
 		UpdatedAt  func(childComplexity int) int
 	}
 
@@ -578,6 +579,8 @@ type TicketResolver interface {
 }
 type TicketMessageResolver interface {
 	Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error)
+
+	Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error)
 
 	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error)
 }
@@ -2191,6 +2194,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.TicketMessage.Sender(childComplexity), true
 
+	case "TicketMessage.ticket":
+		if e.complexity.TicketMessage.Ticket == nil {
+			break
+		}
+
+		return e.complexity.TicketMessage.Ticket(childComplexity), true
+
 	case "TicketMessage.updatedAt":
 		if e.complexity.TicketMessage.UpdatedAt == nil {
 			break
@@ -2970,6 +2980,7 @@ type TicketMessage {
   id: ID!
   sender: User!
   message: String!
+  ticket: Ticket!
   read: Boolean
   attachment: [File!]
   createdAt: Time
@@ -8337,6 +8348,8 @@ func (ec *executionContext) fieldContext_Mutation_addTicketMessage(ctx context.C
 				return ec.fieldContext_TicketMessage_sender(ctx, field)
 			case "message":
 				return ec.fieldContext_TicketMessage_message(ctx, field)
+			case "ticket":
+				return ec.fieldContext_TicketMessage_ticket(ctx, field)
 			case "read":
 				return ec.fieldContext_TicketMessage_read(ctx, field)
 			case "attachment":
@@ -14114,6 +14127,8 @@ func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context,
 				return ec.fieldContext_TicketMessage_sender(ctx, field)
 			case "message":
 				return ec.fieldContext_TicketMessage_message(ctx, field)
+			case "ticket":
+				return ec.fieldContext_TicketMessage_ticket(ctx, field)
 			case "read":
 				return ec.fieldContext_TicketMessage_read(ctx, field)
 			case "attachment":
@@ -14382,6 +14397,68 @@ func (ec *executionContext) fieldContext_TicketMessage_message(ctx context.Conte
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_TicketMessage_ticket(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.TicketMessage().Ticket(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.Ticket)
+	fc.Result = res
+	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "TicketMessage",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Ticket_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Ticket_user(ctx, field)
+			case "subject":
+				return ec.fieldContext_Ticket_subject(ctx, field)
+			case "status":
+				return ec.fieldContext_Ticket_status(ctx, field)
+			case "url":
+				return ec.fieldContext_Ticket_url(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Ticket_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Ticket_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Ticket", field.Name)
 		},
 	}
 	return fc, nil
@@ -14844,6 +14921,8 @@ func (ec *executionContext) fieldContext_TicketMessagesEdge_node(ctx context.Con
 				return ec.fieldContext_TicketMessage_sender(ctx, field)
 			case "message":
 				return ec.fieldContext_TicketMessage_message(ctx, field)
+			case "ticket":
+				return ec.fieldContext_TicketMessage_ticket(ctx, field)
 			case "read":
 				return ec.fieldContext_TicketMessage_read(ctx, field)
 			case "attachment":
@@ -21276,6 +21355,26 @@ func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.Selectio
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "ticket":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._TicketMessage_ticket(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "read":
 
 			out.Values[i] = ec._TicketMessage_read(ctx, field, obj)
@@ -22401,6 +22500,20 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
 	res, err := ec.unmarshalInputTestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v model.Ticket) graphql.Marshaler {
+	return ec._Ticket(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Ticket(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v model.TicketMessage) graphql.Marshaler {

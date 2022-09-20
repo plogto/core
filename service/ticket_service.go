@@ -19,10 +19,9 @@ func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInpu
 	s.Tickets.CreateTicket(ticket)
 
 	if len(ticket.ID) > 0 {
-		s.TicketMessages.CreateTicketMessage(&model.TicketMessage{
-			SenderID: user.ID,
-			TicketID: ticket.ID,
-			Message:  input.Message,
+		s.AddTicketMessage(ctx, ticket.ID, model.AddTicketMessageInput{
+			Attachment: input.Attachment,
+			Message:    input.Message,
 		})
 	}
 
