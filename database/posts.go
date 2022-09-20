@@ -77,13 +77,16 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(parentID string, limit int, after 
 	var edges []*model.PostsEdge
 	var endCursor string
 
+	// TODO: refactor query (show post for public and following users)
 	query := p.DB.Model(&posts).
-		Where("parent_id= ?", parentID).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC")
+		Join("INNER JOIN users ON users.id = post.user_id").
+		Where("post.parent_id = ?", parentID).
+		Where("post.deleted_at is ?", nil).
+		Where("users.is_private is false").
+		Order("post.created_at DESC")
 
 	if len(after) > 0 {
-		query.Where("created_at < ?", after)
+		query.Where("post.created_at < ?", after)
 	}
 
 	totalCount, err := query.Limit(limit).SelectAndCount()

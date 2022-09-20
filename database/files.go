@@ -47,8 +47,6 @@ func (f *Files) GetFilesByTicketMessageID(ticketMessageID string) ([]*model.File
 		Where("ticket_message_attachments.deleted_at is ?", nil).
 		Returning("*").Select()
 
-	fmt.Println(err)
-
 	return files, err
 }
 
