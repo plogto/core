@@ -26,6 +26,11 @@ func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID stri
 	return r.Service.ReadTicketMessages(ctx, ticketID)
 }
 
+// UpdateTicketStatus is the resolver for the updateTicketStatus field.
+func (r *mutationResolver) UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error) {
+	return r.Service.UpdateTicketStatus(ctx, ticketID, status)
+}
+
 // GetTickets is the resolver for the getTickets field.
 func (r *queryResolver) GetTickets(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Tickets, error) {
 	return r.Service.GetTickets(ctx, pageInfo)

@@ -83,6 +83,7 @@ func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(userID, tic
 	var ticketMessages []*model.TicketMessage
 
 	query := t.DB.Model(&ticketMessages).
+		// TODO: change = to !=
 		Where("sender_id = ?", userID).
 		Where("ticket_id = ?", ticketID)
 

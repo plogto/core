@@ -73,4 +73,5 @@ extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
   addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
   readTicketMessages(ticketId: ID!): Boolean
+  updateTicketStatus(ticketId: ID!, status: TicketStatus!): Ticket
 }
