@@ -25,6 +25,8 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID string, input m
 		Message:  input.Message,
 	})
 
+	s.Tickets.UpdateTicketUpdatedAt(ticketID)
+
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
 			s.TicketMessageAttachments.CreateTicketMessageAttachment(&model.TicketMessageAttachment{

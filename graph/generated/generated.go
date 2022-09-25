@@ -212,6 +212,7 @@ type ComplexityRoot struct {
 		SingleUploadFile   func(childComplexity int, file graphql.Upload) int
 		Test               func(childComplexity int, input model.TestInput) int
 		UnfollowUser       func(childComplexity int, userID string) int
+		UpdateTicketStatus func(childComplexity int, ticketID string, status model.TicketStatus) int
 	}
 
 	Notification struct {
@@ -497,6 +498,7 @@ type MutationResolver interface {
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
 	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
 	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
+	UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
@@ -1324,6 +1326,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(string)), true
+
+	case "Mutation.updateTicketStatus":
+		if e.complexity.Mutation.UpdateTicketStatus == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateTicketStatus_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(string), args["status"].(model.TicketStatus)), true
 
 	case "Notification.createdAt":
 		if e.complexity.Notification.CreatedAt == nil {
@@ -3033,9 +3047,11 @@ extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
   addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
   readTicketMessages(ticketId: ID!): Boolean
+  updateTicketStatus(ticketId: ID!, status: TicketStatus!): Ticket
 }
 `, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `enum UserRole {
+  SUPER_ADMIN
   ADMIN
   USER
 }
@@ -3409,6 +3425,30 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 		}
 	}
 	args["userId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_updateTicketStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["ticketId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["ticketId"] = arg0
+	var arg1 model.TicketStatus
+	if tmp, ok := rawArgs["status"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+		arg1, err = ec.unmarshalNTicketStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketStatus(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["status"] = arg1
 	return args, nil
 }
 
@@ -8422,6 +8462,76 @@ func (ec *executionContext) fieldContext_Mutation_readTicketMessages(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_readTicketMessages_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateTicketStatus(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(string), fc.Args["status"].(model.TicketStatus))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Ticket)
+	fc.Result = res
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateTicketStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Ticket_id(ctx, field)
+			case "user":
+				return ec.fieldContext_Ticket_user(ctx, field)
+			case "subject":
+				return ec.fieldContext_Ticket_subject(ctx, field)
+			case "status":
+				return ec.fieldContext_Ticket_status(ctx, field)
+			case "url":
+				return ec.fieldContext_Ticket_url(ctx, field)
+			case "lastMessage":
+				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Ticket_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Ticket_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Ticket", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateTicketStatus_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -19614,6 +19724,12 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_readTicketMessages(ctx, field)
+			})
+
+		case "updateTicketStatus":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateTicketStatus(ctx, field)
 			})
 
 		case "editUser":

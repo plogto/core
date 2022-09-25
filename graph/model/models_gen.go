@@ -569,18 +569,20 @@ func (e TicketStatus) MarshalGQL(w io.Writer) {
 type UserRole string
 
 const (
-	UserRoleAdmin UserRole = "ADMIN"
-	UserRoleUser  UserRole = "USER"
+	UserRoleSuperAdmin UserRole = "SUPER_ADMIN"
+	UserRoleAdmin      UserRole = "ADMIN"
+	UserRoleUser       UserRole = "USER"
 )
 
 var AllUserRole = []UserRole{
+	UserRoleSuperAdmin,
 	UserRoleAdmin,
 	UserRoleUser,
 }
 
 func (e UserRole) IsValid() bool {
 	switch e {
-	case UserRoleAdmin, UserRoleUser:
+	case UserRoleSuperAdmin, UserRoleAdmin, UserRoleUser:
 		return true
 	}
 	return false

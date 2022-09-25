@@ -2,6 +2,7 @@ package database
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/go-pg/pg/v10"
 	"github.com/plogto/core/graph/model"
@@ -74,5 +75,30 @@ func (t *Tickets) CreateTicket(ticket *model.Ticket) (*model.Ticket, error) {
 	if len(ticket.ID) < 1 {
 		return nil, err
 	}
+	return ticket, err
+}
+
+func (t *Tickets) UpdateTicketStatus(ticket *model.Ticket) (*model.Ticket, error) {
+	query := t.DB.Model(ticket).
+		Where("id = ?id")
+
+	_, err := query.Set("status = ?status").Returning("*").Update()
+
+	return ticket, err
+}
+
+func (t *Tickets) UpdateTicketUpdatedAt(ticketID string) (*model.Ticket, error) {
+	var ticket *model.Ticket
+	UpdatedAt := time.Now()
+	ticket = &model.Ticket{
+		ID:        ticketID,
+		UpdatedAt: &UpdatedAt,
+	}
+
+	query := t.DB.Model(ticket).
+		Where("id = ?id")
+
+	_, err := query.Set("updated_at = ?updated_at").Returning("*").Update()
+
 	return ticket, err
 }
