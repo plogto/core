@@ -521,6 +521,53 @@ func (e PrimaryColor) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type TicketPermission string
+
+const (
+	TicketPermissionOpen       TicketPermission = "OPEN"
+	TicketPermissionClose      TicketPermission = "CLOSE"
+	TicketPermissionApprove    TicketPermission = "APPROVE"
+	TicketPermissionSolve      TicketPermission = "SOLVE"
+	TicketPermissionNewMessage TicketPermission = "NEW_MESSAGE"
+)
+
+var AllTicketPermission = []TicketPermission{
+	TicketPermissionOpen,
+	TicketPermissionClose,
+	TicketPermissionApprove,
+	TicketPermissionSolve,
+	TicketPermissionNewMessage,
+}
+
+func (e TicketPermission) IsValid() bool {
+	switch e {
+	case TicketPermissionOpen, TicketPermissionClose, TicketPermissionApprove, TicketPermissionSolve, TicketPermissionNewMessage:
+		return true
+	}
+	return false
+}
+
+func (e TicketPermission) String() string {
+	return string(e)
+}
+
+func (e *TicketPermission) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = TicketPermission(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid TicketPermission", str)
+	}
+	return nil
+}
+
+func (e TicketPermission) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type TicketStatus string
 
 const (

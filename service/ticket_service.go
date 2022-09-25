@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/constants/err"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -46,6 +47,81 @@ func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoI
 	return s.Tickets.GetTicketsByUserIDAndPageInfo(nil, *pageInfo.First, *pageInfo.After)
 }
 
+func (s *Service) GetTicketPermissions(ctx context.Context, ticketID string) ([]*model.TicketPermission, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+	ticket, _ := s.Tickets.GetTicketByID(ticketID)
+	var permissions []*model.TicketPermission
+
+	if !validation.IsUserAllowToUpdateTicket(user, ticket) {
+		return nil, err.ErrorAccessDenied
+	}
+
+	switch ticket.Status {
+	case model.TicketStatusOpen:
+		return s.GetPermissionsForOpenTicket(*user)
+	case model.TicketStatusClosed:
+		return s.GetPermissionsForClosedTicket(*user)
+	case model.TicketStatusApproved:
+		return s.GetPermissionsForApprovedTicket(*user)
+	case model.TicketStatusSolved:
+		return s.GetPermissionsForSolvedTicket(*user)
+	}
+
+	return permissions, nil
+}
+
+func (s *Service) GetPermissionsForOpenTicket(user model.User) ([]*model.TicketPermission, error) {
+	var permissions []*model.TicketPermission
+
+	switch user.Role {
+	case model.UserRoleSuperAdmin, model.UserRoleAdmin:
+		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.APPROVE, &constants.CLOSE)
+	case model.UserRoleUser:
+		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
+	}
+
+	return permissions, nil
+}
+
+func (s *Service) GetPermissionsForClosedTicket(user model.User) ([]*model.TicketPermission, error) {
+	var permissions []*model.TicketPermission
+
+	switch user.Role {
+	case model.UserRoleSuperAdmin, model.UserRoleAdmin:
+		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.OPEN)
+	case model.UserRoleUser:
+		permissions = append(permissions, &constants.NEW_MESSAGE)
+	}
+
+	return permissions, nil
+}
+
+func (s *Service) GetPermissionsForApprovedTicket(user model.User) ([]*model.TicketPermission, error) {
+	var permissions []*model.TicketPermission
+
+	switch user.Role {
+	case model.UserRoleSuperAdmin:
+		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.SOLVE, &constants.CLOSE)
+	case model.UserRoleAdmin, model.UserRoleUser:
+		permissions = append(permissions, &constants.NEW_MESSAGE)
+	}
+
+	return permissions, nil
+}
+
+func (s *Service) GetPermissionsForSolvedTicket(user model.User) ([]*model.TicketPermission, error) {
+	var permissions []*model.TicketPermission
+
+	switch user.Role {
+	case model.UserRoleSuperAdmin:
+		permissions = append(permissions, &constants.NEW_MESSAGE)
+	case model.UserRoleAdmin, model.UserRoleUser:
+		permissions = append(permissions, &constants.NEW_MESSAGE)
+	}
+
+	return permissions, nil
+}
+
 func (s *Service) CloseTicket(ticket model.Ticket) (*model.Ticket, error) {
 	if validation.IsTicketOpen(&ticket) {
 		ticket.Status = model.TicketStatusClosed
@@ -85,7 +161,7 @@ func (s *Service) ApproveTicket(user model.User, ticket model.Ticket) (*model.Ti
 }
 
 func (s *Service) SolveTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	if validation.IsUser(&user) {
+	if !validation.IsSuperAdmin(&user) {
 		return nil, err.ErrorAccessDenied
 	}
 
@@ -111,10 +187,10 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID string, statu
 	}
 
 	switch status {
-	case model.TicketStatusClosed:
-		return s.CloseTicket(*ticket)
 	case model.TicketStatusOpen:
 		return s.OpenTicket(*user, *ticket)
+	case model.TicketStatusClosed:
+		return s.CloseTicket(*ticket)
 	case model.TicketStatusApproved:
 		return s.ApproveTicket(*user, *ticket)
 	case model.TicketStatusSolved:
