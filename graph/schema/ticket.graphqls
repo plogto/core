@@ -5,6 +5,14 @@ enum TicketStatus {
   SOLVED
 }
 
+enum TicketPermission {
+  OPEN
+  CLOSE
+  APPROVE
+  SOLVE
+  NEW_MESSAGE
+}
+
 type Ticket {
   id: ID!
   user: User!
@@ -12,6 +20,7 @@ type Ticket {
   status: TicketStatus!
   url: String
   lastMessage: TicketMessage!
+  permissions: [TicketPermission]!
   createdAt: Time
   updatedAt: Time
 }

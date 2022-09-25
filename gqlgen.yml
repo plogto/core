@@ -158,6 +158,8 @@ models:
         resolver: true
       lastMessage:
         resolver: true
+      permissions:
+        resolver: true
   TicketMessages:
     fields:
       ticket:

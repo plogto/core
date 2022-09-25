@@ -369,6 +369,7 @@ type ComplexityRoot struct {
 		CreatedAt   func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LastMessage func(childComplexity int) int
+		Permissions func(childComplexity int) int
 		Status      func(childComplexity int) int
 		Subject     func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
@@ -578,6 +579,7 @@ type TicketResolver interface {
 	User(ctx context.Context, obj *model.Ticket) (*model.User, error)
 
 	LastMessage(ctx context.Context, obj *model.Ticket) (*model.TicketMessage, error)
+	Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error)
 }
 type TicketMessageResolver interface {
 	Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error)
@@ -2131,6 +2133,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Ticket.LastMessage(childComplexity), true
 
+	case "Ticket.permissions":
+		if e.complexity.Ticket.Permissions == nil {
+			break
+		}
+
+		return e.complexity.Ticket.Permissions(childComplexity), true
+
 	case "Ticket.status":
 		if e.complexity.Ticket.Status == nil {
 			break
@@ -2979,6 +2988,14 @@ extend type Query {
   SOLVED
 }
 
+enum TicketPermission {
+  OPEN
+  CLOSE
+  APPROVE
+  SOLVE
+  NEW_MESSAGE
+}
+
 type Ticket {
   id: ID!
   user: User!
@@ -2986,6 +3003,7 @@ type Ticket {
   status: TicketStatus!
   url: String
   lastMessage: TicketMessage!
+  permissions: [TicketPermission]!
   createdAt: Time
   updatedAt: Time
 }
@@ -8324,6 +8342,8 @@ func (ec *executionContext) fieldContext_Mutation_createTicket(ctx context.Conte
 				return ec.fieldContext_Ticket_url(ctx, field)
 			case "lastMessage":
 				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Ticket_permissions(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -8516,6 +8536,8 @@ func (ec *executionContext) fieldContext_Mutation_updateTicketStatus(ctx context
 				return ec.fieldContext_Ticket_url(ctx, field)
 			case "lastMessage":
 				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Ticket_permissions(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -14244,6 +14266,50 @@ func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Ticket_permissions(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Ticket_permissions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Ticket().Permissions(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]*model.TicketPermission)
+	fc.Result = res
+	return ec.marshalNTicketPermission2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Ticket_permissions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Ticket",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type TicketPermission does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_createdAt(ctx, field)
 	if err != nil {
@@ -14553,6 +14619,8 @@ func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Contex
 				return ec.fieldContext_Ticket_url(ctx, field)
 			case "lastMessage":
 				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Ticket_permissions(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -14827,6 +14895,8 @@ func (ec *executionContext) fieldContext_TicketMessages_ticket(ctx context.Conte
 				return ec.fieldContext_Ticket_url(ctx, field)
 			case "lastMessage":
 				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Ticket_permissions(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -15268,6 +15338,8 @@ func (ec *executionContext) fieldContext_TicketsEdge_node(ctx context.Context, f
 				return ec.fieldContext_Ticket_url(ctx, field)
 			case "lastMessage":
 				return ec.fieldContext_Ticket_lastMessage(ctx, field)
+			case "permissions":
+				return ec.fieldContext_Ticket_permissions(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Ticket_createdAt(ctx, field)
 			case "updatedAt":
@@ -21398,6 +21470,26 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 				return innerFunc(ctx)
 
 			})
+		case "permissions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Ticket_permissions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "createdAt":
 
 			out.Values[i] = ec._Ticket_createdAt(ctx, field, obj)
@@ -22634,6 +22726,61 @@ func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcor
 		return graphql.Null
 	}
 	return ec._TicketMessage(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalNTicketPermission2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx context.Context, v interface{}) ([]*model.TicketPermission, error) {
+	var vSlice []interface{}
+	if v != nil {
+		vSlice = graphql.CoerceList(v)
+	}
+	var err error
+	res := make([]*model.TicketPermission, len(vSlice))
+	for i := range vSlice {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
+		res[i], err = ec.unmarshalOTicketPermission2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx, vSlice[i])
+		if err != nil {
+			return nil, err
+		}
+	}
+	return res, nil
+}
+
+func (ec *executionContext) marshalNTicketPermission2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx context.Context, sel ast.SelectionSet, v []*model.TicketPermission) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTicketPermission2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTicketStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketStatus(ctx context.Context, v interface{}) (model.TicketStatus, error) {
@@ -23880,6 +24027,22 @@ func (ec *executionContext) marshalOTicketMessagesEdge2ᚖgithubᚗcomᚋplogto�
 		return graphql.Null
 	}
 	return ec._TicketMessagesEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTicketPermission2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx context.Context, v interface{}) (*model.TicketPermission, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.TicketPermission)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTicketPermission2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx context.Context, sel ast.SelectionSet, v *model.TicketPermission) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalOTickets2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTickets(ctx context.Context, sel ast.SelectionSet, v *model.Tickets) graphql.Marshaler {
