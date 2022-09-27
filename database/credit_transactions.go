@@ -82,10 +82,14 @@ func (c *CreditTransactions) GetCreditsByUserID(userID string) (float64, error) 
 	var creditTransactions []*model.CreditTransaction
 
 	err := c.DB.Model(&creditTransactions).
-		ColumnExpr("sum(amount) as amount").
-		Where("user_id = ?", userID).
-		Where("deleted_at is ?", nil).
+		ColumnExpr("sum(credit_transaction.amount) as amount").
+		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id").
+		Where("credit_transaction.user_id = ?", userID).
+		Where("credit_transaction_infos.status = ?", model.CreditTransactionStatusApproved).
+		Where("credit_transaction.deleted_at is ?", nil).
 		Select()
+
+	fmt.Println(err)
 
 	return creditTransactions[0].Amount, err
 }
