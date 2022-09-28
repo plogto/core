@@ -21,3 +21,30 @@ func IsUserAllowToUpdateTicket(user *model.User, ticket *model.Ticket) bool {
 func IsTicketExist(ticket *model.Ticket) bool {
 	return ticket == nil || len(ticket.ID) == 0
 }
+
+func CheckUserPermission(permissions []*model.TicketPermission, status model.TicketStatus) bool {
+	isAllow := false
+
+	for _, value := range permissions {
+		if *value == ConvertTicketStatusToPermission(status) {
+			isAllow = true
+		}
+	}
+
+	return isAllow
+}
+
+func ConvertTicketStatusToPermission(status model.TicketStatus) model.TicketPermission {
+	switch status {
+	case model.TicketStatusOpen:
+		return model.TicketPermissionOpen
+	case model.TicketStatusClosed:
+		return model.TicketPermissionClose
+	case model.TicketStatusApproved:
+		return model.TicketPermissionApprove
+	case model.TicketStatusSolved:
+		return model.TicketPermissionSolve
+	default:
+		return ""
+	}
+}

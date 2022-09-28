@@ -2,9 +2,10 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/plogto/core/constants"
-	"github.com/plogto/core/constants/err"
+	"github.com/plogto/core/constants/e"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -47,18 +48,18 @@ func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoI
 	return s.Tickets.GetTicketsByUserIDAndPageInfo(nil, *pageInfo.First, *pageInfo.After)
 }
 
-func (s *Service) GetTicketPermissions(ctx context.Context, ticketID string) ([]*model.TicketPermission, error) {
+func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID string) ([]*model.TicketPermission, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	ticket, _ := s.Tickets.GetTicketByID(ticketID)
 	var permissions []*model.TicketPermission
 
 	if !validation.IsUserAllowToUpdateTicket(user, ticket) {
-		return nil, err.ErrorAccessDenied
+		return nil, e.ErrorAccessDenied
 	}
 
 	switch ticket.Status {
 	case model.TicketStatusOpen:
-		return s.GetPermissionsForOpenTicket(*user)
+		return s.GetPermissionsForOpenTicket(*user, *ticket)
 	case model.TicketStatusClosed:
 		return s.GetPermissionsForClosedTicket(*user)
 	case model.TicketStatusApproved:
@@ -70,12 +71,18 @@ func (s *Service) GetTicketPermissions(ctx context.Context, ticketID string) ([]
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForOpenTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket model.Ticket) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin, model.UserRoleAdmin:
+	case model.UserRoleSuperAdmin:
 		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.APPROVE, &constants.CLOSE)
+	case model.UserRoleAdmin:
+		if ticket.UserID != user.ID {
+			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.APPROVE, &constants.CLOSE)
+		} else {
+			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
+		}
 	case model.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
 	}
@@ -123,67 +130,60 @@ func (s *Service) GetPermissionsForSolvedTicket(user model.User) ([]*model.Ticke
 }
 
 func (s *Service) CloseTicket(ticket model.Ticket) (*model.Ticket, error) {
-	if validation.IsTicketOpen(&ticket) {
-		ticket.Status = model.TicketStatusClosed
-		closedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
-		return closedTicket, nil
-	}
-
-	return nil, err.ErrorTicketIsNotOpen
+	ticket.Status = model.TicketStatusClosed
+	closedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+	return closedTicket, nil
 }
 
 func (s *Service) OpenTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	if validation.IsUser(&user) {
-		return nil, err.ErrorAccessDenied
-	}
-
-	if validation.IsTicketClosed(&ticket) {
-		ticket.Status = model.TicketStatusOpen
-		openTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
-		return openTicket, nil
-	}
-
-	return nil, err.ErrorTicketIsNotClosed
+	ticket.Status = model.TicketStatusOpen
+	openTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+	return openTicket, nil
 }
 
 func (s *Service) ApproveTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	if validation.IsUser(&user) {
-		return nil, err.ErrorAccessDenied
-	}
+	ticket.Status = model.TicketStatusApproved
+	approvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
 
-	if validation.IsTicketOpen(&ticket) {
-		ticket.Status = model.TicketStatusApproved
-		approvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
-		return approvedTicket, nil
-	}
+	transactionCreditInfo, _ := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
+		ReceiverID:   ticket.UserID,
+		Status:       model.CreditTransactionStatusPending,
+		Type:         model.CreditTransactionTypeOrder,
+		TemplateName: model.CreditTransactionTemplateNameApproveTicket,
+	})
 
-	return nil, err.ErrorTicketIsNotOpen
+	s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+		CreditTransactionInfoID: transactionCreditInfo.ID,
+		Type:                    model.CreditTransactionDescriptionVariableTypeTicket,
+		Key:                     "ticket",
+		ContentID:               ticket.ID,
+	})
+
+	return approvedTicket, nil
 }
 
 func (s *Service) SolveTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	if !validation.IsSuperAdmin(&user) {
-		return nil, err.ErrorAccessDenied
-	}
-
-	if validation.IsTicketApproved(&ticket) {
-		ticket.Status = model.TicketStatusSolved
-		solvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
-		return solvedTicket, nil
-	}
-
-	return nil, err.ErrorTicketIsNotApproved
+	ticket.Status = model.TicketStatusSolved
+	solvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+	return solvedTicket, nil
 }
 
 func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	ticket, _ := s.Tickets.GetTicketByID(ticketID)
 
-	if !validation.IsUserAllowToUpdateTicket(user, ticket) {
-		return nil, err.ErrorAccessDenied
+	if validation.IsTicketExist(ticket) {
+		return nil, e.ErrorTicketNotFound
 	}
 
-	if validation.IsTicketExist(ticket) {
-		return nil, err.ErrorTicketNotFound
+	permissions, err := s.GetTicketPermissionsByTicketID(ctx, ticketID)
+
+	if err != nil {
+		return nil, errors.New(err.Error())
+	}
+
+	if !validation.CheckUserPermission(permissions, status) {
+		return nil, e.ErrorAccessDenied
 	}
 
 	switch status {

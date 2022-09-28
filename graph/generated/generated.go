@@ -2648,6 +2648,7 @@ extend type Mutation {
 }
 
 enum CreditTransactionDescriptionVariableType {
+  TICKET
   USER
   TAG
 }
@@ -2655,6 +2656,7 @@ enum CreditTransactionDescriptionVariableType {
 enum CreditTransactionTemplateName {
   INVITE_USER
   REGISTER_BY_INVITATION_CODE
+  APPROVE_TICKET
 }
 
 enum CreditTransactionType {

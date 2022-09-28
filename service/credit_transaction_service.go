@@ -135,7 +135,7 @@ func (s *Service) TransferCreditFromAdmin(transferCreditFromAdminParams Transfer
 	return s.CreateCreditTransaction(CreateCreditTransactionParams{
 		SenderID:     bankUser.ID,
 		ReceiverID:   transferCreditFromAdminParams.ReceiverID,
-		Status:       model.CreditTransactionStatusApproved,
+		Status:       transferCreditFromAdminParams.Status,
 		TemplateName: &transferCreditFromAdminParams.TemplateName,
 		Type:         model.CreditTransactionTypeOrder,
 	})
@@ -156,6 +156,12 @@ func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Co
 		descriptionVariable = DescriptionVariable{
 			Content: tag.Name,
 			Url:     &tag.Name,
+		}
+	case model.CreditTransactionDescriptionVariableTypeTicket:
+		ticket, _ := s.Tickets.GetTicketByID(contentID)
+		descriptionVariable = DescriptionVariable{
+			Content: ticket.Subject,
+			Url:     &ticket.Url,
 		}
 	}
 	return descriptionVariable, nil
