@@ -29,3 +29,12 @@ func (c *CreditTransactionInfos) GetCreditTransactionInfoByField(field string, v
 
 	return &creditTransactionInfo, err
 }
+
+func (c *CreditTransactionInfos) UpdateCreditTransactionInfoStatus(creditTransactionInfo *model.CreditTransactionInfo) (*model.CreditTransactionInfo, error) {
+	query := c.DB.Model(creditTransactionInfo).
+		Where("id = ?id")
+
+	_, err := query.Set("status = ?status").Returning("*").Update()
+
+	return creditTransactionInfo, err
+}

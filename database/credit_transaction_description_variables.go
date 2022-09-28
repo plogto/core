@@ -15,6 +15,10 @@ func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionV
 	return c.GetCreditTransactionDescriptionVariableByField("id", id)
 }
 
+func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByContentID(contentID string) (*model.CreditTransactionDescriptionVariable, error) {
+	return c.GetCreditTransactionDescriptionVariableByField("content_id", contentID)
+}
+
 func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(creditTransactionInfoID string) ([]*model.CreditTransactionDescriptionVariable, error) {
 	var creditTransactionDescriptionVariables []*model.CreditTransactionDescriptionVariable
 	err := c.DB.Model(&creditTransactionDescriptionVariables).
@@ -30,6 +34,7 @@ func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionV
 	err := c.DB.Model(&creditTransactionDescriptionVariable).
 		Where(fmt.Sprintf("%v = ?", field), value).
 		Where("deleted_at is ?", nil).
+		Order("created_at DESC").
 		First()
 
 	return &creditTransactionDescriptionVariable, err

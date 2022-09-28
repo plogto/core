@@ -130,8 +130,20 @@ func (s *Service) GetPermissionsForSolvedTicket(user model.User) ([]*model.Ticke
 }
 
 func (s *Service) CloseTicket(ticket model.Ticket) (*model.Ticket, error) {
+	oldStatus := ticket.Status
 	ticket.Status = model.TicketStatusClosed
 	closedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+
+	if oldStatus == model.TicketStatusApproved {
+		creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ticket.ID)
+		creditTransactionInfo := model.CreditTransactionInfo{
+			ID:     creditTransactionDescriptionVariables.CreditTransactionInfoID,
+			Status: model.CreditTransactionStatusCanceled,
+		}
+
+		s.CreditTransactionInfos.UpdateCreditTransactionInfoStatus(&creditTransactionInfo)
+	}
+
 	return closedTicket, nil
 }
 
