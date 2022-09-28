@@ -262,18 +262,20 @@ func (e BackgroundColor) MarshalGQL(w io.Writer) {
 type CreditTransactionDescriptionVariableType string
 
 const (
-	CreditTransactionDescriptionVariableTypeUser CreditTransactionDescriptionVariableType = "USER"
-	CreditTransactionDescriptionVariableTypeTag  CreditTransactionDescriptionVariableType = "TAG"
+	CreditTransactionDescriptionVariableTypeTicket CreditTransactionDescriptionVariableType = "TICKET"
+	CreditTransactionDescriptionVariableTypeUser   CreditTransactionDescriptionVariableType = "USER"
+	CreditTransactionDescriptionVariableTypeTag    CreditTransactionDescriptionVariableType = "TAG"
 )
 
 var AllCreditTransactionDescriptionVariableType = []CreditTransactionDescriptionVariableType{
+	CreditTransactionDescriptionVariableTypeTicket,
 	CreditTransactionDescriptionVariableTypeUser,
 	CreditTransactionDescriptionVariableTypeTag,
 }
 
 func (e CreditTransactionDescriptionVariableType) IsValid() bool {
 	switch e {
-	case CreditTransactionDescriptionVariableTypeUser, CreditTransactionDescriptionVariableTypeTag:
+	case CreditTransactionDescriptionVariableTypeTicket, CreditTransactionDescriptionVariableTypeUser, CreditTransactionDescriptionVariableTypeTag:
 		return true
 	}
 	return false
@@ -350,16 +352,18 @@ type CreditTransactionTemplateName string
 const (
 	CreditTransactionTemplateNameInviteUser               CreditTransactionTemplateName = "INVITE_USER"
 	CreditTransactionTemplateNameRegisterByInvitationCode CreditTransactionTemplateName = "REGISTER_BY_INVITATION_CODE"
+	CreditTransactionTemplateNameApproveTicket            CreditTransactionTemplateName = "APPROVE_TICKET"
 )
 
 var AllCreditTransactionTemplateName = []CreditTransactionTemplateName{
 	CreditTransactionTemplateNameInviteUser,
 	CreditTransactionTemplateNameRegisterByInvitationCode,
+	CreditTransactionTemplateNameApproveTicket,
 }
 
 func (e CreditTransactionTemplateName) IsValid() bool {
 	switch e {
-	case CreditTransactionTemplateNameInviteUser, CreditTransactionTemplateNameRegisterByInvitationCode:
+	case CreditTransactionTemplateNameInviteUser, CreditTransactionTemplateNameRegisterByInvitationCode, CreditTransactionTemplateNameApproveTicket:
 		return true
 	}
 	return false

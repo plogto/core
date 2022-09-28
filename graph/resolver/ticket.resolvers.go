@@ -53,7 +53,7 @@ func (r *ticketResolver) LastMessage(ctx context.Context, obj *model.Ticket) (*m
 
 // Permissions is the resolver for the permissions field.
 func (r *ticketResolver) Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error) {
-	return r.Service.GetTicketPermissions(ctx, obj.ID)
+	return r.Service.GetTicketPermissionsByTicketID(ctx, obj.ID)
 }
 
 // Sender is the resolver for the sender field.
