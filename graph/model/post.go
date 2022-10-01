@@ -12,7 +12,7 @@ type Post struct {
 	ChildID   *string
 	Content   *string
 	Url       string
-	Status    PostStatus
+	Status    *PostStatus
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 	DeletedAt *time.Time `pg:"-,soft_delete"`
