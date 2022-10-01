@@ -205,15 +205,15 @@ type UsersEdge struct {
 }
 
 type AddPostInput struct {
-	ParentID   *string  `json:"parentId"`
-	Content    *string  `json:"content"`
-	Status     *string  `json:"status"`
-	Attachment []string `json:"attachment"`
+	ParentID   *string     `json:"parentId"`
+	Content    *string     `json:"content"`
+	Status     *PostStatus `json:"status"`
+	Attachment []string    `json:"attachment"`
 }
 
 type EditPostInput struct {
-	Content *string `json:"content"`
-	Status  *string `json:"status"`
+	Content *string     `json:"content"`
+	Status  *PostStatus `json:"status"`
 }
 
 type BackgroundColor string
