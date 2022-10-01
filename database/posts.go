@@ -213,6 +213,50 @@ func (p *Posts) GetTimelinePostsByPageInfo(userID string, limit int, after strin
 	}, err
 }
 
+func (p *Posts) GetExplorePostsByPageInfo(limit int, after string) (*model.Posts, error) {
+	var posts []*model.Post
+	var edges []*model.PostsEdge
+	var endCursor string
+
+	query := p.DB.Model(&posts).
+		Where("post.parent_id is ?", nil).
+		Where("post.status = ?", model.PostStatusPublic).
+		Where("post.deleted_at is ?", nil)
+
+	if len(after) > 0 {
+		query.Where("post.created_at < ?", after)
+	}
+
+	totalCount, err := query.Limit(limit).Order("post.created_at DESC").SelectAndCount()
+
+	fmt.Println(err)
+
+	for _, value := range posts {
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
+	return &model.Posts{
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
+	}, err
+}
+
 func (p *Posts) GetPostByID(id string) (*model.Post, error) {
 	return p.GetPostByField("id", id)
 }

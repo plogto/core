@@ -27,11 +27,6 @@ func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*mode
 	return r.Service.DeletePost(ctx, postID)
 }
 
-// Status is the resolver for the status field.
-func (r *postResolver) Status(ctx context.Context, obj *model.Post) (model.PostStatus, error) {
-	panic(fmt.Errorf("not implemented: Status - status"))
-}
-
 // Parent is the resolver for the parent field.
 func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.ParentID)
@@ -100,6 +95,11 @@ func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Po
 // GetTimelinePosts is the resolver for the getTimelinePosts field.
 func (r *queryResolver) GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
 	return r.Service.GetTimelinePosts(ctx, pageInfoInput)
+}
+
+// GetExplorePosts is the resolver for the getExplorePosts field.
+func (r *queryResolver) GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetExplorePosts(ctx, pageInfo)
 }
 
 // Post returns generated.PostResolver implementation.

@@ -293,6 +293,7 @@ type ComplexityRoot struct {
 		CheckEmail                   func(childComplexity int, email string) int
 		CheckUsername                func(childComplexity int, username string) int
 		GetCreditTransactions        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetExplorePosts              func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetFollowRequests            func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetFollowersByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetFollowingByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
@@ -515,7 +516,6 @@ type NotificationsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error)
 }
 type PostResolver interface {
-	Status(ctx context.Context, obj *model.Post) (model.PostStatus, error)
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
 	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
@@ -545,6 +545,7 @@ type QueryResolver interface {
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
 	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
@@ -1705,6 +1706,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.GetCreditTransactions(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+
+	case "Query.getExplorePosts":
+		if e.complexity.Query.GetExplorePosts == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getExplorePosts_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetExplorePosts(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getFollowRequests":
 		if e.complexity.Query.GetFollowRequests == nil {
@@ -2904,13 +2917,13 @@ type Posts {
 input addPostInput {
   parentId: ID
   content: String
-  status: String
+  status: PostStatus
   attachment: [String!]
 }
 
 input editPostInput {
   content: String
-  status: String
+  status: PostStatus
 }
 
 extend type Query {
@@ -2918,6 +2931,7 @@ extend type Query {
   getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfoInput: PageInfoInput): Posts
+  getExplorePosts(pageInfo: PageInfoInput): Posts
 }
 
 extend type Mutation {
@@ -3529,6 +3543,21 @@ func (ec *executionContext) field_Query_getCreditTransactions_args(ctx context.C
 		}
 	}
 	args["pageInfoInput"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getExplorePosts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
+		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -10160,7 +10189,7 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Post().Status(rctx, obj)
+		return obj.Status, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10181,8 +10210,8 @@ func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field 
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type PostStatus does not have child fields")
 		},
@@ -11887,6 +11916,66 @@ func (ec *executionContext) fieldContext_Query_getTimelinePosts(ctx context.Cont
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getTimelinePosts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getExplorePosts(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getExplorePosts(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetExplorePosts(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Posts)
+	fc.Result = res
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getExplorePosts(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getExplorePosts_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -18612,7 +18701,7 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18656,7 +18745,7 @@ func (ec *executionContext) unmarshalInputeditPostInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -20224,25 +20313,12 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Post_status(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Post_status(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "parent":
 			field := field
 
@@ -20775,6 +20851,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getTimelinePosts(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getExplorePosts":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getExplorePosts(ctx, field)
 				return res
 			}
 
@@ -23655,6 +23751,22 @@ func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 		return graphql.Null
 	}
 	return ec._Post(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (*model.PostStatus, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.PostStatus)
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *model.PostStatus) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return v
 }
 
 func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx context.Context, sel ast.SelectionSet, v *model.Posts) graphql.Marshaler {

@@ -34,13 +34,13 @@ type Posts {
 input addPostInput {
   parentId: ID
   content: String
-  status: String
+  status: PostStatus
   attachment: [String!]
 }
 
 input editPostInput {
   content: String
-  status: String
+  status: PostStatus
 }
 
 extend type Query {
@@ -48,6 +48,7 @@ extend type Query {
   getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfoInput: PageInfoInput): Posts
+  getExplorePosts(pageInfo: PageInfoInput): Posts
 }
 
 extend type Mutation {
