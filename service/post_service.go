@@ -49,7 +49,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		ParentID: input.ParentID,
 		UserID:   user.ID,
 		Content:  input.Content,
-		Status:   *input.Status,
+		Status:   input.Status,
 		Url:      util.RandomString(20),
 	}
 	s.Posts.CreatePost(post)
@@ -102,8 +102,8 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		didUpdate = true
 	}
 
-	if input.Status != nil && &post.Status != input.Status {
-		post.Status = *input.Status
+	if input.Status != nil && post.Status != input.Status {
+		post.Status = input.Status
 		didUpdate = true
 	}
 
