@@ -136,7 +136,7 @@ func (s *Service) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput)
 	inputRegister := model.RegisterInput{
 		FullName:       fmt.Sprintf("%v", payload.Claims["name"]),
 		Email:          email,
-		InvitationCode: &input.Credential,
+		InvitationCode: input.InvitationCode,
 		Password:       "",
 	}
 
