@@ -435,6 +435,55 @@ func (e CreditTransactionType) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type NotificationTypeName string
+
+const (
+	NotificationTypeNameWelcome    NotificationTypeName = "WELCOME"
+	NotificationTypeNameLikePost   NotificationTypeName = "LIKE_POST"
+	NotificationTypeNameReplyPost  NotificationTypeName = "REPLY_POST"
+	NotificationTypeNameLikeReply  NotificationTypeName = "LIKE_REPLY"
+	NotificationTypeNameFollowUser NotificationTypeName = "FOLLOW_USER"
+	NotificationTypeNameAcceptUser NotificationTypeName = "ACCEPT_USER"
+)
+
+var AllNotificationTypeName = []NotificationTypeName{
+	NotificationTypeNameWelcome,
+	NotificationTypeNameLikePost,
+	NotificationTypeNameReplyPost,
+	NotificationTypeNameLikeReply,
+	NotificationTypeNameFollowUser,
+	NotificationTypeNameAcceptUser,
+}
+
+func (e NotificationTypeName) IsValid() bool {
+	switch e {
+	case NotificationTypeNameWelcome, NotificationTypeNameLikePost, NotificationTypeNameReplyPost, NotificationTypeNameLikeReply, NotificationTypeNameFollowUser, NotificationTypeNameAcceptUser:
+		return true
+	}
+	return false
+}
+
+func (e NotificationTypeName) String() string {
+	return string(e)
+}
+
+func (e *NotificationTypeName) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = NotificationTypeName(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid NotificationTypeName", str)
+	}
+	return nil
+}
+
+func (e NotificationTypeName) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type PostStatus string
 
 const (

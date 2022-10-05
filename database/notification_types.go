@@ -24,6 +24,6 @@ func (n *NotificationTypes) GetNotificationTypeByID(id string) (*model.Notificat
 	return n.GetNotificationTypeByField("id", id)
 }
 
-func (n *NotificationTypes) GetNotificationTypeByName(name string) (*model.NotificationType, error) {
-	return n.GetNotificationTypeByField("name", name)
+func (n *NotificationTypes) GetNotificationTypeByName(name model.NotificationTypeName) (*model.NotificationType, error) {
+	return n.GetNotificationTypeByField("name", string(name))
 }

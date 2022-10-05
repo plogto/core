@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -71,7 +70,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		// notification for reply
 		if input.ParentID != nil {
 			s.CreateNotification(CreateNotificationArgs{
-				Name:       constants.NOTIFICATION_REPLY_POST,
+				Name:       model.NotificationTypeNameReplyPost,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url + "#" + post.ID,
@@ -131,7 +130,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		if parentPost != nil && len(parentPost.ID) > 0 {
 			// remove notification for reply
 			s.RemoveNotification(CreateNotificationArgs{
-				Name:       constants.NOTIFICATION_REPLY_POST,
+				Name:       model.NotificationTypeNameReplyPost,
 				SenderID:   user.ID,
 				ReceiverID: parentPost.UserID,
 				Url:        "/p/" + parentPost.Url + "#" + post.ID,
