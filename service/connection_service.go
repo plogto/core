@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -41,7 +40,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 	s.Connections.CreateConnection(newConnection)
 	if len(newConnection.ID) > 0 && status == 2 {
 		s.CreateNotification(CreateNotificationArgs{
-			Name:       constants.NOTIFICATION_FOLLOW_USER,
+			Name:       model.NotificationTypeNameFollowUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -70,7 +69,7 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*model.Conne
 
 	if len(deletedConnection.ID) > 0 {
 		s.RemoveNotification(CreateNotificationArgs{
-			Name:       constants.NOTIFICATION_FOLLOW_USER,
+			Name:       model.NotificationTypeNameFollowUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -110,7 +109,7 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*model.Connect
 	updatedConnection, _ := s.Connections.UpdateConnection(connection)
 	if len(updatedConnection.ID) > 0 {
 		s.CreateNotification(CreateNotificationArgs{
-			Name:       constants.NOTIFICATION_ACCEPT_USER,
+			Name:       model.NotificationTypeNameAcceptUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,

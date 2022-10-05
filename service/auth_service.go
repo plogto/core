@@ -115,6 +115,15 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 		}
 	}
 
+	plogAccount, _ := s.GetPlogAccount()
+
+	s.CreateNotification(CreateNotificationArgs{
+		Name:       model.NotificationTypeNameWelcome,
+		SenderID:   plogAccount.ID,
+		ReceiverID: newUser.ID,
+		Url:        "/" + plogAccount.Username,
+	})
+
 	return s.PrepareAuthToken(user)
 }
 

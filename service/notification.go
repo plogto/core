@@ -11,7 +11,7 @@ import (
 )
 
 type CreateNotificationArgs struct {
-	Name       string
+	Name       model.NotificationTypeName
 	SenderID   string
 	ReceiverID string
 	Url        string

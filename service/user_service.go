@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"os"
 
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/graph/model"
@@ -193,4 +194,9 @@ func (s *Service) PrepareUser(user *model.User) *model.User {
 	}
 
 	return user
+}
+
+func (s *Service) GetPlogAccount() (*model.User, error) {
+	username := os.Getenv("PLOG_ACCOUNT")
+	return s.Users.GetUserByUsername(username)
 }

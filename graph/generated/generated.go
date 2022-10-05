@@ -2828,9 +2828,18 @@ type Subscription {
   test(input: TestInput!): Test
 }
 `, BuiltIn: false},
-	{Name: "../schema/notification.graphqls", Input: `type NotificationType {
+	{Name: "../schema/notification.graphqls", Input: `enum NotificationTypeName {
+  WELCOME
+  LIKE_POST
+  REPLY_POST
+  LIKE_REPLY
+  FOLLOW_USER
+  ACCEPT_USER
+}
+
+type NotificationType {
   id: ID!
-  name: String!
+  name: NotificationTypeName!
   template: String!
 }
 
@@ -9396,9 +9405,9 @@ func (ec *executionContext) _NotificationType_name(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.NotificationTypeName)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNNotificationTypeName2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationTypeName(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9408,7 +9417,7 @@ func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type NotificationTypeName does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10201,9 +10210,9 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(model.PostStatus)
+	res := resTmp.(*model.PostStatus)
 	fc.Result = res
-	return ec.marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
+	return ec.marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22724,6 +22733,16 @@ func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋ
 	return ec._NotificationType(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNNotificationTypeName2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationTypeName(ctx context.Context, v interface{}) (model.NotificationTypeName, error) {
+	var res model.NotificationTypeName
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNNotificationTypeName2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationTypeName(ctx context.Context, sel ast.SelectionSet, v model.NotificationTypeName) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx context.Context, v interface{}) (model.OAuthGoogleInput, error) {
 	res, err := ec.unmarshalInputOAuthGoogleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -22753,13 +22772,19 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (model.PostStatus, error) {
-	var res model.PostStatus
+func (ec *executionContext) unmarshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (*model.PostStatus, error) {
+	var res = new(model.PostStatus)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v model.PostStatus) graphql.Marshaler {
+func (ec *executionContext) marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *model.PostStatus) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
 	return v
 }
 
