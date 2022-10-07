@@ -97,26 +97,26 @@ func main() {
 			token, _ := customMiddleware.StripBearerPrefixFromToken(initPayload.Authorization())
 			util.ParseJWTWithClaims(token, &claims)
 
-			if len(claims) > 0 {
-				user, err := users.GetUserByID(claims["jti"].(string))
+			// if len(claims) > 0 {
+			// 	user, err := users.GetUserByID(claims["jti"].(string))
 
-				if err != nil {
-					return nil, err
-				}
+			// 	if err != nil {
+			// 		return nil, err
+			// 	}
 
-				currentOnlineUser := &customMiddleware.OnlineUserContext{
-					User:      *user,
-					Token:     token,
-					SocketID:  util.RandomString(20),
-					UserAgent: "UserAgent",
-				}
+			// 	currentOnlineUser := &customMiddleware.OnlineUserContext{
+			// 		User:      *user,
+			// 		Token:     token,
+			// 		SocketID:  util.RandomString(20),
+			// 		UserAgent: "UserAgent",
+			// 	}
 
-				c := context.WithValue(ctx, constants.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
+			// 	c := context.WithValue(ctx, constants.CURRENT_ONLINE_USER_KEY, currentOnlineUser)
 
-				s.AddOnlineUser(c, currentOnlineUser)
+			// 	s.AddOnlineUser(c, currentOnlineUser)
 
-				return c, nil
-			}
+			// 	return c, nil
+			// }
 
 			return ctx, nil
 		},
