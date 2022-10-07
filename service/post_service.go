@@ -211,7 +211,15 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 }
 
 func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
-	return s.Posts.GetPostByURL(url)
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	post, err := s.Posts.GetPostByURL(url)
+
+	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, err
+	}
+
+	return post, err
 }
 
 func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PageInfoInput) (*model.Posts, error) {
