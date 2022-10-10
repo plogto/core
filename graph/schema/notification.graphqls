@@ -5,6 +5,7 @@ enum NotificationTypeName {
   LIKE_REPLY
   FOLLOW_USER
   ACCEPT_USER
+  MENTION_IN_POST
 }
 
 type NotificationType {

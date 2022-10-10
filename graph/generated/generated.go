@@ -519,7 +519,7 @@ type PostResolver interface {
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
 	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
-
+	Content(ctx context.Context, obj *model.Post) (*string, error)
 	Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error)
 
 	Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error)
@@ -2835,6 +2835,7 @@ type Subscription {
   LIKE_REPLY
   FOLLOW_USER
   ACCEPT_USER
+  MENTION_IN_POST
 }
 
 type NotificationType {
@@ -10472,7 +10473,7 @@ func (ec *executionContext) _Post_content(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Content, nil
+		return ec.resolvers.Post().Content(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10490,8 +10491,8 @@ func (ec *executionContext) fieldContext_Post_content(ctx context.Context, field
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -20383,9 +20384,22 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "content":
+			field := field
 
-			out.Values[i] = ec._Post_content(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_content(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "attachment":
 			field := field
 

@@ -13,3 +13,7 @@ func IsAdmin(user *model.User) bool {
 func IsUser(user *model.User) bool {
 	return len(user.ID) > 0 && user.Role == model.UserRoleUser
 }
+
+func IsUserExists(user *model.User) bool {
+	return len(user.ID) > 0
+}

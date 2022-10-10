@@ -10,3 +10,6 @@ const CURRENT_USER_KEY key = "CURRENT_USER"
 const CURRENT_ONLINE_USER_KEY key = "CURRENT_ONLINE_USER"
 
 var MB int64 = 1 << 20
+
+const MENTION_PATTERN = "@(\\w|_)+"
+const KEY_PATTERN = "(\\$\\$\\$___[0123456789abcdefg-]+___\\$\\$\\$)"
