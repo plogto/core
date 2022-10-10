@@ -1,4 +1,4 @@
-FROM golang:1.17-alpine AS build
+FROM golang:1.19-alpine AS build
 
 LABEL maintainer="Mohammad Mahdi <mahdineer@pm.me>"
 
