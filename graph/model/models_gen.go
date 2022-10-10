@@ -438,12 +438,13 @@ func (e CreditTransactionType) MarshalGQL(w io.Writer) {
 type NotificationTypeName string
 
 const (
-	NotificationTypeNameWelcome    NotificationTypeName = "WELCOME"
-	NotificationTypeNameLikePost   NotificationTypeName = "LIKE_POST"
-	NotificationTypeNameReplyPost  NotificationTypeName = "REPLY_POST"
-	NotificationTypeNameLikeReply  NotificationTypeName = "LIKE_REPLY"
-	NotificationTypeNameFollowUser NotificationTypeName = "FOLLOW_USER"
-	NotificationTypeNameAcceptUser NotificationTypeName = "ACCEPT_USER"
+	NotificationTypeNameWelcome       NotificationTypeName = "WELCOME"
+	NotificationTypeNameLikePost      NotificationTypeName = "LIKE_POST"
+	NotificationTypeNameReplyPost     NotificationTypeName = "REPLY_POST"
+	NotificationTypeNameLikeReply     NotificationTypeName = "LIKE_REPLY"
+	NotificationTypeNameFollowUser    NotificationTypeName = "FOLLOW_USER"
+	NotificationTypeNameAcceptUser    NotificationTypeName = "ACCEPT_USER"
+	NotificationTypeNameMentionInPost NotificationTypeName = "MENTION_IN_POST"
 )
 
 var AllNotificationTypeName = []NotificationTypeName{
@@ -453,11 +454,12 @@ var AllNotificationTypeName = []NotificationTypeName{
 	NotificationTypeNameLikeReply,
 	NotificationTypeNameFollowUser,
 	NotificationTypeNameAcceptUser,
+	NotificationTypeNameMentionInPost,
 }
 
 func (e NotificationTypeName) IsValid() bool {
 	switch e {
-	case NotificationTypeNameWelcome, NotificationTypeNameLikePost, NotificationTypeNameReplyPost, NotificationTypeNameLikeReply, NotificationTypeNameFollowUser, NotificationTypeNameAcceptUser:
+	case NotificationTypeNameWelcome, NotificationTypeNameLikePost, NotificationTypeNameReplyPost, NotificationTypeNameLikeReply, NotificationTypeNameFollowUser, NotificationTypeNameAcceptUser, NotificationTypeNameMentionInPost:
 		return true
 	}
 	return false

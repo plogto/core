@@ -65,6 +65,8 @@ models:
     fields:
       user:
         resolver: true
+      content:
+        resolver: true
       parent:
         resolver: true
       attachment:

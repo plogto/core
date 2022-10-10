@@ -73,6 +73,7 @@ func main() {
 		TicketMessageAttachments:              database.TicketMessageAttachments{DB: DB},
 		PostAttachments:                       database.PostAttachments{DB: DB},
 		PostTags:                              database.PostTags{DB: DB},
+		PostMentions:                          database.PostMentions{DB: DB},
 		LikedPosts:                            database.LikedPosts{DB: DB},
 		SavedPosts:                            database.SavedPosts{DB: DB},
 		InvitedUsers:                          database.InvitedUsers{DB: DB},

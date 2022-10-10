@@ -42,6 +42,11 @@ func (r *postResolver) User(ctx context.Context, obj *model.Post) (*model.User, 
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
+// Content is the resolver for the content field.
+func (r *postResolver) Content(ctx context.Context, obj *model.Post) (*string, error) {
+	return r.Service.GetPostContentByPostID(ctx, &obj.ID)
+}
+
 // Attachment is the resolver for the attachment field.
 func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error) {
 	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)

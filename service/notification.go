@@ -24,6 +24,12 @@ type RemovePostNotificationsArgs struct {
 	PostID     string
 }
 
+type CreatePostMentionNotificationsArgs struct {
+	UserIDs  []string
+	Post     model.Post
+	SenderID string
+}
+
 func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInput) (*model.Notifications, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
@@ -128,19 +134,6 @@ func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
 	return nil
 }
 
-func (s *Service) RemoveNotifications(args RemovePostNotificationsArgs) error {
-	DeletedAt := time.Now()
-	notification := &model.Notification{
-		ReceiverID: args.ReceiverID,
-		PostID:     &args.PostID,
-		DeletedAt:  &DeletedAt,
-	}
-
-	s.Notifications.RemovePostNotifications(notification)
-
-	return nil
-}
-
 func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
@@ -151,4 +144,18 @@ func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 	status, _ := s.Notifications.UpdateReadNotifications(user.ID)
 
 	return &status, nil
+}
+
+func (s *Service) CreatePostMentionNotifications(args CreatePostMentionNotificationsArgs) {
+	for _, receiverID := range args.UserIDs {
+		if receiverID != args.SenderID {
+			s.CreateNotification(CreateNotificationArgs{
+				Name:       model.NotificationTypeNameMentionInPost,
+				SenderID:   args.SenderID,
+				ReceiverID: receiverID,
+				Url:        "/p/" + args.Post.Url,
+				PostID:     &args.Post.ID,
+			})
+		}
+	}
 }
