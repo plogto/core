@@ -10,8 +10,8 @@ func IsTicketClosed(ticket *model.Ticket) bool {
 	return len(ticket.ID) > 0 && ticket.Status == model.TicketStatusClosed
 }
 
-func IsTicketApproved(ticket *model.Ticket) bool {
-	return len(ticket.ID) > 0 && ticket.Status == model.TicketStatusApproved
+func IsTicketAccepted(ticket *model.Ticket) bool {
+	return len(ticket.ID) > 0 && ticket.Status == model.TicketStatusAccepted
 }
 
 func IsUserAllowToUpdateTicket(user *model.User, ticket *model.Ticket) bool {
@@ -40,8 +40,8 @@ func ConvertTicketStatusToPermission(status model.TicketStatus) model.TicketPerm
 		return model.TicketPermissionOpen
 	case model.TicketStatusClosed:
 		return model.TicketPermissionClose
-	case model.TicketStatusApproved:
-		return model.TicketPermissionApprove
+	case model.TicketStatusAccepted:
+		return model.TicketPermissionAccept
 	case model.TicketStatusSolved:
 		return model.TicketPermissionSolve
 	default:

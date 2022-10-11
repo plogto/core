@@ -3010,14 +3010,14 @@ extend type Query {
 	{Name: "../schema/ticket.graphqls", Input: `enum TicketStatus {
   OPEN
   CLOSED
-  APPROVED
+  ACCEPTED
   SOLVED
 }
 
 enum TicketPermission {
   OPEN
   CLOSE
-  APPROVE
+  ACCEPT
   SOLVE
   NEW_MESSAGE
 }
