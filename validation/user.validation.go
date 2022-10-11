@@ -1,19 +1,22 @@
 package validation
 
-import "github.com/plogto/core/graph/model"
+import (
+	"github.com/plogto/core/graph/model"
+	"github.com/samber/lo"
+)
 
 func IsSuperAdmin(user *model.User) bool {
-	return len(user.ID) > 0 && user.Role == model.UserRoleSuperAdmin
+	return IsUserExists(user) && user.Role == model.UserRoleSuperAdmin
 }
 
 func IsAdmin(user *model.User) bool {
-	return len(user.ID) > 0 && user.Role == model.UserRoleAdmin
+	return IsUserExists(user) && user.Role == model.UserRoleAdmin
 }
 
 func IsUser(user *model.User) bool {
-	return len(user.ID) > 0 && user.Role == model.UserRoleUser
+	return IsUserExists(user) && user.Role == model.UserRoleUser
 }
 
 func IsUserExists(user *model.User) bool {
-	return len(user.ID) > 0
+	return user != nil && lo.IsNotEmpty(user.ID)
 }

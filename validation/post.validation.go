@@ -1,7 +1,10 @@
 package validation
 
-import "github.com/plogto/core/graph/model"
+import (
+	"github.com/plogto/core/graph/model"
+	"github.com/samber/lo"
+)
 
 func IsPostExists(post *model.Post) bool {
-	return len(post.ID) > 0
+	return post != nil && lo.IsNotEmpty(post.ID)
 }

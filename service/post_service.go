@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
@@ -291,8 +290,6 @@ func (s *Service) GetPostContentByPostID(ctx context.Context, id *string) (*stri
 	}
 
 	content := s.ParsePostContent(*post.Content)
-
-	fmt.Println(content)
 
 	return &content, err
 }
