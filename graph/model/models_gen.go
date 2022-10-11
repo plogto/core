@@ -581,7 +581,7 @@ type TicketPermission string
 const (
 	TicketPermissionOpen       TicketPermission = "OPEN"
 	TicketPermissionClose      TicketPermission = "CLOSE"
-	TicketPermissionApprove    TicketPermission = "APPROVE"
+	TicketPermissionAccept     TicketPermission = "ACCEPT"
 	TicketPermissionSolve      TicketPermission = "SOLVE"
 	TicketPermissionNewMessage TicketPermission = "NEW_MESSAGE"
 )
@@ -589,14 +589,14 @@ const (
 var AllTicketPermission = []TicketPermission{
 	TicketPermissionOpen,
 	TicketPermissionClose,
-	TicketPermissionApprove,
+	TicketPermissionAccept,
 	TicketPermissionSolve,
 	TicketPermissionNewMessage,
 }
 
 func (e TicketPermission) IsValid() bool {
 	switch e {
-	case TicketPermissionOpen, TicketPermissionClose, TicketPermissionApprove, TicketPermissionSolve, TicketPermissionNewMessage:
+	case TicketPermissionOpen, TicketPermissionClose, TicketPermissionAccept, TicketPermissionSolve, TicketPermissionNewMessage:
 		return true
 	}
 	return false
@@ -628,20 +628,20 @@ type TicketStatus string
 const (
 	TicketStatusOpen     TicketStatus = "OPEN"
 	TicketStatusClosed   TicketStatus = "CLOSED"
-	TicketStatusApproved TicketStatus = "APPROVED"
+	TicketStatusAccepted TicketStatus = "ACCEPTED"
 	TicketStatusSolved   TicketStatus = "SOLVED"
 )
 
 var AllTicketStatus = []TicketStatus{
 	TicketStatusOpen,
 	TicketStatusClosed,
-	TicketStatusApproved,
+	TicketStatusAccepted,
 	TicketStatusSolved,
 }
 
 func (e TicketStatus) IsValid() bool {
 	switch e {
-	case TicketStatusOpen, TicketStatusClosed, TicketStatusApproved, TicketStatusSolved:
+	case TicketStatusOpen, TicketStatusClosed, TicketStatusAccepted, TicketStatusSolved:
 		return true
 	}
 	return false
