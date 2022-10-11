@@ -3011,6 +3011,8 @@ extend type Query {
   OPEN
   CLOSED
   ACCEPTED
+  APPROVED
+  REJECTED
   SOLVED
 }
 
@@ -3018,6 +3020,8 @@ enum TicketPermission {
   OPEN
   CLOSE
   ACCEPT
+  APPROVE
+  REJECT
   SOLVE
   NEW_MESSAGE
 }
