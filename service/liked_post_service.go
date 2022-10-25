@@ -6,7 +6,7 @@ import (
 
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
-	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost, error) {
@@ -24,13 +24,13 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 
 	likedPost, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(user.ID, postID)
 
-	if util.IsEmpty(likedPost.ID) {
+	if !validation.IsLikedPostExists(likedPost) {
 		likedPost, err := s.LikedPosts.CreateLikedPost(&model.LikedPost{
 			UserID: user.ID,
 			PostID: postID,
 		})
 
-		if !util.IsEmpty(likedPost.ID) {
+		if validation.IsLikedPostExists(likedPost) {
 			var name = model.NotificationTypeNameLikePost
 			if post.ParentID != nil {
 				name = model.NotificationTypeNameLikeReply

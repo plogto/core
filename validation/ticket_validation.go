@@ -6,7 +6,7 @@ import (
 )
 
 func IsTicketExist(ticket *model.Ticket) bool {
-	return ticket != nil || lo.IsNotEmpty(ticket.ID)
+	return ticket != nil && lo.IsNotEmpty(ticket.ID)
 }
 
 func IsTicketOpen(ticket *model.Ticket) bool {

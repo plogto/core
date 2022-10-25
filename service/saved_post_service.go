@@ -7,6 +7,7 @@ import (
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost, error) {
@@ -23,7 +24,7 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost
 
 	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
 
-	if util.IsEmpty(savedPost.ID) {
+	if !validation.IsSavedPostExists(savedPost) {
 		savedPost := &model.SavedPost{
 			UserID: user.ID,
 			PostID: postID,
@@ -73,12 +74,12 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedP
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		isPostSaved, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
+		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
 
-		if util.IsEmpty(isPostSaved.ID) {
+		if validation.IsSavedPostExists(savedPost) {
 			return nil, nil
 		}
 
-		return isPostSaved, err
+		return savedPost, err
 	}
 }
