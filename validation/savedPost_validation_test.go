@@ -3,7 +3,7 @@ package validation
 import (
 	"testing"
 
-	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/fixtures"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,17 +21,17 @@ func TestIsSavedPostExists(t *testing.T) {
 		},
 		{
 			Expected: false,
-			Actual:   IsSavedPostExists(&model.SavedPost{}),
+			Actual:   IsSavedPostExists(fixtures.EmptySavedPost),
 			Message:  "Should return false if savedPost.ID is not exist",
 		},
 		{
 			Expected: true,
-			Actual:   IsSavedPostExists(&model.SavedPost{ID: "id"}),
+			Actual:   IsSavedPostExists(fixtures.SavedPostWithID),
 			Message:  "Should return true if savedPost is exist",
 		},
 	}
 
 	for _, value := range testData {
-		assert.Equal(t, value.Actual, value.Expected, value.Message)
+		assert.Equal(t, value.Expected, value.Actual, value.Message)
 	}
 }
