@@ -9,28 +9,12 @@ func IsTicketExist(ticket *model.Ticket) bool {
 	return ticket != nil && lo.IsNotEmpty(ticket.ID)
 }
 
-func IsTicketOpen(ticket *model.Ticket) bool {
-	return IsTicketExist(ticket) && ticket.Status == model.TicketStatusOpen
-}
-
-func IsTicketClosed(ticket *model.Ticket) bool {
-	return IsTicketExist(ticket) && ticket.Status == model.TicketStatusClosed
-}
-
-func IsTicketAccepted(ticket *model.Ticket) bool {
-	return IsTicketExist(ticket) && ticket.Status == model.TicketStatusAccepted
-}
-
-func IsTicketApproved(ticket *model.Ticket) bool {
-	return IsTicketExist(ticket) && ticket.Status == model.TicketStatusApproved
-}
-
-func IsTicketRejected(ticket *model.Ticket) bool {
-	return IsTicketExist(ticket) && ticket.Status == model.TicketStatusRejected
+func IsTicketOwner(user *model.User, ticket *model.Ticket) bool {
+	return IsTicketExist(ticket) && IsUserExists(user) && user.ID == ticket.UserID
 }
 
 func IsUserAllowToUpdateTicket(user *model.User, ticket *model.Ticket) bool {
-	return IsAdmin(user) || IsSuperAdmin(user) || user.ID == ticket.UserID
+	return IsTicketOwner(user, ticket) || IsAdmin(user) || IsSuperAdmin(user)
 }
 
 func CheckUserPermission(permissions []*model.TicketPermission, status model.TicketStatus) bool {
