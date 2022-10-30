@@ -76,7 +76,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedP
 	} else {
 		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
 
-		if validation.IsSavedPostExists(savedPost) {
+		if !validation.IsSavedPostExists(savedPost) {
 			return nil, nil
 		}
 
