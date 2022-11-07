@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/plogto/core/constants"
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -31,7 +32,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 			return nil, errors.New("access denied")
 		}
 
-		followingUser, _ := s.Users.GetUserByID(parentPost.UserID)
+		followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID)
 		if s.CheckUserAccess(user, followingUser) == bool(false) {
 			return nil, errors.New("access denied")
 		}
@@ -217,7 +218,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	parentPost, _ := s.Posts.GetPostByID(parentID)
-	followingUser, _ := s.Users.GetUserByID(parentPost.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID)
 
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
@@ -269,7 +270,7 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 
 	post, err := s.Posts.GetPostByID(*id)
 
-	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
 	}
 
@@ -285,11 +286,11 @@ func (s *Service) GetPostContentByPostID(ctx context.Context, id *string) (*stri
 
 	post, err := s.Posts.GetPostByID(*id)
 
-	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
 	}
 
-	content := s.ParsePostContent(*post.Content)
+	content := s.ParsePostContent(ctx, *post.Content)
 
 	return &content, err
 }
@@ -299,7 +300,7 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, er
 
 	post, err := s.Posts.GetPostByURL(url)
 
-	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
 	}
 
@@ -345,11 +346,11 @@ func (s *Service) ExtractUserIDsFromPostContent(content string) []string {
 	return userIDs
 }
 
-func (s *Service) ParsePostContent(content string) string {
+func (s *Service) ParsePostContent(ctx context.Context, content string) string {
 	r := regexp.MustCompile(constants.KEY_PATTERN)
 	userIDKeys := r.FindAllString(content, -1)
 	for _, userIDKey := range userIDKeys {
-		user, _ := s.Users.GetUserByID(strings.Trim(userIDKey, "$_"))
+		user, _ := graph.GetUserLoader(ctx).Load(strings.Trim(userIDKey, "$_"))
 		if validation.IsUserExists(user) {
 			content = strings.ReplaceAll(content, userIDKey, "@"+user.Username)
 		}

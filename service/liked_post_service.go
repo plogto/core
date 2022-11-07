@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/validation"
@@ -17,7 +18,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 	}
 
 	post, _ := s.Posts.GetPostByID(postID)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
@@ -66,7 +67,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := s.Posts.GetPostByID(postID)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
@@ -83,7 +84,7 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 	}
 
 	post, _ := s.Posts.GetPostByID(postID)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {

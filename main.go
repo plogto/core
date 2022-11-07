@@ -20,8 +20,9 @@ import (
 
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
+	graphDataloader "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/generated"
-	graph "github.com/plogto/core/graph/resolver"
+	graphResolver "github.com/plogto/core/graph/resolver"
 	customMiddleware "github.com/plogto/core/middleware"
 	"github.com/plogto/core/service"
 	"github.com/plogto/core/util"
@@ -35,6 +36,8 @@ func init() {
 
 func main() {
 	DB := database.New()
+
+	DB.AddQueryHook(database.DbLogger{})
 
 	defer DB.Close()
 
@@ -84,7 +87,7 @@ func main() {
 
 	s.OnlineUsers.DeleteAllOnlineUsers()
 
-	c := generated.Config{Resolvers: &graph.Resolver{Service: s}}
+	c := generated.Config{Resolvers: &graphResolver.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
 	queryHandler.AddTransport(transport.POST{})
 	queryHandler.AddTransport(transport.MultipartForm{
@@ -131,7 +134,7 @@ func main() {
 	queryHandler.Use(extension.Introspection{})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", queryHandler)
+	router.Handle("/query", graphDataloader.DataloaderMiddleware(DB, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))
