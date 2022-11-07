@@ -13,3 +13,6 @@ var MB int64 = 1 << 20
 
 const MENTION_PATTERN = "@(\\w|_)+"
 const KEY_PATTERN = "(\\$\\$\\$___[0123456789abcdefg-]+___\\$\\$\\$)"
+
+// loader keys
+const USER_LOADER_KEY = "USER_LOADER_KEY"

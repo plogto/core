@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -145,7 +146,7 @@ func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Co
 	var descriptionVariable DescriptionVariable
 	switch creditTransactionDescriptionVariableType {
 	case model.CreditTransactionDescriptionVariableTypeUser:
-		user, _ := s.Users.GetUserByID(contentID)
+		user, _ := graph.GetUserLoader(ctx).Load(contentID)
 		descriptionVariable = DescriptionVariable{
 			Content: user.FullName,
 			Url:     &user.Username,

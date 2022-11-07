@@ -5,6 +5,7 @@ import (
 	"errors"
 
 	"github.com/plogto/core/database"
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -20,7 +21,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*model.Connect
 		return nil, errors.New("can not follow yourself")
 	}
 
-	followingUser, _ := s.Users.GetUserByID(userID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(userID)
 	connection, _ := s.Connections.GetConnection(userID, user.ID)
 	if len(connection.ID) > 0 {
 		return connection, nil

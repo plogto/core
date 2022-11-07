@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/plogto/core/constants"
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 )
@@ -18,7 +19,7 @@ func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
 }
 
 func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	user, _ := s.Users.GetUserByID(id)
+	user, _ := graph.GetUserLoader(ctx).Load(id)
 
 	return s.PrepareUser(user), nil
 }

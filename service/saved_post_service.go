@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -17,7 +18,7 @@ func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost
 	}
 
 	post, _ := s.Posts.GetPostByID(postID)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
@@ -56,7 +57,7 @@ func (s *Service) GetSavedPostByID(ctx context.Context, id string) (*model.Saved
 	savedPost, _ := s.SavedPosts.GetSavedPostByID(id)
 	post, err := s.Posts.GetPostByID(savedPost.PostID)
 
-	if followingUser, err := s.Users.GetUserByID(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
 	}
 
@@ -70,7 +71,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedP
 	}
 
 	post, _ := s.Posts.GetPostByID(postID)
-	followingUser, _ := s.Users.GetUserByID(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
