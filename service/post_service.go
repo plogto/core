@@ -26,7 +26,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check parent post
 	var parentPost *model.Post
 	if input.ParentID != nil {
-		parentPost, _ = s.Posts.GetPostByID(*input.ParentID)
+		parentPost, _ = graph.GetPostLoader(ctx).Load(*input.ParentID)
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
@@ -108,7 +108,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Posts.GetPostByID(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
@@ -176,13 +176,13 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Posts.GetPostByID(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
 
 	if post.ParentID != nil {
-		parentPost, _ := s.Posts.GetPostByID(*post.ParentID)
+		parentPost, _ := graph.GetPostLoader(ctx).Load(*post.ParentID)
 
 		if parentPost != nil && len(parentPost.ID) > 0 {
 			// remove notification for reply
@@ -217,7 +217,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	parentPost, _ := s.Posts.GetPostByID(parentID)
+	parentPost, _ := graph.GetPostLoader(ctx).Load(parentID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID)
 
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
@@ -268,7 +268,7 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 		return nil, nil
 	}
 
-	post, err := s.Posts.GetPostByID(*id)
+	post, err := graph.GetPostLoader(ctx).Load(*id)
 
 	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
@@ -284,7 +284,7 @@ func (s *Service) GetPostContentByPostID(ctx context.Context, id *string) (*stri
 		return nil, nil
 	}
 
-	post, err := s.Posts.GetPostByID(*id)
+	post, err := graph.GetPostLoader(ctx).Load(*id)
 
 	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, err
