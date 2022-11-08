@@ -17,7 +17,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := s.Posts.GetPostByID(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
@@ -66,7 +66,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, _ := s.Posts.GetPostByID(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil
@@ -83,7 +83,7 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 		return nil, nil
 	}
 
-	post, _ := s.Posts.GetPostByID(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 	if s.CheckUserAccess(user, followingUser) == bool(false) {
 		return nil, nil

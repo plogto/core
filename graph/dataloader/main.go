@@ -13,16 +13,22 @@ import (
 func DataloaderMiddleware(db *pg.DB, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userLoader := PrepareUserLoader(db)
+		postLoader := PreparePostLoader(db)
 
 		ctxUser := context.WithValue(r.Context(), constants.USER_LOADER_KEY, &userLoader)
+		ctxPost := context.WithValue(ctxUser, constants.POST_LOADER_KEY, &postLoader)
 
-		ctx := r.WithContext(ctxUser)
+		ctx := r.WithContext(ctxPost)
 		next.ServeHTTP(w, ctx)
 	})
 }
 
 func GetUserLoader(ctx context.Context) *UserLoader {
 	return ctx.Value(constants.USER_LOADER_KEY).(*UserLoader)
+}
+
+func GetPostLoader(ctx context.Context) *PostLoader {
+	return ctx.Value(constants.POST_LOADER_KEY).(*PostLoader)
 }
 
 func PrepareUserLoader(db *pg.DB) UserLoader {
@@ -48,6 +54,36 @@ func PrepareUserLoader(db *pg.DB) UserLoader {
 
 			for i, id := range ids {
 				result[i] = u[id]
+			}
+
+			return result, nil
+		},
+	}
+}
+
+func PreparePostLoader(db *pg.DB) PostLoader {
+	return PostLoader{
+		maxBatch: 100,
+		wait:     1 * time.Millisecond,
+		fetch: func(ids []string) ([]*model.Post, []error) {
+			var posts []*model.Post
+
+			err := db.Model(&posts).Where("id in (?)", pg.In(ids)).Select()
+
+			if err != nil {
+				return nil, []error{err}
+			}
+
+			p := make(map[string]*model.Post, len(posts))
+
+			for _, post := range posts {
+				p[post.ID] = post
+			}
+
+			result := make([]*model.Post, len(ids))
+
+			for i, id := range ids {
+				result[i] = p[id]
 			}
 
 			return result, nil
