@@ -14,15 +14,18 @@ func DataloaderMiddleware(db *pg.DB, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userLoader := PrepareUserLoader(db)
 		postLoader := PreparePostLoader(db)
+		tagLoader := PrepareTagLoader(db)
 
 		ctxUser := context.WithValue(r.Context(), constants.USER_LOADER_KEY, &userLoader)
 		ctxPost := context.WithValue(ctxUser, constants.POST_LOADER_KEY, &postLoader)
+		ctxTag := context.WithValue(ctxPost, constants.TAG_LOADER_KEY, &tagLoader)
 
-		ctx := r.WithContext(ctxPost)
+		ctx := r.WithContext(ctxTag)
 		next.ServeHTTP(w, ctx)
 	})
 }
 
+// get functions
 func GetUserLoader(ctx context.Context) *UserLoader {
 	return ctx.Value(constants.USER_LOADER_KEY).(*UserLoader)
 }
@@ -31,6 +34,11 @@ func GetPostLoader(ctx context.Context) *PostLoader {
 	return ctx.Value(constants.POST_LOADER_KEY).(*PostLoader)
 }
 
+func GetTagLoader(ctx context.Context) *TagLoader {
+	return ctx.Value(constants.TAG_LOADER_KEY).(*TagLoader)
+}
+
+// prepare functions
 func PrepareUserLoader(db *pg.DB) UserLoader {
 	return UserLoader{
 		maxBatch: 100,
@@ -84,6 +92,36 @@ func PreparePostLoader(db *pg.DB) PostLoader {
 
 			for i, id := range ids {
 				result[i] = p[id]
+			}
+
+			return result, nil
+		},
+	}
+}
+
+func PrepareTagLoader(db *pg.DB) TagLoader {
+	return TagLoader{
+		maxBatch: 100,
+		wait:     1 * time.Millisecond,
+		fetch: func(ids []string) ([]*model.Tag, []error) {
+			var tags []*model.Tag
+
+			err := db.Model(&tags).Where("id in (?)", pg.In(ids)).Select()
+
+			if err != nil {
+				return nil, []error{err}
+			}
+
+			t := make(map[string]*model.Tag, len(tags))
+
+			for _, post := range tags {
+				t[post.ID] = post
+			}
+
+			result := make([]*model.Tag, len(ids))
+
+			for i, id := range ids {
+				result[i] = t[id]
 			}
 
 			return result, nil

@@ -17,3 +17,4 @@ const KEY_PATTERN = "(\\$\\$\\$___[0123456789abcdefg-]+___\\$\\$\\$)"
 // loader keys
 const USER_LOADER_KEY = "USER_LOADER_KEY"
 const POST_LOADER_KEY = "POST_LOADER_KEY"
+const TAG_LOADER_KEY = "TAG_LOADER_KEY"

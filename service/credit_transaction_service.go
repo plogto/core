@@ -153,7 +153,7 @@ func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Co
 			Image:   user.Avatar,
 		}
 	case model.CreditTransactionDescriptionVariableTypeTag:
-		tag, _ := s.Tags.GetTagByID(contentID)
+		tag, _ := graph.GetTagLoader(ctx).Load(contentID)
 		descriptionVariable = DescriptionVariable{
 			Content: tag.Name,
 			Url:     &tag.Name,

@@ -61,10 +61,6 @@ func (t *Tags) GetTagByName(value string) (*model.Tag, error) {
 	return &tag, err
 }
 
-func (t *Tags) GetTagByID(id string) (*model.Tag, error) {
-	return t.GetTagByField("id", id)
-}
-
 func (t *Tags) CreateTag(tag *model.Tag) (*model.Tag, error) {
 	_, err := t.DB.Model(tag).Where("name = ?name").Group("id").Returning("*").SelectOrInsert()
 	return tag, err
