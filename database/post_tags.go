@@ -44,9 +44,9 @@ func (p *PostTags) GetTagsOrderByCountTags(limit int) (*model.Tags, error) {
 }
 
 func (p *PostTags) CountPostTagsByTagID(tagId string) (*int, error) {
-	var postTag []*model.PostTag
+	var postTags []*model.PostTag
 
-	totalCount, err := p.DB.Model(&postTag).
+	totalCount, err := p.DB.Model(&postTags).
 		Join("INNER JOIN posts ON posts.id = post_tag.post_id").
 		Join("INNER JOIN users ON users.id = posts.user_id").
 		Where("post_tag.tag_id = ?", tagId).
@@ -56,4 +56,14 @@ func (p *PostTags) CountPostTagsByTagID(tagId string) (*int, error) {
 		Count()
 
 	return &totalCount, err
+}
+
+func (p *PostTags) DeletePostTagsByPostID(postID string) error {
+	var postTags []*model.PostTag
+
+	_, err := p.DB.Model(&postTags).
+		Where("post_id = ?", postID).
+		Where("deleted_at is ?", nil).Delete()
+
+	return err
 }

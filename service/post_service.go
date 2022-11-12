@@ -153,6 +153,9 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 				Post:     *post,
 			})
 
+			s.PostTags.DeletePostTagsByPostID(post.ID)
+			s.SaveTagsPost(post.ID, content)
+
 			post.Content = &content
 			didUpdate = true
 		}
