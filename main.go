@@ -37,8 +37,6 @@ func init() {
 func main() {
 	DB := database.New()
 
-	DB.AddQueryHook(database.DbLogger{})
-
 	defer DB.Close()
 
 	port := os.Getenv("PORT")
