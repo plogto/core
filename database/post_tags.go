@@ -27,6 +27,7 @@ func (p *PostTags) GetTagsOrderByCountTags(limit int) (*model.Tags, error) {
 		Where("users.is_private is false").
 		GroupExpr("post_tags.tag_id, tag.id").
 		Order("count DESC").
+		Order("tag.created_at DESC").
 		Limit(limit).
 		Select()
 
