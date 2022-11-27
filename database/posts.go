@@ -72,17 +72,23 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 	}, err
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(parentID string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(userID, parentID string, limit int, after string) (*model.Posts, error) {
 	var posts []*model.Post
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	// TODO: refactor query (show post for public and following users)
 	query := p.DB.Model(&posts).
-		Join("INNER JOIN users ON users.id = post.user_id").
+		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
+		Join("INNER JOIN users ON users.id = connections.following_id OR users.id = ?", userID).
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.Where("connections.status = ?", 2).
+				WhereOr("users.is_private = ?", false)
+			return q, nil
+		}).
+		Where("post.user_id = users.id").
 		Where("post.parent_id = ?", parentID).
+		Where("connections.deleted_at is ?", nil).
 		Where("post.deleted_at is ?", nil).
-		Where("users.is_private is false").
 		Order("post.created_at DESC")
 
 	if len(after) > 0 {
