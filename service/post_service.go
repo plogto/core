@@ -227,7 +227,7 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*mod
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
-		return s.Posts.GetPostsByParentIDAndPageInfo(parentPost.ID, 50, "")
+		return s.Posts.GetPostsByParentIDAndPageInfo(user.ID, parentPost.ID, 50, "")
 	}
 }
 
