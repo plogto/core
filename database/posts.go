@@ -73,13 +73,15 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 }
 
 func (p *Posts) GetPostsByParentIDAndPageInfo(userID, parentID string, limit int, after string) (*model.Posts, error) {
+	var followingPosts []*model.Post
+	var publicAndUserPosts []*model.Post
 	var posts []*model.Post
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	query := p.DB.Model(&posts).
+	followingPostsQuery := p.DB.Model(&followingPosts).
 		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
-		Join("INNER JOIN users ON users.id = connections.following_id OR users.id = ?", userID).
+		Join("INNER JOIN users ON users.id = connections.following_id").
 		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
 			q = q.Where("connections.status = ?", 2).
 				WhereOr("users.is_private = ?", false)
@@ -91,11 +93,25 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(userID, parentID string, limit int
 		Where("post.deleted_at is ?", nil).
 		Order("post.created_at DESC")
 
+	publicAndUserPostsQuery := p.DB.Model(&publicAndUserPosts).
+		Join("INNER JOIN users ON users.id = post.user_id").
+		Where("post.parent_id = ?", parentID).
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.Where("post.user_id = ?", userID).
+				WhereOr("users.is_private = ?", false)
+			return q, nil
+		}).
+		Where("post.deleted_at is ?", nil)
+
+	publicAndUserPostsQuery.Union(followingPostsQuery)
+
+	query := p.DB.Model(&posts).With("posts", publicAndUserPostsQuery)
+
 	if len(after) > 0 {
 		query.Where("post.created_at < ?", after)
 	}
 
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, err := query.Limit(limit).Order("post.created_at DESC").SelectAndCount()
 
 	for _, value := range posts {
 		edges = append(edges, &model.PostsEdge{Node: &model.Post{
