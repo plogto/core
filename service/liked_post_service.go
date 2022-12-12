@@ -68,7 +68,8 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+
+	if s.CheckUserAccess(user, followingUser) == bool(false) || !validation.IsUserExists(user) {
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
