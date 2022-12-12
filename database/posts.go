@@ -72,7 +72,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 	}, err
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(userID, parentID string, limit int, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(userID *string, parentID string, limit int, after string) (*model.Posts, error) {
 	var followingPosts []*model.Post
 	var publicAndUserPosts []*model.Post
 	var posts []*model.Post

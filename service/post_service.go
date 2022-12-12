@@ -227,7 +227,11 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*mod
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
-		return s.Posts.GetPostsByParentIDAndPageInfo(user.ID, parentPost.ID, 50, "")
+		if validation.IsUserExists(user) {
+			return s.Posts.GetPostsByParentIDAndPageInfo(&user.ID, parentPost.ID, 50, "")
+		} else {
+			return s.Posts.GetPostsByParentIDAndPageInfo(nil, parentPost.ID, 50, "")
+		}
 	}
 }
 
