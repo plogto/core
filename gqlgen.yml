@@ -100,6 +100,12 @@ models:
         resolver: true
       post:
         resolver: true
+  LikedPostsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   SavedPost:
     model: github.com/plogto/core/graph/model.SavedPost
     fields:

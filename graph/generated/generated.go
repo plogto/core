@@ -46,6 +46,7 @@ type ResolverRoot interface {
 	InvitedUser() InvitedUserResolver
 	InvitedUsersEdge() InvitedUsersEdgeResolver
 	LikedPost() LikedPostResolver
+	LikedPostsEdge() LikedPostsEdgeResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
 	NotificationsEdge() NotificationsEdgeResolver
@@ -481,6 +482,10 @@ type InvitedUsersEdgeResolver interface {
 type LikedPostResolver interface {
 	User(ctx context.Context, obj *model.LikedPost) (*model.User, error)
 	Post(ctx context.Context, obj *model.LikedPost) (*model.Post, error)
+}
+type LikedPostsEdgeResolver interface {
+	Cursor(ctx context.Context, obj *model.LikedPostsEdge) (string, error)
+	Node(ctx context.Context, obj *model.LikedPostsEdge) (*model.LikedPost, error)
 }
 type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
@@ -2786,10 +2791,7 @@ type LikedPosts {
 }
 
 extend type Query {
-  getLikedPostsByPostId(
-    postId: String!
-    pageInfoInput: PageInfoInput
-  ): LikedPosts
+  getLikedPostsByPostId(postId: ID!, pageInfoInput: PageInfoInput): LikedPosts
 }
 
 extend type Mutation {
@@ -3659,7 +3661,7 @@ func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.C
 	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7343,7 +7345,7 @@ func (ec *executionContext) _LikedPostsEdge_cursor(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
+		return ec.resolvers.LikedPostsEdge().Cursor(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7364,8 +7366,8 @@ func (ec *executionContext) fieldContext_LikedPostsEdge_cursor(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "LikedPostsEdge",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -7387,7 +7389,7 @@ func (ec *executionContext) _LikedPostsEdge_node(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
+		return ec.resolvers.LikedPostsEdge().Node(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7405,8 +7407,8 @@ func (ec *executionContext) fieldContext_LikedPostsEdge_node(ctx context.Context
 	fc = &graphql.FieldContext{
 		Object:     "LikedPostsEdge",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -19761,16 +19763,42 @@ func (ec *executionContext) _LikedPostsEdge(ctx context.Context, sel ast.Selecti
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("LikedPostsEdge")
 		case "cursor":
+			field := field
 
-			out.Values[i] = ec._LikedPostsEdge_cursor(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LikedPostsEdge_cursor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "node":
+			field := field
 
-			out.Values[i] = ec._LikedPostsEdge_node(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._LikedPostsEdge_node(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

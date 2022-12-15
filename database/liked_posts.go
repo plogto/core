@@ -66,6 +66,13 @@ func (l *LikedPosts) GetLikedPostByUserIDAndPostID(userID, postID string) (*mode
 	return &likedPost, err
 }
 
+func (l *LikedPosts) GetLikedPostByID(id string) (*model.LikedPost, error) {
+	var likedPost model.LikedPost
+	err := l.DB.Model(&likedPost).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+
+	return &likedPost, err
+}
+
 func (l *LikedPosts) DeleteLikedPostByID(id string) (*model.LikedPost, error) {
 	DeletedAt := time.Now()
 	var likedPost = &model.LikedPost{
