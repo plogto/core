@@ -97,3 +97,21 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 		return isPostLiked, err
 	}
 }
+
+func (s *Service) GetLikedPostByID(ctx context.Context, id *string) (*model.LikedPost, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	if id == nil || !validation.IsUserExists(user) {
+		return nil, nil
+	}
+
+	likedPost, err := s.LikedPosts.GetLikedPostByID(*id)
+	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID)
+
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+		return nil, err
+	}
+
+	return likedPost, err
+
+}
