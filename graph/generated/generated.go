@@ -304,6 +304,7 @@ type ComplexityRoot struct {
 		GetPostByURL                 func(childComplexity int, url string) int
 		GetPostsByTagName            func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
 		GetPostsByUsername           func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
+		GetRepliesByUsername         func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetSavedPosts                func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetTagByTagName              func(childComplexity int, tagName string) int
 		GetTicketMessagesByTicketURL func(childComplexity int, ticketURL string, pageInfo *model.PageInfoInput) int
@@ -547,6 +548,7 @@ type QueryResolver interface {
 	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfoInput *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
 	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
@@ -1832,6 +1834,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
 
+	case "Query.getRepliesByUsername":
+		if e.complexity.Query.GetRepliesByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getRepliesByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetRepliesByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+
 	case "Query.getSavedPosts":
 		if e.complexity.Query.GetSavedPosts == nil {
 			break
@@ -2940,6 +2954,7 @@ input editPostInput {
 
 extend type Query {
   getPostsByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
+  getRepliesByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
   getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfoInput: PageInfoInput): Posts
@@ -3734,6 +3749,30 @@ func (ec *executionContext) field_Query_getPostsByTagName_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_Query_getPostsByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfoInput"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfoInput"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getRepliesByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -11730,6 +11769,66 @@ func (ec *executionContext) fieldContext_Query_getPostsByUsername(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getPostsByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getRepliesByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getRepliesByUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetRepliesByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Posts)
+	fc.Result = res
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getRepliesByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getRepliesByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -20846,6 +20945,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getPostsByUsername(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getRepliesByUsername":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getRepliesByUsername(ctx, field)
 				return res
 			}
 
