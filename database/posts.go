@@ -72,6 +72,50 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 	}, err
 }
 
+func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(userID string, limit int, after string) (*model.Posts, error) {
+	var posts []*model.Post
+	var edges []*model.PostsEdge
+	var endCursor string
+
+	query := p.DB.Model(&posts).
+		Where("user_id = ?", userID).
+		Where("deleted_at is ?", nil).
+		Where("parent_id is not ?", nil).
+		Order("created_at DESC")
+
+	if len(after) > 0 {
+		query.Where("created_at < ?", after)
+	}
+
+	totalCount, err := query.Limit(limit).SelectAndCount()
+
+	for _, value := range posts {
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+			ID:        value.ID,
+			ParentID:  value.ParentID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
+	return &model.Posts{
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
+	}, err
+}
+
 func (p *Posts) GetPostsByParentIDAndPageInfo(userID *string, parentID string, limit int, after string) (*model.Posts, error) {
 	var followingPosts []*model.Post
 	var publicAndUserPosts []*model.Post

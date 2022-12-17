@@ -252,6 +252,23 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 	}
 }
 
+func (s *Service) GetRepliesByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.Posts, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+	followingUser, err := s.Users.GetUserByUsername(username)
+
+	if err != nil {
+		return nil, errors.New("user not found")
+	} else {
+		if s.CheckUserAccess(user, followingUser) == bool(false) {
+			return nil, errors.New("access denied")
+		}
+
+		pageInfoInput := util.ExtractPageInfo(input)
+
+		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(followingUser.ID, *pageInfoInput.First, *pageInfoInput.After)
+	}
+}
+
 func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PageInfoInput) (*model.Posts, error) {
 	tag, err := s.Tags.GetTagByName(tagName)
 

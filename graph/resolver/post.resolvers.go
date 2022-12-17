@@ -88,6 +88,11 @@ func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string,
 	return r.Service.GetPostsByUsername(ctx, username, pageInfoInput)
 }
 
+// GetRepliesByUsername is the resolver for the getRepliesByUsername field.
+func (r *queryResolver) GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetRepliesByUsername(ctx, username, pageInfoInput)
+}
+
 // GetPostsByTagName is the resolver for the getPostsByTagName field.
 func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
 	return r.Service.GetPostsByTagName(ctx, tagName, pageInfoInput)
