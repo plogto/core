@@ -286,15 +286,20 @@ func (p *Posts) GetExplorePostsByPageInfo(limit int, after string) (*model.Posts
 
 	query := p.DB.Model(&posts).
 		Join("INNER JOIN users ON users.id = post.user_id").
+		Join("INNER JOIN post_tags ON post_tags.post_id = post.id").
 		Where("post.parent_id is ?", nil).
 		Where("users.is_private = ?", false).
-		Where("post.deleted_at is ?", nil)
+		Where("post.deleted_at is ?", nil).
+		Where("post_tags.id is not ?", nil)
 
 	if len(after) > 0 {
 		query.Where("post.created_at < ?", after)
 	}
 
-	totalCount, err := query.Limit(limit).Order("post.created_at DESC").SelectAndCount()
+	totalCount, err := query.Limit(limit).
+		Order("post.created_at DESC").
+		Group("post.id").
+		SelectAndCount()
 
 	for _, value := range posts {
 		edges = append(edges, &model.PostsEdge{Node: &model.Post{
