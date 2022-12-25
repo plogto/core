@@ -8,5 +8,5 @@ type File {
 }
 
 extend type Mutation {
-  singleUploadFile(file: Upload!): File
+  uploadFiles(files: [Upload!]!): [File]
 }

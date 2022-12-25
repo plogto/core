@@ -11,7 +11,7 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-// SingleUploadFile is the resolver for the singleUploadFile field.
-func (r *mutationResolver) SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error) {
-	return r.Service.SingleUploadFile(ctx, file)
+// UploadFiles is the resolver for the uploadFiles field.
+func (r *mutationResolver) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error) {
+	return r.Service.UploadFiles(ctx, files)
 }
