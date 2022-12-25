@@ -9,6 +9,7 @@ import (
 
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 	"google.golang.org/api/idtoken"
 )
 
@@ -116,13 +117,14 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 	}
 
 	plogAccount, _ := s.GetPlogAccount()
-
-	s.CreateNotification(CreateNotificationArgs{
-		Name:       model.NotificationTypeNameWelcome,
-		SenderID:   plogAccount.ID,
-		ReceiverID: newUser.ID,
-		Url:        "/" + plogAccount.Username,
-	})
+	if validation.IsUserExists(plogAccount) {
+		s.CreateNotification(CreateNotificationArgs{
+			Name:       model.NotificationTypeNameWelcome,
+			SenderID:   plogAccount.ID,
+			ReceiverID: newUser.ID,
+			Url:        "/" + plogAccount.Username,
+		})
+	}
 
 	return s.PrepareAuthToken(user)
 }

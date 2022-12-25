@@ -65,6 +65,16 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 	return nil, nil
 }
 
+func (s *Service) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error) {
+	var uploadedFiles []*model.File
+	for _, file := range files {
+		uploadedFile, _ := s.SingleUploadFile(ctx, *file)
+		uploadedFiles = append(uploadedFiles, uploadedFile)
+	}
+
+	return uploadedFiles, nil
+}
+
 func (s *Service) UploadImage(fileName string, fileSize int64) {
 	fileBytes := util.ReadImage(fileName, fileSize)
 
