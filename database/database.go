@@ -26,5 +26,6 @@ func New() *pg.DB {
 		panic(err)
 	}
 
+	opt.PoolSize = 40
 	return pg.Connect(opt)
 }
