@@ -7,6 +7,7 @@ import (
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 	"github.com/plogto/core/validation"
 )
 
@@ -74,6 +75,23 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 	} else {
 		// TODO: add inputPageInfo
 		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(postID, 50, "")
+	}
+}
+
+func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.LikedPosts, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+	followingUser, err := s.Users.GetUserByUsername(username)
+
+	if err != nil {
+		return nil, errors.New("user not found")
+	} else {
+		if s.CheckUserAccess(user, followingUser) == bool(false) {
+			return nil, errors.New("access denied")
+		}
+
+		pageInfo := util.ExtractPageInfo(input)
+
+		return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(followingUser.ID, *pageInfo.First, *pageInfo.After)
 	}
 }
 
