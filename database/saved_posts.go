@@ -77,11 +77,17 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, 
 		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
 	}
 
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
 	return &model.SavedPosts{
 		TotalCount: &totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
 	}, err
 }
