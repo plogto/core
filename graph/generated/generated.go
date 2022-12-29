@@ -299,7 +299,8 @@ type ComplexityRoot struct {
 		GetFollowersByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetFollowingByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetInvitedUsers              func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetLikedPostsByPostID        func(childComplexity int, postID string, pageInfoInput *model.PageInfoInput) int
+		GetLikedPostsByPostID        func(childComplexity int, postID string, pageInfo *model.PageInfoInput) int
+		GetLikedPostsByUsername      func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetNotifications             func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetPostByURL                 func(childComplexity int, url string) int
 		GetPostsByTagName            func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
@@ -545,7 +546,8 @@ type QueryResolver interface {
 	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetCreditTransactions(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.CreditTransactions, error)
 	GetInvitedUsers(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.InvitedUsers, error)
-	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfoInput *model.PageInfoInput) (*model.LikedPosts, error)
+	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
+	GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
@@ -1784,7 +1786,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(string), args["pageInfo"].(*model.PageInfoInput)), true
+
+	case "Query.getLikedPostsByUsername":
+		if e.complexity.Query.GetLikedPostsByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getLikedPostsByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetLikedPostsByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getNotifications":
 		if e.complexity.Query.GetNotifications == nil {
@@ -2805,7 +2819,11 @@ type LikedPosts {
 }
 
 extend type Query {
-  getLikedPostsByPostId(postId: ID!, pageInfoInput: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(postId: ID!, pageInfo: PageInfoInput): LikedPosts
+  getLikedPostsByUsername(
+    username: String!
+    pageInfo: PageInfoInput
+  ): LikedPosts
 }
 
 extend type Mutation {
@@ -3683,14 +3701,38 @@ func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.C
 	}
 	args["postId"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getLikedPostsByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -11607,7 +11649,7 @@ func (ec *executionContext) _Query_getLikedPostsByPostId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11647,6 +11689,66 @@ func (ec *executionContext) fieldContext_Query_getLikedPostsByPostId(ctx context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getLikedPostsByPostId_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getLikedPostsByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getLikedPostsByUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetLikedPostsByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.LikedPosts)
+	fc.Result = res
+	return ec.marshalOLikedPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getLikedPostsByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_LikedPosts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_LikedPosts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_LikedPosts_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type LikedPosts", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getLikedPostsByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -20905,6 +21007,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getLikedPostsByPostId(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getLikedPostsByUsername":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getLikedPostsByUsername(ctx, field)
 				return res
 			}
 

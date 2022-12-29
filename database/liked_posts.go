@@ -66,6 +66,62 @@ func (l *LikedPosts) GetLikedPostByUserIDAndPostID(userID, postID string) (*mode
 	return &likedPost, err
 }
 
+func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(userID string, limit int, after string) (*model.LikedPosts, error) {
+	var likedPosts []*model.LikedPost
+	var edges []*model.LikedPostsEdge
+	var endCursor string
+
+	query := l.DB.Model(&likedPosts).
+		Join("INNER JOIN posts ON posts.id = liked_post.post_id").
+		Join("INNER JOIN users ON users.id = posts.user_id").
+		Join("INNER JOIN connections ON connections.following_id = posts.user_id").
+		Where("liked_post.user_id = ?", userID).
+		Where("liked_post.deleted_at is ?", nil).
+		Where("posts.deleted_at is ?", nil).
+		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
+			q = q.Where("users.id = ?", userID).
+				WhereOr("connections.status = ?", 2).
+				WhereOr("users.is_private = ?", false)
+			return q, nil
+		}).
+		Where("connections.deleted_at is ?", nil).
+		GroupExpr("liked_post.id, posts.id")
+
+	if len(after) > 0 {
+		query.Where("liked_post.created_at < ?", after)
+	}
+
+	totalCount, err :=
+		query.Limit(limit).Order("liked_post.created_at DESC").SelectAndCount()
+
+	for _, value := range likedPosts {
+		edges = append(edges, &model.LikedPostsEdge{Node: &model.LikedPost{
+			ID:        value.ID,
+			UserID:    value.UserID,
+			PostID:    value.PostID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > limit {
+		hasNextPage = true
+	}
+
+	return &model.LikedPosts{
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
+	}, err
+}
+
 func (l *LikedPosts) GetLikedPostByID(id string) (*model.LikedPost, error) {
 	var likedPost model.LikedPost
 	err := l.DB.Model(&likedPost).Where("id = ?", id).Where("deleted_at is ?", nil).First()
