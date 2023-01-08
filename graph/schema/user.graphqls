@@ -35,9 +35,9 @@ type User {
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int
-  followingCount: Int!
-  followersCount: Int!
-  followRequestsCount: Int!
+  followingCount: TotalCount!
+  followersCount: TotalCount!
+  followRequestsCount: TotalCount!
   postsCount: Int!
   createdAt: Time
   updatedAt: Time
@@ -48,7 +48,7 @@ type UsersEdge {
 }
 
 type Users {
-  edges: [UsersEdge]
+  edges: [UsersEdge]!
 }
 
 input EditUserInput {

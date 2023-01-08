@@ -11,7 +11,7 @@ type TagsEdge {
 }
 
 type Tags {
-  edges: [TagsEdge]
+  edges: [TagsEdge]!
 }
 
 extend type Query {

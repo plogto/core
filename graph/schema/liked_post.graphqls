@@ -13,7 +13,7 @@ type LikedPostsEdge {
 
 type LikedPosts {
   totalCount: Int
-  edges: [LikedPostsEdge]
+  edges: [LikedPostsEdge]!
   pageInfo: PageInfo!
 }
 

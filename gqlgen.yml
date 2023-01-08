@@ -41,6 +41,18 @@ autobind: []
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+
+  UUID:
+    model:
+      - github.com/plogto/core/db.UUID
+  TotalCount:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int64
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -82,11 +94,17 @@ models:
   File:
     model: github.com/plogto/core/graph/model.File
   Connection:
-    model: github.com/plogto/core/graph/model.Connection
+    model: github.com/plogto/core/db.Connection
     fields:
       following:
         resolver: true
       follower:
+        resolver: true
+  ConnectionsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
         resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag

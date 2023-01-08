@@ -7,6 +7,8 @@ import (
 	"io"
 	"strconv"
 	"time"
+
+	"github.com/plogto/core/db"
 )
 
 type AddTicketMessageInput struct {
@@ -30,14 +32,14 @@ type ChangePasswordInput struct {
 }
 
 type Connections struct {
-	TotalCount *int               `json:"totalCount"`
+	TotalCount *int64             `json:"totalCount"`
 	Edges      []*ConnectionsEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 }
 
 type ConnectionsEdge struct {
-	Cursor string      `json:"cursor"`
-	Node   *Connection `json:"node"`
+	Cursor string         `json:"cursor"`
+	Node   *db.Connection `json:"node"`
 }
 
 type CreateTicketInput struct {

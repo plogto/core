@@ -67,7 +67,7 @@ type CreditTransactionsEdge {
 
 type CreditTransactions {
   totalCount: Int
-  edges: [CreditTransactionsEdge]
+  edges: [CreditTransactionsEdge]!
   pageInfo: PageInfo!
 }
 

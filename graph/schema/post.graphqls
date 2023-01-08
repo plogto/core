@@ -27,7 +27,7 @@ type PostsEdge {
 
 type Posts {
   totalCount: Int
-  edges: [PostsEdge]
+  edges: [PostsEdge]!
   pageInfo: PageInfo!
 }
 

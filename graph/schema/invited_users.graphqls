@@ -13,7 +13,7 @@ type InvitedUsersEdge {
 
 type InvitedUsers {
   totalCount: Int
-  edges: [InvitedUsersEdge]
+  edges: [InvitedUsersEdge]!
   pageInfo: PageInfo!
 }
 

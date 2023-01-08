@@ -34,7 +34,7 @@ type NotificationsEdge {
 
 type Notifications {
   totalCount: Int
-  edges: [NotificationsEdge]
+  edges: [NotificationsEdge]!
   unreadNotificationsCount: Int
   pageInfo: PageInfo!
 }
