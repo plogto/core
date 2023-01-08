@@ -7,48 +7,61 @@ package graph
 import (
 	"context"
 
+	"github.com/plogto/core/constants"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 // Following is the resolver for the following field.
-func (r *connectionResolver) Following(ctx context.Context, obj *model.Connection) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.FollowingID)
+func (r *connectionResolver) Following(ctx context.Context, obj *db.Connection) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.FollowingID.String())
 }
 
 // Follower is the resolver for the follower field.
-func (r *connectionResolver) Follower(ctx context.Context, obj *model.Connection) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.FollowerID)
+func (r *connectionResolver) Follower(ctx context.Context, obj *db.Connection) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.FollowerID.String())
+}
+
+// Cursor is the resolver for the cursor field.
+func (r *connectionsEdgeResolver) Cursor(ctx context.Context, obj *model.ConnectionsEdge) (string, error) {
+	return util.ConvertCreateAtToCursor(obj.Node.CreatedAt), nil
+}
+
+// Node is the resolver for the node field.
+func (r *connectionsEdgeResolver) Node(ctx context.Context, obj *model.ConnectionsEdge) (*db.Connection, error) {
+	return r.Service.Connections.GetConnectionByID(ctx, obj.Node.ID)
 }
 
 // FollowUser is the resolver for the followUser field.
-func (r *mutationResolver) FollowUser(ctx context.Context, userID string) (*model.Connection, error) {
+func (r *mutationResolver) FollowUser(ctx context.Context, userID string) (*db.Connection, error) {
 	return r.Service.FollowUser(ctx, userID)
 }
 
 // UnfollowUser is the resolver for the unfollowUser field.
-func (r *mutationResolver) UnfollowUser(ctx context.Context, userID string) (*model.Connection, error) {
+func (r *mutationResolver) UnfollowUser(ctx context.Context, userID string) (*db.Connection, error) {
 	return r.Service.UnfollowUser(ctx, userID)
 }
 
 // AcceptUser is the resolver for the acceptUser field.
-func (r *mutationResolver) AcceptUser(ctx context.Context, userID string) (*model.Connection, error) {
+func (r *mutationResolver) AcceptUser(ctx context.Context, userID string) (*db.Connection, error) {
 	return r.Service.AcceptUser(ctx, userID)
 }
 
 // RejectUser is the resolver for the rejectUser field.
-func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*model.Connection, error) {
+func (r *mutationResolver) RejectUser(ctx context.Context, userID string) (*db.Connection, error) {
 	return r.Service.RejectUser(ctx, userID)
 }
 
 // GetFollowersByUsername is the resolver for the getFollowersByUsername field.
 func (r *queryResolver) GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error) {
-	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, "followers")
+	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, constants.Followers)
 }
 
 // GetFollowingByUsername is the resolver for the getFollowingByUsername field.
 func (r *queryResolver) GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error) {
-	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, "following")
+	return r.Service.GetConnectionsByUsername(ctx, username, pageInfoInput, constants.Following)
 }
 
 // GetFollowRequests is the resolver for the getFollowRequests field.
@@ -59,4 +72,10 @@ func (r *queryResolver) GetFollowRequests(ctx context.Context, pageInfoInput *mo
 // Connection returns generated.ConnectionResolver implementation.
 func (r *Resolver) Connection() generated.ConnectionResolver { return &connectionResolver{r} }
 
+// ConnectionsEdge returns generated.ConnectionsEdgeResolver implementation.
+func (r *Resolver) ConnectionsEdge() generated.ConnectionsEdgeResolver {
+	return &connectionsEdgeResolver{r}
+}
+
 type connectionResolver struct{ *Resolver }
+type connectionsEdgeResolver struct{ *Resolver }

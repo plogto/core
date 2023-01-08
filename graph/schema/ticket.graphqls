@@ -47,7 +47,7 @@ type TicketsEdge {
 
 type Tickets {
   totalCount: Int
-  edges: [TicketsEdge]
+  edges: [TicketsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -59,7 +59,7 @@ type TicketMessagesEdge {
 type TicketMessages {
   totalCount: Int
   ticket: Ticket
-  edges: [TicketMessagesEdge]
+  edges: [TicketMessagesEdge]!
   pageInfo: PageInfo!
 }
 

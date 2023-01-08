@@ -1,8 +1,8 @@
 type Connection {
-  id: ID!
+  id: UUID!
   following: User!
   follower: User!
-  status: Int
+  status: Int!
   createdAt: Time
   updatedAt: Time
 }
@@ -13,8 +13,8 @@ type ConnectionsEdge {
 }
 
 type Connections {
-  totalCount: Int
-  edges: [ConnectionsEdge]
+  totalCount: TotalCount
+  edges: [ConnectionsEdge]!
   pageInfo: PageInfo!
 }
 

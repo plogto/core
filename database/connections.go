@@ -1,57 +1,73 @@
 package database
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type Connections struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
 type ConnectionFilter struct {
-	Limit  int
-	After  string
-	Status *int
+	Limit  int32
+	After  time.Time
+	Status int32
 }
 
-func (c *Connections) GetConnectionsByFieldAndPageInfo(field, value string, filter ConnectionFilter) (*model.Connections, error) {
-	var connections []*model.Connection
+func (c *Connections) CreateConnection(ctx context.Context, arg db.CreateConnectionParams) (*db.Connection, error) {
+	connection, err := c.Queries.CreateConnection(ctx, arg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
+}
+
+func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, followerID string, filter ConnectionFilter) (*model.Connections, error) {
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
-	query := c.DB.Model(&connections).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil)
+	// FIXME
+	FollowerID, _ := uuid.Parse(followerID)
 
-	if len(filter.After) > 0 {
-		query.Where("created_at < ?", filter.After)
-	}
+	connections, err := c.Queries.GetFollowersByUserIDAndPageInfo(ctx, db.GetFollowersByUserIDAndPageInfoParams{
+		Limit:       filter.Limit,
+		FollowingID: FollowerID,
+		Status:      2,
+		CreatedAt:   filter.After,
+	})
 
-	if filter.Status != nil {
-		query.Where("status = ?", *filter.Status)
-	}
-
-	totalCount, err :=
-		query.Limit(filter.Limit).Order("created_at DESC").SelectAndCount()
+	totalCount, _ := c.Queries.CountFollowersByUserIDAndPageInfo(ctx, db.CountFollowersByUserIDAndPageInfoParams{
+		Limit:       filter.Limit,
+		FollowingID: FollowerID,
+		Status:      2,
+		CreatedAt:   filter.After,
+	})
 
 	for _, value := range connections {
-		edges = append(edges, &model.ConnectionsEdge{Node: &model.Connection{
+		edges = append(edges, &model.ConnectionsEdge{Node: &db.Connection{
 			ID:          value.ID,
 			FollowerID:  value.FollowerID,
 			FollowingID: value.FollowingID,
+			Status:      value.Status,
 			CreatedAt:   value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > filter.Limit {
+	if totalCount > int64(filter.Limit) {
 		hasNextPage = true
 	}
 
@@ -65,51 +81,132 @@ func (c *Connections) GetConnectionsByFieldAndPageInfo(field, value string, filt
 	}, err
 }
 
-func (c *Connections) GetFollowersByUserIDAndPageInfo(followerID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPageInfo("following_id", followerID, filter)
+func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID string, filter ConnectionFilter) (*model.Connections, error) {
+
+	var edges []*model.ConnectionsEdge
+	var endCursor string
+
+	// FIXME
+	FollowingID, _ := uuid.Parse(followingID)
+
+	connections, err := c.Queries.GetFollowingByUserIDAndPageInfo(ctx, db.GetFollowingByUserIDAndPageInfoParams{
+		Limit:      filter.Limit,
+		FollowerID: FollowingID,
+		Status:     2,
+		CreatedAt:  filter.After,
+	})
+
+	totalCount, _ := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
+		Limit:      filter.Limit,
+		FollowerID: FollowingID,
+		Status:     2,
+		CreatedAt:  filter.After,
+	})
+
+	for _, value := range connections {
+		edges = append(edges, &model.ConnectionsEdge{Node: &db.Connection{
+			ID:          value.ID,
+			FollowerID:  value.FollowerID,
+			FollowingID: value.FollowingID,
+			Status:      value.Status,
+			CreatedAt:   value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > int64(filter.Limit) {
+		hasNextPage = true
+	}
+
+	return &model.Connections{
+		TotalCount: &totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
+		},
+	}, err
 }
 
-func (c *Connections) GetFollowingByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPageInfo("follower_id", followingID, filter)
+func (c *Connections) GetConnectionByID(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
+	// FIXME: use dataloader
+	connection, err := c.Queries.GetConnectionByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
 }
 
-func (c *Connections) GetFollowRequestsByUserIDAndPageInfo(followingID string, filter ConnectionFilter) (*model.Connections, error) {
-	return c.GetConnectionsByFieldAndPageInfo("following_id", followingID, filter)
+func (c *Connections) GetConnection(ctx context.Context, followingID, followerID string) (*db.Connection, error) { // FIXME
+	FollowerID, _ := uuid.Parse(followerID)
+	FollowingID, _ := uuid.Parse(followingID)
+
+	connection, err := c.Queries.GetConnection(ctx, db.GetConnectionParams{
+		FollowerID:  FollowerID,
+		FollowingID: FollowingID,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
 }
 
-func (c *Connections) CreateConnection(connection *model.Connection) (*model.Connection, error) {
-	_, err := c.DB.Model(connection).Returning("*").Insert()
-	return connection, err
+func (c *Connections) CountFollowingConnectionByUserID(ctx context.Context, userID uuid.UUID, status int32) (int64, error) {
+	totalCount, err := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
+		FollowerID: userID,
+		Status:     status,
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCount, nil
 }
 
-func (c *Connections) GetConnectionByField(field, value string) (*model.Connection, error) {
-	var connection model.Connection
-	err := c.DB.Model(&connection).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	return &connection, err
+func (c *Connections) CountFollowersConnectionByUserID(ctx context.Context, userID uuid.UUID, status int32) (int64, error) {
+	totalCount, err := c.Queries.CountFollowersByUserIDAndPageInfo(ctx, db.CountFollowersByUserIDAndPageInfoParams{
+		FollowingID: userID,
+		Status:      status,
+	})
+
+	if err != nil {
+		return 0, err
+	}
+
+	return totalCount, nil
 }
 
-func (c *Connections) GetConnection(followingID, followerID string) (*model.Connection, error) {
-	var connection model.Connection
-	err := c.DB.Model(&connection).Where("following_id = ?", followingID).Where("follower_id = ?", followerID).Where("deleted_at is ?", nil).First()
-	return &connection, err
-}
+func (c *Connections) UpdateConnection(ctx context.Context, arg db.UpdateConnectionParams) (*db.Connection, error) {
+	connection, err := c.Queries.UpdateConnection(ctx, arg)
 
-func (c *Connections) UpdateConnection(connection *model.Connection) (*model.Connection, error) {
-	_, err := c.DB.Model(connection).Where("id = ?", connection.ID).Where("deleted_at is ?", nil).Returning("*").Update()
-	return connection, err
+	if err != nil {
+		return nil, err
+	}
+
+	return connection, nil
 }
 
 // TODO: fix this name or functionality
-func (c *Connections) DeleteConnection(id string) (*model.Connection, error) {
-	DeletedAt := time.Now()
-	var connection = &model.Connection{
-		ID:        id,
-		DeletedAt: &DeletedAt,
-	}
-	_, err := c.DB.Model(connection).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
-	return connection, err
-}
+func (c *Connections) DeleteConnection(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
+	// FIXME
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-func (c *Connections) CountConnectionByUserID(field, userID string, status int) (int, error) {
-	return c.DB.Model((*model.Connection)(nil)).Where(fmt.Sprintf("%v = ?", field), userID).Where("status = ?", status).Where("deleted_at is ?", nil).Count()
+	connection, err := c.Queries.DeleteConnection(ctx, db.DeleteConnectionParams{
+		ID:        id,
+		DeletedAt: DeletedAt,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return connection, nil
 }
