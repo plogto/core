@@ -504,7 +504,7 @@ type MutationResolver interface {
 	UnfollowUser(ctx context.Context, userID string) (*db.Connection, error)
 	AcceptUser(ctx context.Context, userID string) (*db.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*db.Connection, error)
-	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error)
+	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error)
 	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
 	ReadNotifications(ctx context.Context) (*bool, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
@@ -534,7 +534,7 @@ type PostResolver interface {
 	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
 	User(ctx context.Context, obj *model.Post) (*model.User, error)
 	Content(ctx context.Context, obj *model.Post) (*string, error)
-	Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error)
+	Attachment(ctx context.Context, obj *model.Post) ([]*db.File, error)
 
 	Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error)
 	Replies(ctx context.Context, obj *model.Post) (*model.Posts, error)
@@ -603,7 +603,7 @@ type TicketMessageResolver interface {
 
 	Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error)
 
-	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error)
+	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*db.File, error)
 }
 type TicketMessagesResolver interface {
 	Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error)
@@ -617,8 +617,8 @@ type TicketsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.TicketsEdge) (*model.Ticket, error)
 }
 type UserResolver interface {
-	Avatar(ctx context.Context, obj *model.User) (*model.File, error)
-	Background(ctx context.Context, obj *model.User) (*model.File, error)
+	Avatar(ctx context.Context, obj *model.User) (*db.File, error)
+	Background(ctx context.Context, obj *model.User) (*db.File, error)
 
 	Credits(ctx context.Context, obj *model.User) (float64, error)
 
@@ -2773,7 +2773,7 @@ extend type Query {
 	{Name: "../schema/file.graphqls", Input: `scalar Upload
 
 type File {
-  id: ID
+  id: UUID!
   name: String
   width: Int
   height: Int
@@ -6303,7 +6303,7 @@ func (ec *executionContext) fieldContext_CreditTransactionsEdge_node(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6324,11 +6324,14 @@ func (ec *executionContext) _File_id(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_File_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6338,13 +6341,13 @@ func (ec *executionContext) fieldContext_File_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6385,7 +6388,7 @@ func (ec *executionContext) fieldContext_File_name(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _File_width(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_width(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_width(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6426,7 +6429,7 @@ func (ec *executionContext) fieldContext_File_width(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _File_height(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_height(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_height(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7992,9 +7995,9 @@ func (ec *executionContext) _Mutation_uploadFiles(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_uploadFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10637,9 +10640,9 @@ func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_attachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15040,9 +15043,9 @@ func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_attachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15900,9 +15903,9 @@ func (ec *executionContext) _User_avatar(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.File)
+	res := resTmp.(*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_avatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15951,9 +15954,9 @@ func (ec *executionContext) _User_background(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.File)
+	res := resTmp.(*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_background(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19716,7 +19719,7 @@ func (ec *executionContext) _CreditTransactionsEdge(ctx context.Context, sel ast
 
 var fileImplementors = []string{"File"}
 
-func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *model.File) graphql.Marshaler {
+func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *db.File) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19728,6 +19731,9 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._File_id(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "name":
 
 			out.Values[i] = ec._File_name(ctx, field, obj)
@@ -23129,7 +23135,7 @@ func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋplogtoᚋcore
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v *model.File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v *db.File) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24284,7 +24290,7 @@ func (ec *executionContext) marshalOCreditTransactionsEdge2ᚖgithubᚗcomᚋplo
 	return ec._CreditTransactionsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v []*model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v []*db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24311,7 +24317,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24325,7 +24331,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ret
 }
 
-func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24352,7 +24358,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24372,21 +24378,11 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ret
 }
 
-func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v *model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v *db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._File(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {

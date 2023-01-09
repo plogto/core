@@ -8,10 +8,10 @@ import (
 	"context"
 
 	"github.com/99designs/gqlgen/graphql"
-	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/db"
 )
 
 // UploadFiles is the resolver for the uploadFiles field.
-func (r *mutationResolver) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error) {
+func (r *mutationResolver) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error) {
 	return r.Service.UploadFiles(ctx, files)
 }

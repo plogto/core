@@ -58,7 +58,7 @@ func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageIn
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After.String())
 }
 
 func (s *Service) CreateCreditTransaction(creditTransactionParams CreateCreditTransactionParams) (*model.CreditTransactionInfo, error) {

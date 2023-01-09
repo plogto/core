@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
@@ -13,7 +14,8 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID string, input m
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	for _, id := range input.Attachment {
-		file, _ := s.Files.GetFileByID(*id)
+		ID, _ := uuid.Parse(*id)
+		file, _ := s.Files.GetFileByID(ctx, ID)
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -62,7 +64,7 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 		return nil, nil
 	}
 
-	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, *pageInfo.First, *pageInfo.After)
+	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, pageInfo.First, pageInfo.After.String())
 }
 
 func (s *Service) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {

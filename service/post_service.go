@@ -45,7 +45,8 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	for _, id := range input.Attachment {
-		file, _ := s.Files.GetFileByID(id)
+		ID, _ := uuid.Parse(id)
+		file, _ := s.Files.GetFileByID(ctx, ID)
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}

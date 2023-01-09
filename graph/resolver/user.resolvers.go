@@ -7,7 +7,9 @@ package graph
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 )
@@ -48,18 +50,20 @@ func (r *queryResolver) CheckEmail(ctx context.Context, email string) (*model.Us
 }
 
 // Avatar is the resolver for the avatar field.
-func (r *userResolver) Avatar(ctx context.Context, obj *model.User) (*model.File, error) {
+func (r *userResolver) Avatar(ctx context.Context, obj *model.User) (*db.File, error) {
 	if obj.Avatar != nil {
-		return r.Service.GetFileByFileId(ctx, *obj.Avatar)
+		fileID, _ := uuid.Parse(*obj.Avatar)
+		return r.Service.GetFileByFileId(ctx, fileID)
 	} else {
 		return nil, nil
 	}
 }
 
 // Background is the resolver for the background field.
-func (r *userResolver) Background(ctx context.Context, obj *model.User) (*model.File, error) {
+func (r *userResolver) Background(ctx context.Context, obj *model.User) (*db.File, error) {
 	if obj.Background != nil {
-		return r.Service.GetFileByFileId(ctx, *obj.Background)
+		fileID, _ := uuid.Parse(*obj.Background)
+		return r.Service.GetFileByFileId(ctx, fileID)
 	} else {
 		return nil, nil
 	}

@@ -593,8 +593,8 @@ type File struct {
 	ID        uuid.UUID
 	Hash      string
 	Name      string
-	Width     int16
-	Height    int16
+	Width     int32
+	Height    int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt sql.NullTime
