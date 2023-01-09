@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -49,7 +50,7 @@ func (r *postResolver) Content(ctx context.Context, obj *model.Post) (*string, e
 }
 
 // Attachment is the resolver for the attachment field.
-func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error) {
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*db.File, error) {
 	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)
 }
 

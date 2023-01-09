@@ -3,11 +3,13 @@ package service
 import (
 	"context"
 
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
-func (s *Service) GetPostAttachmentsByPostID(ctx context.Context, postID string) ([]*model.File, error) {
-	postAttachments, _ := s.Files.GetFilesByPostId(postID)
+func (s *Service) GetPostAttachmentsByPostID(ctx context.Context, postID string) ([]*db.File, error) {
+	PostID, _ := uuid.Parse(postID)
+	postAttachments, _ := s.Files.GetFilesByTicketMessageID(ctx, PostID)
 
 	return postAttachments, nil
 }

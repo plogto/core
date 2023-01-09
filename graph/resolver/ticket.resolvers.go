@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -68,7 +69,7 @@ func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *model.TicketMes
 }
 
 // Attachment is the resolver for the attachment field.
-func (r *ticketMessageResolver) Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error) {
+func (r *ticketMessageResolver) Attachment(ctx context.Context, obj *model.TicketMessage) ([]*db.File, error) {
 	return r.Service.GetTicketMessageAttachmentsByTicketMessageID(ctx, obj.ID)
 }
 

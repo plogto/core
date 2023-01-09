@@ -1,7 +1,7 @@
 scalar Upload
 
 type File {
-  id: ID
+  id: UUID!
   name: String
   width: Int
   height: Int

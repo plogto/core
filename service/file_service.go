@@ -12,12 +12,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/google/uuid"
 	guuid "github.com/google/uuid"
-	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*model.File, error) {
+func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*db.File, error) {
 	if util.IsImage(file.ContentType) {
 		name := guuid.New().String()
 		ext := strings.ToLower(filepath.Ext(file.Filename))
@@ -30,7 +31,7 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 
 		// calculate hash
 		hash := util.CalculateHash(file.File, fileName)
-		isFile, _ := s.Files.GetFileByHash(hash)
+		isFile, _ := s.Files.GetFileByHash(ctx, hash)
 		if isFile != nil && len(isFile.ID) > 0 {
 			_ = os.Remove(fileName)
 
@@ -49,7 +50,7 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		// save image data
 		width := int32(img.Bounds().Size().X)
 		height := int32(img.Bounds().Size().Y)
-		newFile := &model.File{
+		newFile := db.CreateFileParams{
 			Name:   fileName,
 			Hash:   hash,
 			Width:  width,
@@ -59,14 +60,15 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*m
 		os.Remove(fileName)
 		os.Remove(thumbnailName)
 
-		return s.SaveImageData(newFile)
+		// save image
+		return s.Files.CreateFile(ctx, newFile)
 	}
 
 	return nil, nil
 }
 
-func (s *Service) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error) {
-	var uploadedFiles []*model.File
+func (s *Service) UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error) {
+	var uploadedFiles []*db.File
 	for _, file := range files {
 		uploadedFile, _ := s.SingleUploadFile(ctx, *file)
 		uploadedFiles = append(uploadedFiles, uploadedFile)
@@ -103,12 +105,6 @@ func (s *Service) UploadImage(fileName string, fileSize int64) {
 	}
 }
 
-func (s *Service) SaveImageData(file *model.File) (*model.File, error) {
-	s.Files.CreateFile(file)
-
-	return file, nil
-}
-
-func (s *Service) GetFileByFileId(ctx context.Context, fileID string) (*model.File, error) {
-	return s.Files.GetFileByID(fileID)
+func (s *Service) GetFileByFileId(ctx context.Context, fileID uuid.UUID) (*db.File, error) {
+	return s.Files.GetFileByID(ctx, fileID)
 }
