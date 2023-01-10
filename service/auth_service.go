@@ -7,6 +7,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 	"github.com/plogto/core/validation"
@@ -68,9 +70,11 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 
 	if input.InvitationCode != nil {
 		if inviter, err := s.Users.GetUserByInvitationCode(*input.InvitationCode); err == nil {
-			s.InvitedUsers.CreateInvitedUser(&model.InvitedUser{
-				InviterID: inviter.ID,
-				InviteeID: newUser.ID,
+			InviterID, _ := uuid.Parse(inviter.ID)
+			InviteeID, _ := uuid.Parse(newUser.ID)
+			s.InvitedUsers.CreateInvitedUser(ctx, db.CreateInvitedUserParams{
+				InviterID: InviterID,
+				InviteeID: InviteeID,
 			})
 
 			if err != nil {
