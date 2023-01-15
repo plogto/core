@@ -56,6 +56,49 @@ func (ns NullBackgroundColor) Value() (driver.Value, error) {
 	return ns.BackgroundColor, nil
 }
 
+type CreditTransactionDescriptionVariableKey string
+
+const (
+	CreditTransactionDescriptionVariableKeyInvitedUser CreditTransactionDescriptionVariableKey = "invited_user"
+	CreditTransactionDescriptionVariableKeyInviterUser CreditTransactionDescriptionVariableKey = "inviter_user"
+	CreditTransactionDescriptionVariableKeyTicket      CreditTransactionDescriptionVariableKey = "ticket"
+)
+
+func (e *CreditTransactionDescriptionVariableKey) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = CreditTransactionDescriptionVariableKey(s)
+	case string:
+		*e = CreditTransactionDescriptionVariableKey(s)
+	default:
+		return fmt.Errorf("unsupported scan type for CreditTransactionDescriptionVariableKey: %T", src)
+	}
+	return nil
+}
+
+type NullCreditTransactionDescriptionVariableKey struct {
+	CreditTransactionDescriptionVariableKey CreditTransactionDescriptionVariableKey
+	Valid                                   bool // Valid is true if String is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullCreditTransactionDescriptionVariableKey) Scan(value interface{}) error {
+	if value == nil {
+		ns.CreditTransactionDescriptionVariableKey, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.CreditTransactionDescriptionVariableKey.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullCreditTransactionDescriptionVariableKey) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return ns.CreditTransactionDescriptionVariableKey, nil
+}
+
 type CreditTransactionDescriptionVariableType string
 
 const (
@@ -565,7 +608,7 @@ type CreditTransactionDescriptionVariable struct {
 	ID                      uuid.UUID
 	CreditTransactionInfoID uuid.UUID
 	ContentID               uuid.UUID
-	Key                     string
+	Key                     CreditTransactionDescriptionVariableKey
 	Type                    CreditTransactionDescriptionVariableType
 	CreatedAt               time.Time
 	DeletedAt               sql.NullTime

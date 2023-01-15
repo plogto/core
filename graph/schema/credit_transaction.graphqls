@@ -6,9 +6,15 @@ enum CreditTransactionStatus {
 }
 
 enum CreditTransactionDescriptionVariableType {
-  TICKET
-  USER
-  TAG
+  ticket
+  user
+  tag
+}
+
+enum CreditTransactionDescriptionVariableKey {
+  ticket
+  invited_user
+  inviter_user
 }
 
 enum CreditTransactionTemplateName {
@@ -25,9 +31,9 @@ enum CreditTransactionType {
 }
 
 type CreditTransactionDescriptionVariable {
-  id: ID!
+  id: UUID!
   type: CreditTransactionDescriptionVariableType!
-  key: String!
+  key: CreditTransactionDescriptionVariableKey!
   content: String!
   url: String
   image: String

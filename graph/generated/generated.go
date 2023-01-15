@@ -46,8 +46,6 @@ type ResolverRoot interface {
 	CreditTransactionDescriptionVariable() CreditTransactionDescriptionVariableResolver
 	CreditTransactionInfo() CreditTransactionInfoResolver
 	CreditTransactionsEdge() CreditTransactionsEdgeResolver
-	InvitedUser() InvitedUserResolver
-	InvitedUsersEdge() InvitedUsersEdgeResolver
 	LikedPost() LikedPostResolver
 	LikedPostsEdge() LikedPostsEdgeResolver
 	Mutation() MutationResolver
@@ -467,26 +465,20 @@ type CreditTransactionResolver interface {
 	RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error)
 }
 type CreditTransactionDescriptionVariableResolver interface {
-	Content(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (string, error)
-	URL(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error)
-	Image(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error)
+	Type(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableType, error)
+	Key(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableKey, error)
+	Content(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (string, error)
+	URL(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
+	Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
 }
 type CreditTransactionInfoResolver interface {
-	DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*model.CreditTransactionDescriptionVariable, error)
+	DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error)
 
 	Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
 }
 type CreditTransactionsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error)
 	Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*model.CreditTransaction, error)
-}
-type InvitedUserResolver interface {
-	Inviter(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
-	Invitee(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
-}
-type InvitedUsersEdgeResolver interface {
-	Cursor(ctx context.Context, obj *model.InvitedUsersEdge) (string, error)
-	Node(ctx context.Context, obj *model.InvitedUsersEdge) (*model.InvitedUser, error)
 }
 type LikedPostResolver interface {
 	User(ctx context.Context, obj *model.LikedPost) (*model.User, error)
@@ -2701,9 +2693,15 @@ extend type Mutation {
 }
 
 enum CreditTransactionDescriptionVariableType {
-  TICKET
-  USER
-  TAG
+  ticket
+  user
+  tag
+}
+
+enum CreditTransactionDescriptionVariableKey {
+  ticket
+  invited_user
+  inviter_user
 }
 
 enum CreditTransactionTemplateName {
@@ -2720,9 +2718,9 @@ enum CreditTransactionType {
 }
 
 type CreditTransactionDescriptionVariable {
-  id: ID!
+  id: UUID!
   type: CreditTransactionDescriptionVariableType!
-  key: String!
+  key: CreditTransactionDescriptionVariableKey!
   content: String!
   url: String
   image: String
@@ -5354,7 +5352,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_relevantTransaction(c
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5380,9 +5378,9 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5392,13 +5390,13 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_id
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_type(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5412,7 +5410,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return ec.resolvers.CreditTransactionDescriptionVariable().Type(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5433,8 +5431,8 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ty
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionDescriptionVariable",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionDescriptionVariableType does not have child fields")
 		},
@@ -5442,7 +5440,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ty
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_key(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5456,7 +5454,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Key, nil
+		return ec.resolvers.CreditTransactionDescriptionVariable().Key(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5468,25 +5466,25 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.CreditTransactionDescriptionVariableKey)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionDescriptionVariable",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CreditTransactionDescriptionVariableKey does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_content(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_content(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5530,7 +5528,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_url(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_url(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5571,7 +5569,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ur
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_image(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_image(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_image(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5720,9 +5718,9 @@ func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx cont
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CreditTransactionDescriptionVariable)
+	res := resTmp.([]*db.CreditTransactionDescriptionVariable)
 	fc.Result = res
-	return ec.marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx, field.Selections, res)
+	return ec.marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6528,7 +6526,7 @@ func (ec *executionContext) _InvitedUser_inviter(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUser().Inviter(rctx, obj)
+		return obj.Inviter, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6549,8 +6547,8 @@ func (ec *executionContext) fieldContext_InvitedUser_inviter(ctx context.Context
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -6616,7 +6614,7 @@ func (ec *executionContext) _InvitedUser_invitee(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUser().Invitee(rctx, obj)
+		return obj.Invitee, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6637,8 +6635,8 @@ func (ec *executionContext) fieldContext_InvitedUser_invitee(ctx context.Context
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -6927,7 +6925,7 @@ func (ec *executionContext) _InvitedUsersEdge_cursor(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUsersEdge().Cursor(rctx, obj)
+		return obj.Cursor, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6948,8 +6946,8 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_cursor(ctx context.Con
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUsersEdge",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -6971,7 +6969,7 @@ func (ec *executionContext) _InvitedUsersEdge_node(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUsersEdge().Node(rctx, obj)
+		return obj.Node, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6989,8 +6987,8 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_node(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUsersEdge",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -19403,7 +19401,7 @@ func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.Sele
 
 var creditTransactionDescriptionVariableImplementors = []string{"CreditTransactionDescriptionVariable"}
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionDescriptionVariableImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19419,19 +19417,45 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Co
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "type":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionDescriptionVariable_type(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionDescriptionVariable_type(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "key":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionDescriptionVariable_key(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionDescriptionVariable_key(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "content":
 			field := field
 
@@ -19772,48 +19796,22 @@ func (ec *executionContext) _InvitedUser(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._InvitedUser_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "inviter":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUser_inviter(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUser_inviter(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "invitee":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUser_invitee(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUser_invitee(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "createdAt":
 
 			out.Values[i] = ec._InvitedUser_createdAt(ctx, field, obj)
@@ -19883,42 +19881,16 @@ func (ec *executionContext) _InvitedUsersEdge(ctx context.Context, sel ast.Selec
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("InvitedUsersEdge")
 		case "cursor":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUsersEdge_cursor(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUsersEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "node":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUsersEdge_node(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._InvitedUsersEdge_node(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -23048,6 +23020,16 @@ func (ec *executionContext) unmarshalNCreateTicketInput2githubᚗcomᚋplogtoᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx context.Context, v interface{}) (model.CreditTransactionDescriptionVariableKey, error) {
+	var res model.CreditTransactionDescriptionVariableKey
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx context.Context, sel ast.SelectionSet, v model.CreditTransactionDescriptionVariableKey) graphql.Marshaler {
+	return v
+}
+
 func (ec *executionContext) unmarshalNCreditTransactionDescriptionVariableType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableType(ctx context.Context, v interface{}) (model.CreditTransactionDescriptionVariableType, error) {
 	var res model.CreditTransactionDescriptionVariableType
 	err := res.UnmarshalGQL(v)
@@ -24211,7 +24193,7 @@ func (ec *executionContext) marshalOCreditTransaction2ᚖgithubᚗcomᚋplogto�
 	return ec._CreditTransaction(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v []*model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v []*db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24238,7 +24220,7 @@ func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx, sel, v[i])
+			ret[i] = ec.marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -24252,7 +24234,7 @@ func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖg
 	return ret
 }
 
-func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

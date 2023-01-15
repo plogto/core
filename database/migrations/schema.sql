@@ -3,6 +3,8 @@ CREATE TYPE background_color AS ENUM ('light', 'dim', 'dark');
 
 CREATE TYPE credit_transaction_description_variable_type AS ENUM ('user', 'tag', 'ticket');
 
+CREATE TYPE credit_transaction_description_variable_key AS ENUM ('invited_user', 'inviter_user', 'ticket');
+
 CREATE TYPE credit_transaction_status AS ENUM ('approved', 'pending', 'failed', 'canceled');
 
 CREATE TYPE credit_transaction_template_name AS ENUM (
@@ -79,7 +81,7 @@ CREATE TABLE credit_transaction_description_variables (
 	id uuid DEFAULT uuid_generate_v4() NOT NULL,
 	credit_transaction_info_id uuid NOT NULL,
 	content_id uuid NOT NULL,
-	KEY CHARACTER VARYING(150) NOT NULL,
+	KEY credit_transaction_description_variable_key NOT NULL,
 	TYPE credit_transaction_description_variable_type NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
 	deleted_at TIMESTAMP WITHOUT TIME ZONE

@@ -52,6 +52,28 @@ models:
   TotalCount:
     model:
       - github.com/99designs/gqlgen/graphql.Int64
+  Connection:
+    model: github.com/plogto/core/db.Connection
+    fields:
+      following:
+        resolver: true
+      follower:
+        resolver: true
+  ConnectionsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  CreditTransactionDescriptionVariable:
+    model: github.com/plogto/core/db.CreditTransactionDescriptionVariable
+    fields:
+      url:
+        resolver: true
+      image:
+        resolver: true
+  File:
+    model: github.com/plogto/core/db.File
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -90,34 +112,6 @@ models:
         resolver: true
       isSaved:
         resolver: true
-  Connection:
-    model: github.com/plogto/core/db.Connection
-    fields:
-      following:
-        resolver: true
-      follower:
-        resolver: true
-  ConnectionsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  File:
-    model: github.com/plogto/core/db.File
-  InvitedUser:
-    model: github.com/plogto/core/graph/model.InvitedUser
-    fields:
-      inviter:
-        resolver: true
-      invitee:
-        resolver: true
-  InvitedUsersEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag
     fields:
@@ -142,13 +136,6 @@ models:
       user:
         resolver: true
       post:
-        resolver: true
-  CreditTransactionDescriptionVariable:
-    model: github.com/plogto/core/graph/model.CreditTransactionDescriptionVariable
-    fields:
-      url:
-        resolver: true
-      image:
         resolver: true
   CreditTransactionTemplate:
     model: github.com/plogto/core/graph/model.CreditTransactionTemplate

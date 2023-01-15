@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,8 +19,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
+	_ "github.com/lib/pq"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
+	"github.com/plogto/core/db"
 	graphDataloader "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/generated"
 	graphResolver "github.com/plogto/core/graph/resolver"
@@ -35,6 +38,15 @@ func init() {
 }
 
 func main() {
+	// FIXME
+	newDB, err := db.Open(os.Getenv("NEW_DATABASE_URL"))
+
+	queries := db.New(newDB)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	// FIXME
 	DB := database.New()
 
 	defer DB.Close()
@@ -59,15 +71,16 @@ func main() {
 	router.Use(customMiddleware.AuthMiddleware(users))
 
 	s := service.New(service.Service{
+		Connections:                           database.Connections{Queries: queries},
+		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{Queries: queries},
+		Files:                                 database.Files{Queries: queries},
+		InvitedUsers:                          database.InvitedUsers{Queries: queries},
 		Users:                                 users,
 		Passwords:                             database.Passwords{DB: DB},
 		Posts:                                 database.Posts{DB: DB},
-		Files:                                 database.Files{DB: DB},
-		Connections:                           database.Connections{DB: DB},
 		CreditTransactions:                    database.CreditTransactions{DB: DB},
 		CreditTransactionInfos:                database.CreditTransactionInfos{DB: DB},
 		CreditTransactionTemplates:            database.CreditTransactionTemplates{DB: DB},
-		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{DB: DB},
 		Tickets:                               database.Tickets{DB: DB},
 		TicketMessages:                        database.TicketMessages{DB: DB},
 		Tags:                                  database.Tags{DB: DB},
@@ -77,13 +90,10 @@ func main() {
 		PostMentions:                          database.PostMentions{DB: DB},
 		LikedPosts:                            database.LikedPosts{DB: DB},
 		SavedPosts:                            database.SavedPosts{DB: DB},
-		InvitedUsers:                          database.InvitedUsers{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 		Notifications:                         database.Notifications{DB: DB},
 		NotificationTypes:                     database.NotificationTypes{DB: DB},
 	})
-
-	s.OnlineUsers.DeleteAllOnlineUsers()
 
 	c := generated.Config{Resolvers: &graphResolver.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
