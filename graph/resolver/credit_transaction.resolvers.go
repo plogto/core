@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -32,26 +33,36 @@ func (r *creditTransactionResolver) RelevantTransaction(ctx context.Context, obj
 	return r.Service.GetCreditTransactionByID(ctx, obj.RelevantCreditTransactionID)
 }
 
+// Type is the resolver for the type field.
+func (r *creditTransactionDescriptionVariableResolver) Type(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableType, error) {
+	return model.CreditTransactionDescriptionVariableType(obj.Type), nil
+}
+
+// Key is the resolver for the key field.
+func (r *creditTransactionDescriptionVariableResolver) Key(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableKey, error) {
+	return model.CreditTransactionDescriptionVariableKey(obj.Key), nil
+}
+
 // Content is the resolver for the content field.
-func (r *creditTransactionDescriptionVariableResolver) Content(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (string, error) {
+func (r *creditTransactionDescriptionVariableResolver) Content(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (string, error) {
 	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
 	return descriptionVariable.Content, err
 }
 
 // URL is the resolver for the url field.
-func (r *creditTransactionDescriptionVariableResolver) URL(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error) {
+func (r *creditTransactionDescriptionVariableResolver) URL(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error) {
 	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
 	return descriptionVariable.Url, err
 }
 
 // Image is the resolver for the image field.
-func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error) {
+func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error) {
 	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
 	return descriptionVariable.Image, err
 }
 
 // DescriptionVariables is the resolver for the descriptionVariables field.
-func (r *creditTransactionInfoResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*model.CreditTransactionDescriptionVariable, error) {
+func (r *creditTransactionInfoResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error) {
 	return r.Service.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, &obj.ID)
 }
 

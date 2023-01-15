@@ -71,6 +71,14 @@ type EditUserInput struct {
 	IsPrivate       *bool            `json:"isPrivate"`
 }
 
+type InvitedUser struct {
+	ID        string     `json:"id"`
+	Inviter   *User      `json:"inviter"`
+	Invitee   *User      `json:"invitee"`
+	CreatedAt *time.Time `json:"createdAt"`
+	UpdatedAt *time.Time `json:"updatedAt"`
+}
+
 type InvitedUsers struct {
 	TotalCount *int                `json:"totalCount"`
 	Edges      []*InvitedUsersEdge `json:"edges"`
@@ -261,12 +269,55 @@ func (e BackgroundColor) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }
 
+type CreditTransactionDescriptionVariableKey string
+
+const (
+	CreditTransactionDescriptionVariableKeyTicket      CreditTransactionDescriptionVariableKey = "ticket"
+	CreditTransactionDescriptionVariableKeyInvitedUser CreditTransactionDescriptionVariableKey = "invited_user"
+	CreditTransactionDescriptionVariableKeyInviterUser CreditTransactionDescriptionVariableKey = "inviter_user"
+)
+
+var AllCreditTransactionDescriptionVariableKey = []CreditTransactionDescriptionVariableKey{
+	CreditTransactionDescriptionVariableKeyTicket,
+	CreditTransactionDescriptionVariableKeyInvitedUser,
+	CreditTransactionDescriptionVariableKeyInviterUser,
+}
+
+func (e CreditTransactionDescriptionVariableKey) IsValid() bool {
+	switch e {
+	case CreditTransactionDescriptionVariableKeyTicket, CreditTransactionDescriptionVariableKeyInvitedUser, CreditTransactionDescriptionVariableKeyInviterUser:
+		return true
+	}
+	return false
+}
+
+func (e CreditTransactionDescriptionVariableKey) String() string {
+	return string(e)
+}
+
+func (e *CreditTransactionDescriptionVariableKey) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = CreditTransactionDescriptionVariableKey(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid CreditTransactionDescriptionVariableKey", str)
+	}
+	return nil
+}
+
+func (e CreditTransactionDescriptionVariableKey) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
 type CreditTransactionDescriptionVariableType string
 
 const (
-	CreditTransactionDescriptionVariableTypeTicket CreditTransactionDescriptionVariableType = "TICKET"
-	CreditTransactionDescriptionVariableTypeUser   CreditTransactionDescriptionVariableType = "USER"
-	CreditTransactionDescriptionVariableTypeTag    CreditTransactionDescriptionVariableType = "TAG"
+	CreditTransactionDescriptionVariableTypeTicket CreditTransactionDescriptionVariableType = "ticket"
+	CreditTransactionDescriptionVariableTypeUser   CreditTransactionDescriptionVariableType = "user"
+	CreditTransactionDescriptionVariableTypeTag    CreditTransactionDescriptionVariableType = "tag"
 )
 
 var AllCreditTransactionDescriptionVariableType = []CreditTransactionDescriptionVariableType{
