@@ -461,7 +461,7 @@ type CreditTransactionResolver interface {
 	User(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
 	Recipient(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
 
-	Info(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionInfo, error)
+	Info(ctx context.Context, obj *model.CreditTransaction) (*db.CreditTransactionInfo, error)
 	RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error)
 }
 type CreditTransactionDescriptionVariableResolver interface {
@@ -472,9 +472,11 @@ type CreditTransactionDescriptionVariableResolver interface {
 	Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
 }
 type CreditTransactionInfoResolver interface {
-	DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error)
-
-	Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
+	ID(ctx context.Context, obj *db.CreditTransactionInfo) (string, error)
+	Description(ctx context.Context, obj *db.CreditTransactionInfo) (*string, error)
+	DescriptionVariables(ctx context.Context, obj *db.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error)
+	Status(ctx context.Context, obj *db.CreditTransactionInfo) (model.CreditTransactionStatus, error)
+	Template(ctx context.Context, obj *db.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
 }
 type CreditTransactionsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error)
@@ -5259,9 +5261,9 @@ func (ec *executionContext) _CreditTransaction_info(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransactionInfo)
+	res := resTmp.(*db.CreditTransactionInfo)
 	fc.Result = res
-	return ec.marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx, field.Selections, res)
+	return ec.marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_info(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5610,7 +5612,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_im
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5624,7 +5626,7 @@ func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
+		return ec.resolvers.CreditTransactionInfo().ID(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5645,8 +5647,8 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_id(ctx context.Co
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type ID does not have child fields")
 		},
@@ -5654,7 +5656,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_id(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_description(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5668,7 +5670,7 @@ func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return ec.resolvers.CreditTransactionInfo().Description(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5686,8 +5688,8 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_description(ctx c
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -5695,7 +5697,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_description(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_descriptionVariables(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5750,7 +5752,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_descriptionVariab
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5764,7 +5766,7 @@ func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.CreditTransactionInfo().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5785,8 +5787,8 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_status(ctx contex
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionStatus does not have child fields")
 		},
@@ -5794,7 +5796,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_status(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_template(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5843,7 +5845,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_template(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5866,9 +5868,9 @@ func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5884,7 +5886,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_createdAt(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5907,9 +5909,9 @@ func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19523,7 +19525,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Co
 
 var creditTransactionInfoImplementors = []string{"CreditTransactionInfo"}
 
-func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionInfo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionInfoImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19532,16 +19534,42 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreditTransactionInfo")
 		case "id":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionInfo_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionInfo_id(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "description":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionInfo_description(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionInfo_description(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "descriptionVariables":
 			field := field
 
@@ -19560,12 +19588,25 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 
 			})
 		case "status":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionInfo_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionInfo_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "template":
 			field := field
 
@@ -23040,11 +23081,11 @@ func (ec *executionContext) marshalNCreditTransactionDescriptionVariableType2git
 	return v
 }
 
-func (ec *executionContext) marshalNCreditTransactionInfo2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNCreditTransactionInfo2githubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v db.CreditTransactionInfo) graphql.Marshaler {
 	return ec._CreditTransactionInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

@@ -6,6 +6,7 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
@@ -24,7 +25,7 @@ func (r *creditTransactionResolver) Recipient(ctx context.Context, obj *model.Cr
 }
 
 // Info is the resolver for the info field.
-func (r *creditTransactionResolver) Info(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionInfo, error) {
+func (r *creditTransactionResolver) Info(ctx context.Context, obj *model.CreditTransaction) (*db.CreditTransactionInfo, error) {
 	return r.Service.GetCreditTransactionInfoByID(ctx, &obj.CreditTransactionInfoID)
 }
 
@@ -61,14 +62,29 @@ func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context
 	return descriptionVariable.Image, err
 }
 
+// ID is the resolver for the id field.
+func (r *creditTransactionInfoResolver) ID(ctx context.Context, obj *db.CreditTransactionInfo) (string, error) {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}
+
+// Description is the resolver for the description field.
+func (r *creditTransactionInfoResolver) Description(ctx context.Context, obj *db.CreditTransactionInfo) (*string, error) {
+	panic(fmt.Errorf("not implemented: Description - description"))
+}
+
 // DescriptionVariables is the resolver for the descriptionVariables field.
-func (r *creditTransactionInfoResolver) DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error) {
-	return r.Service.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, &obj.ID)
+func (r *creditTransactionInfoResolver) DescriptionVariables(ctx context.Context, obj *db.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error) {
+	return r.Service.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, obj.ID)
+}
+
+// Status is the resolver for the status field.
+func (r *creditTransactionInfoResolver) Status(ctx context.Context, obj *db.CreditTransactionInfo) (model.CreditTransactionStatus, error) {
+	panic(fmt.Errorf("not implemented: Status - status"))
 }
 
 // Template is the resolver for the template field.
-func (r *creditTransactionInfoResolver) Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error) {
-	return r.Service.GetCreditTransactionTemplateByID(ctx, obj.CreditTransactionTemplateID)
+func (r *creditTransactionInfoResolver) Template(ctx context.Context, obj *db.CreditTransactionInfo) (*model.CreditTransactionTemplate, error) {
+	return r.Service.GetCreditTransactionTemplateByID(ctx, &obj.CreditTransactionTemplateID)
 }
 
 // Cursor is the resolver for the cursor field.
