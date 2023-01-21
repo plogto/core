@@ -1,40 +1,43 @@
 package database
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
 type CreditTransactionInfos struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (c *CreditTransactionInfos) CreateCreditTransactionInfo(creditTransactionInfo *model.CreditTransactionInfo) (*model.CreditTransactionInfo, error) {
-	_, err := c.DB.Model(creditTransactionInfo).Returning("*").Insert()
+func (c *CreditTransactionInfos) CreateCreditTransactionInfo(ctx context.Context, arg db.CreateCreditTransactionInfoParams) (*db.CreditTransactionInfo, error) {
+	creditTransactionInfo, err := c.Queries.CreateCreditTransactionInfo(ctx, arg)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return creditTransactionInfo, err
 }
 
-func (c *CreditTransactionInfos) GetCreditTransactionInfoByID(id string) (*model.CreditTransactionInfo, error) {
-	return c.GetCreditTransactionInfoByField("id", id)
+func (c *CreditTransactionInfos) GetCreditTransactionInfoByID(ctx context.Context, id string) (*db.CreditTransactionInfo, error) {
+	ID, _ := uuid.Parse(id)
+	creditTransactionInfo, err := c.Queries.GetCreditTransactionInfoByID(ctx, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return creditTransactionInfo, err
 }
 
-func (c *CreditTransactionInfos) GetCreditTransactionInfoByField(field string, value string) (*model.CreditTransactionInfo, error) {
-	var creditTransactionInfo model.CreditTransactionInfo
-	err := c.DB.Model(&creditTransactionInfo).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		First()
+func (c *CreditTransactionInfos) UpdateCreditTransactionInfoStatus(ctx context.Context, arg db.UpdateCreditTransactionInfoStatusParams) (*db.CreditTransactionInfo, error) {
+	creditTransactionInfo, err := c.Queries.UpdateCreditTransactionInfoStatus(ctx, arg)
 
-	return &creditTransactionInfo, err
-}
-
-func (c *CreditTransactionInfos) UpdateCreditTransactionInfoStatus(creditTransactionInfo *model.CreditTransactionInfo) (*model.CreditTransactionInfo, error) {
-	query := c.DB.Model(creditTransactionInfo).
-		Where("id = ?id")
-
-	_, err := query.Set("status = ?status").Returning("*").Update()
+	if err != nil {
+		return nil, err
+	}
 
 	return creditTransactionInfo, err
 }

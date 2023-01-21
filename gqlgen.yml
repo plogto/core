@@ -72,6 +72,13 @@ models:
         resolver: true
       image:
         resolver: true
+  CreditTransactionInfo:
+    model: github.com/plogto/core/db.CreditTransactionInfo
+    fields:
+      template:
+        resolver: true
+      descriptionVariables:
+        resolver: true
   File:
     model: github.com/plogto/core/db.File
   User:
@@ -139,13 +146,6 @@ models:
         resolver: true
   CreditTransactionTemplate:
     model: github.com/plogto/core/graph/model.CreditTransactionTemplate
-  CreditTransactionInfo:
-    model: github.com/plogto/core/graph/model.CreditTransactionInfo
-    fields:
-      template:
-        resolver: true
-      descriptionVariables:
-        resolver: true
   CreditTransaction:
     model: github.com/plogto/core/graph/model.CreditTransaction
     fields:

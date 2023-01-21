@@ -70,6 +70,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 
 	if input.InvitationCode != nil {
 		if inviter, err := s.Users.GetUserByInvitationCode(*input.InvitationCode); err == nil {
+			// FIXME
 			InviterID, _ := uuid.Parse(inviter.ID)
 			InviteeID, _ := uuid.Parse(newUser.ID)
 			s.InvitedUsers.CreateInvitedUser(ctx, db.CreateInvitedUserParams{
@@ -82,7 +83,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 			}
 
 			// transfer credits
-			inviterTransactionCreditInfo, err := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
+			inviterTransactionCreditInfo, err := s.TransferCreditFromAdmin(ctx, TransferCreditFromAdminParams{
 				ReceiverID:   inviter.ID,
 				Status:       model.CreditTransactionStatusApproved,
 				Type:         model.CreditTransactionTypeOrder,
@@ -92,15 +93,18 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 			if err != nil {
 				return nil, errors.New(err.Error())
 			}
+			var ContentID uuid.UUID
+			// FIXME
+			ContentID, _ = uuid.Parse(newUser.ID)
 
-			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(ctx, db.CreateCreditTransactionDescriptionVariableParams{
 				CreditTransactionInfoID: inviterTransactionCreditInfo.ID,
-				Type:                    model.CreditTransactionDescriptionVariableTypeUser,
-				Key:                     "invited_user",
-				ContentID:               newUser.ID,
+				Type:                    db.CreditTransactionDescriptionVariableTypeUser,
+				Key:                     db.CreditTransactionDescriptionVariableKeyInvitedUser,
+				ContentID:               ContentID,
 			})
 
-			inviteeTransactionCreditInfo, err := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
+			inviteeTransactionCreditInfo, err := s.TransferCreditFromAdmin(ctx, TransferCreditFromAdminParams{
 				ReceiverID:   newUser.ID,
 				Status:       model.CreditTransactionStatusApproved,
 				Type:         model.CreditTransactionTypeOrder,
@@ -111,11 +115,13 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 				return nil, errors.New(err.Error())
 			}
 
-			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+			ContentID, _ = uuid.Parse(inviter.ID)
+
+			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(ctx, db.CreateCreditTransactionDescriptionVariableParams{
 				CreditTransactionInfoID: inviteeTransactionCreditInfo.ID,
-				Type:                    model.CreditTransactionDescriptionVariableTypeUser,
-				Key:                     "inviter_user",
-				ContentID:               inviter.ID,
+				Type:                    db.CreditTransactionDescriptionVariableTypeUser,
+				Key:                     db.CreditTransactionDescriptionVariableKeyInviterUser,
+				ContentID:               ContentID,
 			})
 		}
 	}
