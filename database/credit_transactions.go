@@ -89,5 +89,5 @@ func (c *CreditTransactions) GetCreditsByUserID(userID string) (float64, error) 
 		Where("credit_transaction.deleted_at is ?", nil).
 		Select()
 
-	return creditTransactions[0].Amount, err
+	return creditTransactions[0].Amount.Float64, err
 }

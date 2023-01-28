@@ -73,6 +73,7 @@ func main() {
 	s := service.New(service.Service{
 		Connections:                           database.Connections{Queries: queries},
 		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{Queries: queries},
+		CreditTransactionTemplates:            database.CreditTransactionTemplates{Queries: queries},
 		CreditTransactionInfos:                database.CreditTransactionInfos{Queries: queries},
 		Files:                                 database.Files{Queries: queries},
 		InvitedUsers:                          database.InvitedUsers{Queries: queries},
@@ -80,7 +81,6 @@ func main() {
 		Passwords:                             database.Passwords{DB: DB},
 		Posts:                                 database.Posts{DB: DB},
 		CreditTransactions:                    database.CreditTransactions{DB: DB},
-		CreditTransactionTemplates:            database.CreditTransactionTemplates{DB: DB},
 		Tickets:                               database.Tickets{DB: DB},
 		TicketMessages:                        database.TicketMessages{DB: DB},
 		Tags:                                  database.Tags{DB: DB},

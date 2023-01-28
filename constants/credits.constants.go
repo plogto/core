@@ -1,3 +1,5 @@
 package constants
 
-var GENERATE_CREDITS_AMOUNT float64 = 100
+import "database/sql"
+
+var GENERATE_CREDITS_AMOUNT sql.NullFloat64 = sql.NullFloat64{100, true}

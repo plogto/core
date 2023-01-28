@@ -40,13 +40,13 @@ type CreditTransactionDescriptionVariable {
 }
 
 type CreditTransactionTemplate {
-  id: ID!
+  id: UUID!
   name: CreditTransactionTemplateName!
   content: String!
 }
 
 type CreditTransactionInfo {
-  id: ID!
+  id: UUID!
   description: String
   descriptionVariables: [CreditTransactionDescriptionVariable]
   status: CreditTransactionStatus!
