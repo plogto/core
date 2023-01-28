@@ -1,37 +1,33 @@
 package database
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
 type CreditTransactionTemplates struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByID(id string) (*model.CreditTransactionTemplate, error) {
-	return c.GetCreditTransactionTemplateByField("id", id)
+func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionTemplate, error) {
+	creditTransactionTemplate, err := c.Queries.GetCreditTransactionTemplateByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return creditTransactionTemplate, err
 }
 
-func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByName(name model.CreditTransactionTemplateName) (*model.CreditTransactionTemplate, error) {
-	var creditTransactionTemplate model.CreditTransactionTemplate
-	err := c.DB.Model(&creditTransactionTemplate).
-		Where("name = ?", name).
-		Where("deleted_at is ?", nil).
-		First()
+func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByName(ctx context.Context, name db.CreditTransactionTemplateName) (*db.CreditTransactionTemplate, error) {
+	creditTransactionTemplate, err := c.Queries.GetCreditTransactionTemplateByName(ctx, name)
 
-	return &creditTransactionTemplate, err
-}
+	if err != nil {
+		return nil, err
+	}
 
-func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByField(field string, value string) (*model.CreditTransactionTemplate, error) {
+	return creditTransactionTemplate, err
 
-	var creditTransactionTemplate model.CreditTransactionTemplate
-	err := c.DB.Model(&creditTransactionTemplate).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		First()
-
-	return &creditTransactionTemplate, err
 }

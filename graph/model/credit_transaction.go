@@ -1,6 +1,9 @@
 package model
 
-import "time"
+import (
+	"database/sql"
+	"time"
+)
 
 type CreditTransaction struct {
 	tableName                   struct{} `pg:"credit_transactions"`
@@ -9,7 +12,7 @@ type CreditTransaction struct {
 	RelevantCreditTransactionID *string `pg:",use_zero"`
 	UserID                      string
 	RecipientID                 string
-	Amount                      float64
+	Amount                      sql.NullFloat64
 	Url                         string
 	Type                        CreditTransactionType
 	CreatedAt                   *time.Time

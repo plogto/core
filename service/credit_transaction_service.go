@@ -2,8 +2,12 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"os"
 
+	"github.com/google/uuid"
+	"github.com/plogto/core/constants"
+	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -13,11 +17,11 @@ import (
 type CreateCreditTransactionParams struct {
 	SenderID                    string
 	ReceiverID                  string
-	Amount                      *float64
+	Amount                      sql.NullFloat64
 	Description                 *string
 	Status                      model.CreditTransactionStatus
 	Type                        model.CreditTransactionType
-	TemplateName                *model.CreditTransactionTemplateName
+	TemplateName                db.CreditTransactionTemplateName
 	RelevantCreditTransactionID *string
 }
 
@@ -26,7 +30,7 @@ type TransferCreditFromAdminParams struct {
 	Amount       *float64
 	Status       model.CreditTransactionStatus
 	Type         model.CreditTransactionType
-	TemplateName model.CreditTransactionTemplateName
+	TemplateName db.CreditTransactionTemplateName
 }
 
 func (s *Service) GetCreditsByUserID(ctx context.Context, userID *string) (float64, error) {
@@ -58,34 +62,32 @@ func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageIn
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After.String())
+	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After)
 }
 
-func (s *Service) CreateCreditTransaction(creditTransactionParams CreateCreditTransactionParams) (*model.CreditTransactionInfo, error) {
-	var amount float64
-	var creditTransactionTemplateID string
+func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransactionParams CreateCreditTransactionParams) (*db.CreditTransactionInfo, error) {
+	var amount sql.NullFloat64
+	var creditTransactionTemplateID uuid.UUID
 
-	if creditTransactionParams.TemplateName != nil {
-		creditTransactionTemplate, _ := s.CreditTransactionTemplates.GetCreditTransactionTemplateByName(*creditTransactionParams.TemplateName)
-		creditTransactionTemplateID = creditTransactionTemplate.ID
-		amount = *creditTransactionTemplate.Amount
+	creditTransactionTemplate, _ := s.CreditTransactionTemplates.GetCreditTransactionTemplateByName(ctx, creditTransactionParams.TemplateName)
+	creditTransactionTemplateID = creditTransactionTemplate.ID
+	amount = creditTransactionTemplate.Amount
+
+	if creditTransactionParams.Amount.Valid {
+		amount = creditTransactionParams.Amount
 	}
 
-	if creditTransactionParams.Amount != nil {
-		amount = *creditTransactionParams.Amount
-	}
-
-	creditTransactionInfo, err := s.CreditTransactionInfos.CreateCreditTransactionInfo(&model.CreditTransactionInfo{
-		Description:                 creditTransactionParams.Description,
-		CreditTransactionTemplateID: &creditTransactionTemplateID,
-		Status:                      creditTransactionParams.Status,
+	creditTransactionInfo, err := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
+		Description:                 sql.NullString{*creditTransactionParams.Description, true},
+		CreditTransactionTemplateID: uuid.NullUUID{creditTransactionTemplateID, true},
+		Status:                      db.CreditTransactionStatus(creditTransactionParams.Status),
 	})
 
 	s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
 		UserID:                  creditTransactionParams.SenderID,
 		RecipientID:             creditTransactionParams.ReceiverID,
-		Amount:                  -amount,
-		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Amount:                  sql.NullFloat64{-amount.Float64, true},
+		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
 		Type:                    creditTransactionParams.Type,
 		Url:                     util.RandomString(24),
 	})
@@ -94,8 +96,8 @@ func (s *Service) CreateCreditTransaction(creditTransactionParams CreateCreditTr
 		UserID:                  creditTransactionParams.ReceiverID,
 		RecipientID:             creditTransactionParams.SenderID,
 		Amount:                  amount,
-		CreditTransactionInfoID: creditTransactionInfo.ID,
-		Type:                    creditTransactionParams.Type,
+		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
+		Type:                    model.CreditTransactionType(creditTransactionParams.Type),
 		Url:                     util.RandomString(24),
 	})
 
@@ -107,59 +109,59 @@ func (s *Service) GetBankAccount() (*model.User, error) {
 	return s.Users.GetUserByUsername(username)
 }
 
-func (s *Service) GenerateCredits(amount float64) (*model.CreditTransaction, error) {
+func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (*model.CreditTransaction, error) {
 	bankUser, _ := s.GetBankAccount()
 
-	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(&model.CreditTransactionInfo{
-		Status: model.CreditTransactionStatusApproved,
+	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
+		Status: db.CreditTransactionStatusApproved,
 	})
 
 	return s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
 		UserID:                  bankUser.ID,
 		RecipientID:             bankUser.ID,
 		Amount:                  amount,
-		CreditTransactionInfoID: creditTransactionInfo.ID,
+		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
 		Type:                    model.CreditTransactionTypeFund,
 		Url:                     util.RandomString(24),
 	})
 }
 
-func (s *Service) TransferCreditFromAdmin(transferCreditFromAdminParams TransferCreditFromAdminParams) (*model.CreditTransactionInfo, error) {
+func (s *Service) TransferCreditFromAdmin(ctx context.Context, transferCreditFromAdminParams TransferCreditFromAdminParams) (*db.CreditTransactionInfo, error) {
 	bankUser, _ := s.GetBankAccount()
 
 	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(bankUser.ID)
 
 	if bankUserCredits <= 0 {
-		s.GenerateCredits(100)
+		s.GenerateCredits(ctx, constants.GENERATE_CREDITS_AMOUNT)
 	}
 
-	return s.CreateCreditTransaction(CreateCreditTransactionParams{
+	return s.CreateCreditTransaction(ctx, CreateCreditTransactionParams{
 		SenderID:     bankUser.ID,
 		ReceiverID:   transferCreditFromAdminParams.ReceiverID,
 		Status:       transferCreditFromAdminParams.Status,
-		TemplateName: &transferCreditFromAdminParams.TemplateName,
+		TemplateName: transferCreditFromAdminParams.TemplateName,
 		Type:         model.CreditTransactionTypeOrder,
 	})
 }
 
-func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType model.CreditTransactionDescriptionVariableType, contentID string) (DescriptionVariable, error) {
+func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType db.CreditTransactionDescriptionVariableType, contentID uuid.UUID) (DescriptionVariable, error) {
 	var descriptionVariable DescriptionVariable
 	switch creditTransactionDescriptionVariableType {
-	case model.CreditTransactionDescriptionVariableTypeUser:
-		user, _ := graph.GetUserLoader(ctx).Load(contentID)
+	case db.CreditTransactionDescriptionVariableTypeUser:
+		user, _ := graph.GetUserLoader(ctx).Load(contentID.String())
 		descriptionVariable = DescriptionVariable{
 			Content: user.FullName,
 			Url:     &user.Username,
 			Image:   user.Avatar,
 		}
-	case model.CreditTransactionDescriptionVariableTypeTag:
-		tag, _ := graph.GetTagLoader(ctx).Load(contentID)
+	case db.CreditTransactionDescriptionVariableTypeTag:
+		tag, _ := graph.GetTagLoader(ctx).Load(contentID.String())
 		descriptionVariable = DescriptionVariable{
 			Content: tag.Name,
 			Url:     &tag.Name,
 		}
-	case model.CreditTransactionDescriptionVariableTypeTicket:
-		ticket, _ := s.Tickets.GetTicketByID(contentID)
+	case db.CreditTransactionDescriptionVariableTypeTicket:
+		ticket, _ := s.Tickets.GetTicketByID(contentID.String())
 		descriptionVariable = DescriptionVariable{
 			Content: ticket.Subject,
 			Url:     &ticket.Url,

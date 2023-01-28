@@ -45,6 +45,7 @@ type ResolverRoot interface {
 	CreditTransaction() CreditTransactionResolver
 	CreditTransactionDescriptionVariable() CreditTransactionDescriptionVariableResolver
 	CreditTransactionInfo() CreditTransactionInfoResolver
+	CreditTransactionTemplate() CreditTransactionTemplateResolver
 	CreditTransactionsEdge() CreditTransactionsEdgeResolver
 	LikedPost() LikedPostResolver
 	LikedPostsEdge() LikedPostsEdgeResolver
@@ -460,6 +461,7 @@ type ConnectionsEdgeResolver interface {
 type CreditTransactionResolver interface {
 	User(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
 	Recipient(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
+	Amount(ctx context.Context, obj *model.CreditTransaction) (float64, error)
 
 	Info(ctx context.Context, obj *model.CreditTransaction) (*db.CreditTransactionInfo, error)
 	RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error)
@@ -472,11 +474,13 @@ type CreditTransactionDescriptionVariableResolver interface {
 	Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
 }
 type CreditTransactionInfoResolver interface {
-	ID(ctx context.Context, obj *db.CreditTransactionInfo) (string, error)
 	Description(ctx context.Context, obj *db.CreditTransactionInfo) (*string, error)
 	DescriptionVariables(ctx context.Context, obj *db.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error)
 	Status(ctx context.Context, obj *db.CreditTransactionInfo) (model.CreditTransactionStatus, error)
-	Template(ctx context.Context, obj *db.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
+	Template(ctx context.Context, obj *db.CreditTransactionInfo) (*db.CreditTransactionTemplate, error)
+}
+type CreditTransactionTemplateResolver interface {
+	Name(ctx context.Context, obj *db.CreditTransactionTemplate) (model.CreditTransactionTemplateName, error)
 }
 type CreditTransactionsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error)
@@ -2729,13 +2733,13 @@ type CreditTransactionDescriptionVariable {
 }
 
 type CreditTransactionTemplate {
-  id: ID!
+  id: UUID!
   name: CreditTransactionTemplateName!
   content: String!
 }
 
 type CreditTransactionInfo {
-  id: ID!
+  id: UUID!
   description: String
   descriptionVariables: [CreditTransactionDescriptionVariable]
   status: CreditTransactionStatus!
@@ -5120,7 +5124,7 @@ func (ec *executionContext) _CreditTransaction_amount(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Amount, nil
+		return ec.resolvers.CreditTransaction().Amount(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5141,8 +5145,8 @@ func (ec *executionContext) fieldContext_CreditTransaction_amount(ctx context.Co
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransaction",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -5626,7 +5630,7 @@ func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.CreditTransactionInfo().ID(rctx, obj)
+		return obj.ID, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5638,19 +5642,19 @@ func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -5819,9 +5823,9 @@ func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransactionTemplate)
+	res := resTmp.(*db.CreditTransactionTemplate)
 	fc.Result = res
-	return ec.marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionTemplate(ctx, field.Selections, res)
+	return ec.marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionTemplate(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5927,7 +5931,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_updatedAt(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5953,9 +5957,9 @@ func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5965,13 +5969,13 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_id(ctx contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5985,7 +5989,7 @@ func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return ec.resolvers.CreditTransactionTemplate().Name(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6006,8 +6010,8 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_name(ctx cont
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionTemplate",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionTemplateName does not have child fields")
 		},
@@ -6015,7 +6019,7 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_name(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_content(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_content(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7554,7 +7558,6 @@ func (ec *executionContext) _Mutation_test(ctx context.Context, field graphql.Co
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7610,7 +7613,6 @@ func (ec *executionContext) _Mutation_register(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7668,7 +7670,6 @@ func (ec *executionContext) _Mutation_oAuthGoogle(ctx context.Context, field gra
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7726,7 +7727,6 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7792,7 +7792,6 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7858,7 +7857,6 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7924,7 +7922,6 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -7990,7 +7987,6 @@ func (ec *executionContext) _Mutation_uploadFiles(ctx context.Context, field gra
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8052,7 +8048,6 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8116,7 +8111,6 @@ func (ec *executionContext) _Mutation_readNotifications(ctx context.Context, fie
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8157,7 +8151,6 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8239,7 +8232,6 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8321,7 +8313,6 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8403,7 +8394,6 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8467,7 +8457,6 @@ func (ec *executionContext) _Mutation_createTicket(ctx context.Context, field gr
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8539,7 +8528,6 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8609,7 +8597,6 @@ func (ec *executionContext) _Mutation_readTicketMessages(ctx context.Context, fi
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8661,7 +8648,6 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8733,7 +8719,6 @@ func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -8829,7 +8814,6 @@ func (ec *executionContext) _Mutation_changePassword(ctx context.Context, field 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11272,7 +11256,6 @@ func (ec *executionContext) _Query_test(ctx context.Context, field graphql.Colle
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11328,7 +11311,6 @@ func (ec *executionContext) _Query_login(ctx context.Context, field graphql.Coll
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11386,7 +11368,6 @@ func (ec *executionContext) _Query_getFollowersByUsername(ctx context.Context, f
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11446,7 +11427,6 @@ func (ec *executionContext) _Query_getFollowingByUsername(ctx context.Context, f
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11506,7 +11486,6 @@ func (ec *executionContext) _Query_getFollowRequests(ctx context.Context, field 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11566,7 +11545,6 @@ func (ec *executionContext) _Query_getCreditTransactions(ctx context.Context, fi
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11626,7 +11604,6 @@ func (ec *executionContext) _Query_getInvitedUsers(ctx context.Context, field gr
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11686,7 +11663,6 @@ func (ec *executionContext) _Query_getLikedPostsByPostId(ctx context.Context, fi
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11746,7 +11722,6 @@ func (ec *executionContext) _Query_getLikedPostsByUsername(ctx context.Context, 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11806,7 +11781,6 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11868,7 +11842,6 @@ func (ec *executionContext) _Query_getPostsByUsername(ctx context.Context, field
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11928,7 +11901,6 @@ func (ec *executionContext) _Query_getRepliesByUsername(ctx context.Context, fie
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -11988,7 +11960,6 @@ func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12048,7 +12019,6 @@ func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graph
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12130,7 +12100,6 @@ func (ec *executionContext) _Query_getTimelinePosts(ctx context.Context, field g
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12190,7 +12159,6 @@ func (ec *executionContext) _Query_getExplorePosts(ctx context.Context, field gr
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12250,7 +12218,6 @@ func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12310,7 +12277,6 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12368,7 +12334,6 @@ func (ec *executionContext) _Query_getTagByTagName(ctx context.Context, field gr
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12432,7 +12397,6 @@ func (ec *executionContext) _Query_getTrends(ctx context.Context, field graphql.
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12488,7 +12452,6 @@ func (ec *executionContext) _Query_getTickets(ctx context.Context, field graphql
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12548,7 +12511,6 @@ func (ec *executionContext) _Query_getTicketMessagesByTicketUrl(ctx context.Cont
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12610,7 +12572,6 @@ func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12695,7 +12656,6 @@ func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12791,7 +12751,6 @@ func (ec *executionContext) _Query_getUserByInvitationCode(ctx context.Context, 
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12887,7 +12846,6 @@ func (ec *executionContext) _Query_checkUsername(ctx context.Context, field grap
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -12983,7 +12941,6 @@ func (ec *executionContext) _Query_checkEmail(ctx context.Context, field graphql
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -13079,7 +13036,6 @@ func (ec *executionContext) _Query___type(ctx context.Context, field graphql.Col
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -13153,7 +13109,6 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return graphql.Null
 	}
 	if resTmp == nil {
 		return graphql.Null
@@ -13824,7 +13779,6 @@ func (ec *executionContext) _Subscription_test(ctx context.Context, field graphq
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return nil
 	}
 	if resTmp == nil {
 		return nil
@@ -13894,7 +13848,6 @@ func (ec *executionContext) _Subscription_getNotification(ctx context.Context, f
 	})
 	if err != nil {
 		ec.Error(ctx, err)
-		return nil
 	}
 	if resTmp == nil {
 		return nil
@@ -19336,12 +19289,25 @@ func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.Sele
 
 			})
 		case "amount":
+			field := field
 
-			out.Values[i] = ec._CreditTransaction_amount(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransaction_amount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "type":
 
 			out.Values[i] = ec._CreditTransaction_type(ctx, field, obj)
@@ -19534,25 +19500,12 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("CreditTransactionInfo")
 		case "id":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._CreditTransactionInfo_id(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._CreditTransactionInfo_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "description":
 			field := field
 
@@ -19645,7 +19598,7 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 
 var creditTransactionTemplateImplementors = []string{"CreditTransactionTemplate"}
 
-func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionTemplate) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionTemplate) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionTemplateImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19658,21 +19611,34 @@ func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel 
 			out.Values[i] = ec._CreditTransactionTemplate_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionTemplate_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionTemplate_name(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "content":
 
 			out.Values[i] = ec._CreditTransactionTemplate_content(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -20125,7 +20091,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -20260,9 +20225,6 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		}
 	}
 	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
 	return out
 }
 
@@ -20958,7 +20920,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	})
 
 	out := graphql.NewFieldSet(fields)
-	var invalids uint32
 	for i, field := range fields {
 		innerCtx := graphql.WithRootFieldContext(ctx, &graphql.RootFieldContext{
 			Object: field.Name,
@@ -21525,9 +21486,6 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		}
 	}
 	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
 	return out
 }
 
@@ -24282,7 +24240,7 @@ func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚖgith
 	return ec._CreditTransactionDescriptionVariable(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionTemplate) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

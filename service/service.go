@@ -10,11 +10,11 @@ import (
 )
 
 type Service struct {
+	Connections                           database.Connections
+	Files                                 database.Files
 	Users                                 database.Users
 	Passwords                             database.Passwords
 	Posts                                 database.Posts
-	Files                                 database.Files
-	Connections                           database.Connections
 	CreditTransactions                    database.CreditTransactions
 	CreditTransactionTemplates            database.CreditTransactionTemplates
 	CreditTransactionInfos                database.CreditTransactionInfos
@@ -38,11 +38,11 @@ type Service struct {
 
 func New(service Service) *Service {
 	return &Service{
+		Connections:                           service.Connections,
+		Files:                                 service.Files,
 		Users:                                 service.Users,
 		Passwords:                             service.Passwords,
 		Posts:                                 service.Posts,
-		Files:                                 service.Files,
-		Connections:                           service.Connections,
 		CreditTransactions:                    service.CreditTransactions,
 		CreditTransactionTemplates:            service.CreditTransactionTemplates,
 		CreditTransactionInfos:                service.CreditTransactionInfos,

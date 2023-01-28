@@ -8,28 +8,35 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *model.PageInfoInput) {
-	var first int = constants.POSTS_PAGE_LIMIT
-	var after string
+type PageInfoResult struct {
+	First int
+	After string
+}
+
+func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *PageInfoResult) {
+	now := time.Now()
+	after := now.Format(time.RFC3339)
+
+	result := &PageInfoResult{
+		First: constants.POSTS_PAGE_LIMIT,
+		After: after,
+	}
 
 	if params != nil {
 		if params.First != nil {
-			first = *params.First
+			result.First = *params.First
 		}
 
 		if params.After != nil {
 			date := ConvertCursorToDateTime(*params.After)
 
-			if _, err := time.Parse(time.RFC3339, date); err == nil {
-				after = date
+			if time, err := time.Parse(time.RFC3339, date); err == nil {
+				result.After = time.String()
 			}
 		}
 	}
 
-	return &model.PageInfoInput{
-		First: &first,
-		After: &after,
-	}
+	return result
 }
 
 func ConvertCreateAtToCursor(createdAt time.Time) string {

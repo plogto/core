@@ -17,7 +17,7 @@ type Connections struct {
 
 type ConnectionFilter struct {
 	Limit  int32
-	After  time.Time
+	After  string
 	Status int32
 }
 
@@ -37,19 +37,20 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 
 	// FIXME
 	FollowerID, _ := uuid.Parse(followerID)
+	after, _ := time.Parse(time.RFC3339, filter.After)
 
 	connections, err := c.Queries.GetFollowersByUserIDAndPageInfo(ctx, db.GetFollowersByUserIDAndPageInfoParams{
 		Limit:       filter.Limit,
 		FollowingID: FollowerID,
 		Status:      2,
-		CreatedAt:   filter.After,
+		CreatedAt:   after,
 	})
 
 	totalCount, _ := c.Queries.CountFollowersByUserIDAndPageInfo(ctx, db.CountFollowersByUserIDAndPageInfoParams{
 		Limit:       filter.Limit,
 		FollowingID: FollowerID,
 		Status:      2,
-		CreatedAt:   filter.After,
+		CreatedAt:   after,
 	})
 
 	for _, value := range connections {
@@ -88,19 +89,20 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 
 	// FIXME
 	FollowingID, _ := uuid.Parse(followingID)
+	after, _ := time.Parse(time.RFC3339, filter.After)
 
 	connections, err := c.Queries.GetFollowingByUserIDAndPageInfo(ctx, db.GetFollowingByUserIDAndPageInfoParams{
 		Limit:      filter.Limit,
 		FollowerID: FollowingID,
 		Status:     2,
-		CreatedAt:  filter.After,
+		CreatedAt:  after,
 	})
 
 	totalCount, _ := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
 		Limit:      filter.Limit,
 		FollowerID: FollowingID,
 		Status:     2,
-		CreatedAt:  filter.After,
+		CreatedAt:  after,
 	})
 
 	for _, value := range connections {

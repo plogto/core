@@ -3,16 +3,17 @@ package service
 import (
 	"context"
 
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/middleware"
 )
 
-func (s *Service) GetCreditTransactionTemplateByID(ctx context.Context, id *string) (*model.CreditTransactionTemplate, error) {
+func (s *Service) GetCreditTransactionTemplateByID(ctx context.Context, id uuid.NullUUID) (*db.CreditTransactionTemplate, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil || err != nil {
+	if err != nil {
 		return nil, nil
 	}
 
-	return s.CreditTransactionTemplates.GetCreditTransactionTemplateByID(*id)
+	return s.CreditTransactionTemplates.GetCreditTransactionTemplateByID(ctx, id.UUID)
 }
