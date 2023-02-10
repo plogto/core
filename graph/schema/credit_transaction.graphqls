@@ -56,7 +56,7 @@ type CreditTransactionInfo {
 }
 
 type CreditTransaction {
-  id: ID!
+  id: UUID!
   user: User!
   recipient: User!
   amount: Float!
@@ -72,7 +72,7 @@ type CreditTransactionsEdge {
 }
 
 type CreditTransactions {
-  totalCount: Int
+  totalCount: TotalCount
   edges: [CreditTransactionsEdge]!
   pageInfo: PageInfo!
 }

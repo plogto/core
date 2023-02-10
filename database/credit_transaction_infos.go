@@ -21,9 +21,8 @@ func (c *CreditTransactionInfos) CreateCreditTransactionInfo(ctx context.Context
 	return creditTransactionInfo, err
 }
 
-func (c *CreditTransactionInfos) GetCreditTransactionInfoByID(ctx context.Context, id string) (*db.CreditTransactionInfo, error) {
-	ID, _ := uuid.Parse(id)
-	creditTransactionInfo, err := c.Queries.GetCreditTransactionInfoByID(ctx, ID)
+func (c *CreditTransactionInfos) GetCreditTransactionInfoByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionInfo, error) {
+	creditTransactionInfo, err := c.Queries.GetCreditTransactionInfoByID(ctx, id)
 
 	if err != nil {
 		return nil, err

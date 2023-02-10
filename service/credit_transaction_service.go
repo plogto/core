@@ -20,7 +20,7 @@ type CreateCreditTransactionParams struct {
 	Amount                      sql.NullFloat64
 	Description                 *string
 	Status                      model.CreditTransactionStatus
-	Type                        model.CreditTransactionType
+	Type                        db.CreditTransactionType
 	TemplateName                db.CreditTransactionTemplateName
 	RelevantCreditTransactionID *string
 }
@@ -33,24 +33,27 @@ type TransferCreditFromAdminParams struct {
 	TemplateName db.CreditTransactionTemplateName
 }
 
-func (s *Service) GetCreditsByUserID(ctx context.Context, userID *string) (float64, error) {
+func (s *Service) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	if userID == nil || err != nil {
+	// FIXME
+	if err != nil {
 		return 0, nil
 	}
 
-	return s.CreditTransactions.GetCreditsByUserID(*userID)
+	return s.CreditTransactions.GetCreditsByUserID(ctx, userID)
 }
 
-func (s *Service) GetCreditTransactionByID(ctx context.Context, id *string) (*model.CreditTransaction, error) {
+func (s *Service) GetCreditTransactionByID(ctx context.Context, id string) (*db.CreditTransaction, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil || err != nil {
+	if err != nil {
 		return nil, nil
 	}
 
-	return s.CreditTransactions.GetCreditTransactionByID(*id)
+	// FIXME
+	ID, _ := uuid.Parse(id)
+	return s.CreditTransactions.GetCreditTransactionByID(ctx, ID)
 }
 
 func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageInfoInput) (*model.CreditTransactions, error) {
@@ -62,7 +65,7 @@ func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageIn
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After)
+	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
 }
 
 func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransactionParams CreateCreditTransactionParams) (*db.CreditTransactionInfo, error) {
@@ -83,21 +86,24 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 		Status:                      db.CreditTransactionStatus(creditTransactionParams.Status),
 	})
 
-	s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
-		UserID:                  creditTransactionParams.SenderID,
-		RecipientID:             creditTransactionParams.ReceiverID,
-		Amount:                  sql.NullFloat64{-amount.Float64, true},
-		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
+	senderID, _ := uuid.Parse(creditTransactionParams.SenderID)
+	receiverID, _ := uuid.Parse(creditTransactionParams.ReceiverID)
+
+	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
+		UserID:                  senderID,
+		RecipientID:             receiverID,
+		Amount:                  float32(-amount.Float64),
+		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    creditTransactionParams.Type,
 		Url:                     util.RandomString(24),
 	})
 
-	s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
-		UserID:                  creditTransactionParams.ReceiverID,
-		RecipientID:             creditTransactionParams.SenderID,
-		Amount:                  amount,
-		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
-		Type:                    model.CreditTransactionType(creditTransactionParams.Type),
+	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
+		UserID:                  receiverID,
+		RecipientID:             senderID,
+		Amount:                  float32(amount.Float64),
+		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Type:                    creditTransactionParams.Type,
 		Url:                     util.RandomString(24),
 	})
 
@@ -109,19 +115,21 @@ func (s *Service) GetBankAccount() (*model.User, error) {
 	return s.Users.GetUserByUsername(username)
 }
 
-func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (*model.CreditTransaction, error) {
+func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (*db.CreditTransaction, error) {
 	bankUser, _ := s.GetBankAccount()
 
 	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
 		Status: db.CreditTransactionStatusApproved,
 	})
 
-	return s.CreditTransactions.CreateCreditTransaction(&model.CreditTransaction{
-		UserID:                  bankUser.ID,
-		RecipientID:             bankUser.ID,
-		Amount:                  amount,
-		CreditTransactionInfoID: creditTransactionInfo.ID.String(),
-		Type:                    model.CreditTransactionTypeFund,
+	bankUserID, _ := uuid.Parse(bankUser.ID)
+
+	return s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
+		UserID:                  bankUserID,
+		RecipientID:             bankUserID,
+		Amount:                  float32(amount.Float64),
+		CreditTransactionInfoID: creditTransactionInfo.ID,
+		Type:                    db.CreditTransactionTypeFund,
 		Url:                     util.RandomString(24),
 	})
 }
@@ -129,7 +137,9 @@ func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (
 func (s *Service) TransferCreditFromAdmin(ctx context.Context, transferCreditFromAdminParams TransferCreditFromAdminParams) (*db.CreditTransactionInfo, error) {
 	bankUser, _ := s.GetBankAccount()
 
-	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(bankUser.ID)
+	bankUserID, _ := uuid.Parse(bankUser.ID)
+
+	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(ctx, bankUserID)
 
 	if bankUserCredits <= 0 {
 		s.GenerateCredits(ctx, constants.GENERATE_CREDITS_AMOUNT)
@@ -140,7 +150,7 @@ func (s *Service) TransferCreditFromAdmin(ctx context.Context, transferCreditFro
 		ReceiverID:   transferCreditFromAdminParams.ReceiverID,
 		Status:       transferCreditFromAdminParams.Status,
 		TemplateName: transferCreditFromAdminParams.TemplateName,
-		Type:         model.CreditTransactionTypeOrder,
+		Type:         db.CreditTransactionTypeOrder,
 	})
 }
 

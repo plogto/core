@@ -84,21 +84,25 @@ LIMIT
 	$4;
 
 -- name: CountFollowingByUserIDAndPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		count(*)
+	FROM
+		connections
+	WHERE
+		follower_id = $1
+		AND status = $2
+		AND created_at < $3
+		AND deleted_at IS NULL
+	GROUP BY
+		id
+	ORDER BY
+		created_at DESC
+)
 SELECT
 	count(*)
 FROM
-	connections
-WHERE
-	follower_id = $1
-	AND status = $2
-	AND created_at < $3
-	AND deleted_at IS NULL
-GROUP BY
-	id
-ORDER BY
-	created_at DESC
-LIMIT
-	$4;
+	_count_wrapper;
 
 -- name: UpdateConnection :one
 UPDATE
