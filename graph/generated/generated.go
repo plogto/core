@@ -488,12 +488,12 @@ type CreditTransactionsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*db.CreditTransaction, error)
 }
 type LikedPostResolver interface {
-	User(ctx context.Context, obj *model.LikedPost) (*model.User, error)
-	Post(ctx context.Context, obj *model.LikedPost) (*model.Post, error)
+	User(ctx context.Context, obj *db.LikedPost) (*model.User, error)
+	Post(ctx context.Context, obj *db.LikedPost) (*model.Post, error)
 }
 type LikedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.LikedPostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.LikedPostsEdge) (*model.LikedPost, error)
+	Node(ctx context.Context, obj *model.LikedPostsEdge) (*db.LikedPost, error)
 }
 type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
@@ -504,7 +504,7 @@ type MutationResolver interface {
 	AcceptUser(ctx context.Context, userID string) (*db.Connection, error)
 	RejectUser(ctx context.Context, userID string) (*db.Connection, error)
 	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error)
-	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
+	LikePost(ctx context.Context, postID string) (*db.LikedPost, error)
 	ReadNotifications(ctx context.Context) (*bool, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
 	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
@@ -537,7 +537,7 @@ type PostResolver interface {
 
 	Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error)
 	Replies(ctx context.Context, obj *model.Post) (*model.Posts, error)
-	IsLiked(ctx context.Context, obj *model.Post) (*model.LikedPost, error)
+	IsLiked(ctx context.Context, obj *model.Post) (*db.LikedPost, error)
 	IsSaved(ctx context.Context, obj *model.Post) (*model.SavedPost, error)
 }
 type PostsEdgeResolver interface {
@@ -2812,7 +2812,7 @@ extend type Query {
 }
 `, BuiltIn: false},
 	{Name: "../schema/liked_post.graphqls", Input: `type LikedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -2825,7 +2825,7 @@ type LikedPostsEdge {
 }
 
 type LikedPosts {
-  totalCount: Int
+  totalCount: TotalCount
   edges: [LikedPostsEdge]!
   pageInfo: PageInfo!
 }
@@ -7015,7 +7015,7 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_node(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7041,9 +7041,9 @@ func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7053,13 +7053,13 @@ func (ec *executionContext) fieldContext_LikedPost_id(ctx context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_user(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_user(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7147,7 +7147,7 @@ func (ec *executionContext) fieldContext_LikedPost_user(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7221,7 +7221,7 @@ func (ec *executionContext) fieldContext_LikedPost_post(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7244,9 +7244,9 @@ func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7262,7 +7262,7 @@ func (ec *executionContext) fieldContext_LikedPost_createdAt(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7285,9 +7285,9 @@ func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7326,9 +7326,9 @@ func (ec *executionContext) _LikedPosts_totalCount(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(*int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalOTotalCount2ᚖint64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPosts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7338,7 +7338,7 @@ func (ec *executionContext) fieldContext_LikedPosts_totalCount(ctx context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7511,9 +7511,9 @@ func (ec *executionContext) _LikedPostsEdge_node(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8053,9 +8053,9 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10818,9 +10818,9 @@ func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_isLiked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19925,7 +19925,7 @@ func (ec *executionContext) _InvitedUsersEdge(ctx context.Context, sel ast.Selec
 
 var likedPostImplementors = []string{"LikedPost"}
 
-func (ec *executionContext) _LikedPost(ctx context.Context, sel ast.SelectionSet, obj *model.LikedPost) graphql.Marshaler {
+func (ec *executionContext) _LikedPost(ctx context.Context, sel ast.SelectionSet, obj *db.LikedPost) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, likedPostImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -24449,7 +24449,7 @@ func (ec *executionContext) marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋ
 	return ec._InvitedUsersEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx context.Context, sel ast.SelectionSet, v *model.LikedPost) graphql.Marshaler {
+func (ec *executionContext) marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx context.Context, sel ast.SelectionSet, v *db.LikedPost) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

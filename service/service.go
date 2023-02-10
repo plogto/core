@@ -11,14 +11,16 @@ import (
 
 type Service struct {
 	Connections                           database.Connections
+	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
+	CreditTransactionTemplates            database.CreditTransactionTemplates
+	CreditTransactionInfos                database.CreditTransactionInfos
+	CreditTransactions                    database.CreditTransactions
 	Files                                 database.Files
+	InvitedUsers                          database.InvitedUsers
+	LikedPosts                            database.LikedPosts
 	Users                                 database.Users
 	Passwords                             database.Passwords
 	Posts                                 database.Posts
-	CreditTransactions                    database.CreditTransactions
-	CreditTransactionTemplates            database.CreditTransactionTemplates
-	CreditTransactionInfos                database.CreditTransactionInfos
-	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
 	Tickets                               database.Tickets
 	TicketMessages                        database.TicketMessages
 	Tags                                  database.Tags
@@ -26,9 +28,7 @@ type Service struct {
 	PostAttachments                       database.PostAttachments
 	PostTags                              database.PostTags
 	PostMentions                          database.PostMentions
-	LikedPosts                            database.LikedPosts
 	SavedPosts                            database.SavedPosts
-	InvitedUsers                          database.InvitedUsers
 	OnlineUsers                           database.OnlineUsers
 	Notifications                         database.Notifications
 	NotificationTypes                     database.NotificationTypes
@@ -39,14 +39,16 @@ type Service struct {
 func New(service Service) *Service {
 	return &Service{
 		Connections:                           service.Connections,
+		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
+		CreditTransactionTemplates:            service.CreditTransactionTemplates,
+		CreditTransactionInfos:                service.CreditTransactionInfos,
+		CreditTransactions:                    service.CreditTransactions,
 		Files:                                 service.Files,
+		InvitedUsers:                          service.InvitedUsers,
+		LikedPosts:                            service.LikedPosts,
 		Users:                                 service.Users,
 		Passwords:                             service.Passwords,
 		Posts:                                 service.Posts,
-		CreditTransactions:                    service.CreditTransactions,
-		CreditTransactionTemplates:            service.CreditTransactionTemplates,
-		CreditTransactionInfos:                service.CreditTransactionInfos,
-		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
 		Tickets:                               service.Tickets,
 		TicketMessages:                        service.TicketMessages,
 		Tags:                                  service.Tags,
@@ -54,9 +56,7 @@ func New(service Service) *Service {
 		PostMentions:                          service.PostMentions,
 		TicketMessageAttachments:              service.TicketMessageAttachments,
 		PostAttachments:                       service.PostAttachments,
-		LikedPosts:                            service.LikedPosts,
 		SavedPosts:                            service.SavedPosts,
-		InvitedUsers:                          service.InvitedUsers,
 		OnlineUsers:                           service.OnlineUsers,
 		Notifications:                         service.Notifications,
 		NotificationTypes:                     service.NotificationTypes,

@@ -91,14 +91,14 @@ type InvitedUsersEdge struct {
 }
 
 type LikedPosts struct {
-	TotalCount *int              `json:"totalCount"`
+	TotalCount *int64            `json:"totalCount"`
 	Edges      []*LikedPostsEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 }
 
 type LikedPostsEdge struct {
-	Cursor string     `json:"cursor"`
-	Node   *LikedPost `json:"node"`
+	Cursor string        `json:"cursor"`
+	Node   *db.LikedPost `json:"node"`
 }
 
 type LoginInput struct {

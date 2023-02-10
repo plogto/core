@@ -16,7 +16,7 @@ import (
 const countCreditTransactionsByUserIDAndPageInfo = `-- name: CountCreditTransactionsByUserIDAndPageInfo :one
 WITH _count_wrapper AS (
 	SELECT
-		count(DISTINCT credit_transaction.id) AS count
+		count(*)
 	FROM
 		credit_transactions AS credit_transaction
 		INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id

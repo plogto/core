@@ -1,5 +1,5 @@
 type LikedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -12,7 +12,7 @@ type LikedPostsEdge {
 }
 
 type LikedPosts {
-  totalCount: Int
+  totalCount: TotalCount
   edges: [LikedPostsEdge]!
   pageInfo: PageInfo!
 }

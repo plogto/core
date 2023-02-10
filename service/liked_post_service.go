@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -11,7 +13,7 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost, error) {
+func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -20,17 +22,19 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
 
-	likedPost, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(user.ID, postID)
+	// FIXME
+	userID, _ := uuid.Parse(user.ID)
+	PostID, _ := uuid.Parse(postID)
+
+	likedPost, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, userID, PostID)
 
 	if !validation.IsLikedPostExists(likedPost) {
-		likedPost, err := s.LikedPosts.CreateLikedPost(&model.LikedPost{
-			UserID: user.ID,
-			PostID: postID,
-		})
+
+		likedPost, err := s.LikedPosts.CreateLikedPost(ctx, userID, PostID)
 
 		if validation.IsLikedPostExists(likedPost) {
 			var name = model.NotificationTypeNameLikePost
@@ -50,7 +54,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*model.LikedPost
 		return likedPost, err
 
 	} else {
-		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(likedPost.ID)
+		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(ctx, likedPost.ID)
 
 		s.RemoveNotification(CreateNotificationArgs{
 			Name:       model.NotificationTypeNameLikePost,
@@ -70,11 +74,11 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
 
-	if s.CheckUserAccess(user, followingUser) == bool(false) || !validation.IsUserExists(user) {
+	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) || !validation.IsUserExists(user) {
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
-		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(postID, 50, "")
+		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(ctx, postID, 50, "")
 	}
 }
 
@@ -85,17 +89,17 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if s.CheckUserAccess(user, followingUser) == bool(false) {
+		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 			return nil, errors.New("access denied")
 		}
 
 		pageInfo := util.ExtractPageInfo(input)
 
-		return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(followingUser.ID, *pageInfo.First, *pageInfo.After)
+		return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfo.First), pageInfo.After)
 	}
 }
 
-func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedPost, error) {
+func (s *Service) IsPostLiked(ctx context.Context, postID string) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
@@ -104,10 +108,15 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+
+	// FIXME
+	userID, _ := uuid.Parse(user.ID)
+	PostID, _ := uuid.Parse(postID)
+
+	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		isPostLiked, err := s.LikedPosts.GetLikedPostByUserIDAndPostID(user.ID, postID)
+		isPostLiked, err := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, userID, PostID)
 		if len(isPostLiked.ID) < 1 {
 			return nil, nil
 		}
@@ -116,17 +125,18 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*model.LikedP
 	}
 }
 
-func (s *Service) GetLikedPostByID(ctx context.Context, id *string) (*model.LikedPost, error) {
+func (s *Service) GetLikedPostByID(ctx context.Context, id *string) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if id == nil || !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
-	likedPost, err := s.LikedPosts.GetLikedPostByID(*id)
-	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID)
+	ID, _ := uuid.Parse(*id)
+	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, ID)
+	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 
