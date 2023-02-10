@@ -82,7 +82,7 @@ models:
   CreditTransactionTemplate:
     model: github.com/plogto/core/db.CreditTransactionTemplate
   CreditTransaction:
-    model: github.com/plogto/core/graph/model.CreditTransaction
+    model: github.com/plogto/core/db.CreditTransaction
     fields:
       user:
         resolver: true

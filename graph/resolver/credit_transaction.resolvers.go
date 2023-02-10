@@ -14,28 +14,41 @@ import (
 )
 
 // User is the resolver for the user field.
-func (r *creditTransactionResolver) User(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID)
+func (r *creditTransactionResolver) User(ctx context.Context, obj *db.CreditTransaction) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID.String())
 }
 
 // Recipient is the resolver for the recipient field.
-func (r *creditTransactionResolver) Recipient(ctx context.Context, obj *model.CreditTransaction) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.RecipientID)
+func (r *creditTransactionResolver) Recipient(ctx context.Context, obj *db.CreditTransaction) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.RecipientID.String())
 }
 
 // Amount is the resolver for the amount field.
-func (r *creditTransactionResolver) Amount(ctx context.Context, obj *model.CreditTransaction) (float64, error) {
-	return obj.Amount.Float64, nil
+func (r *creditTransactionResolver) Amount(ctx context.Context, obj *db.CreditTransaction) (float64, error) {
+	return float64(obj.Amount), nil
+}
+
+// Type is the resolver for the type field.
+func (r *creditTransactionResolver) Type(ctx context.Context, obj *db.CreditTransaction) (*model.CreditTransactionType, error) {
+	return (*model.CreditTransactionType)(&obj.Type), nil
 }
 
 // Info is the resolver for the info field.
-func (r *creditTransactionResolver) Info(ctx context.Context, obj *model.CreditTransaction) (*db.CreditTransactionInfo, error) {
-	return r.Service.GetCreditTransactionInfoByID(ctx, &obj.CreditTransactionInfoID)
+func (r *creditTransactionResolver) Info(ctx context.Context, obj *db.CreditTransaction) (*db.CreditTransactionInfo, error) {
+	if &obj.CreditTransactionInfoID == nil {
+		return nil, nil
+	} else {
+		return r.Service.GetCreditTransactionInfoByID(ctx, obj.CreditTransactionInfoID.String())
+	}
 }
 
 // RelevantTransaction is the resolver for the relevantTransaction field.
-func (r *creditTransactionResolver) RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error) {
-	return r.Service.GetCreditTransactionByID(ctx, obj.RelevantCreditTransactionID)
+func (r *creditTransactionResolver) RelevantTransaction(ctx context.Context, obj *db.CreditTransaction) (*db.CreditTransaction, error) {
+	if &obj.RelevantCreditTransactionID == nil {
+		return nil, nil
+	} else {
+		return r.Service.GetCreditTransactionByID(ctx, obj.RelevantCreditTransactionID.UUID.String())
+	}
 }
 
 // Type is the resolver for the type field.
@@ -97,12 +110,16 @@ func (r *creditTransactionTemplateResolver) Name(ctx context.Context, obj *db.Cr
 
 // Cursor is the resolver for the cursor field.
 func (r *creditTransactionsEdgeResolver) Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error) {
-	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+	return util.ConvertCreateAtToCursor(obj.Node.CreatedAt), nil
 }
 
 // Node is the resolver for the node field.
-func (r *creditTransactionsEdgeResolver) Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*model.CreditTransaction, error) {
-	return r.Service.GetCreditTransactionByID(ctx, &obj.Node.ID)
+func (r *creditTransactionsEdgeResolver) Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*db.CreditTransaction, error) {
+	if &obj.Node.ID == nil {
+		return nil, nil
+	} else {
+		return r.Service.GetCreditTransactionByID(ctx, obj.Node.ID.String())
+	}
 }
 
 // GetCreditTransactions is the resolver for the getCreditTransactions field.

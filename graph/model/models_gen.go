@@ -49,14 +49,14 @@ type CreateTicketInput struct {
 }
 
 type CreditTransactions struct {
-	TotalCount *int                      `json:"totalCount"`
+	TotalCount *int64                    `json:"totalCount"`
 	Edges      []*CreditTransactionsEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 }
 
 type CreditTransactionsEdge struct {
-	Cursor string             `json:"cursor"`
-	Node   *CreditTransaction `json:"node"`
+	Cursor string                `json:"cursor"`
+	Node   *db.CreditTransaction `json:"node"`
 }
 
 type EditUserInput struct {

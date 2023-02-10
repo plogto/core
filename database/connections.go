@@ -83,7 +83,6 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 }
 
 func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID string, filter ConnectionFilter) (*model.Connections, error) {
-
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
@@ -99,7 +98,6 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 	})
 
 	totalCount, _ := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
-		Limit:      filter.Limit,
 		FollowerID: FollowingID,
 		Status:     2,
 		CreatedAt:  after,
