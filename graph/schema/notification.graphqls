@@ -9,7 +9,7 @@ enum NotificationTypeName {
 }
 
 type NotificationType {
-  id: ID!
+  id: UUID!
   name: NotificationTypeName!
   template: String!
 }

@@ -5,13 +5,14 @@ import (
 	"errors"
 	"time"
 
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
 )
 
 type CreateNotificationArgs struct {
-	Name       model.NotificationTypeName
+	Name       db.NotificationTypeName
 	SenderID   string
 	ReceiverID string
 	Url        string
@@ -39,7 +40,7 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInp
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After)
 }
 
 func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.Notification, error) {
@@ -76,12 +77,12 @@ func (s *Service) GetNotification(ctx context.Context) (<-chan *model.Notificati
 	return notificationEdge, nil
 }
 
-func (s *Service) CreateNotification(args CreateNotificationArgs) error {
+func (s *Service) CreateNotification(ctx context.Context, args CreateNotificationArgs) error {
 
 	if args.SenderID != args.ReceiverID {
-		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(args.Name)
+		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
 		notification := &model.Notification{
-			NotificationTypeID: notificationType.ID,
+			NotificationTypeID: notificationType.ID.String(),
 			SenderID:           args.SenderID,
 			ReceiverID:         args.ReceiverID,
 			URL:                args.Url,
@@ -108,11 +109,11 @@ func (s *Service) CreateNotification(args CreateNotificationArgs) error {
 	return nil
 }
 
-func (s *Service) RemoveNotification(args CreateNotificationArgs) error {
-	notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(args.Name)
+func (s *Service) RemoveNotification(ctx context.Context, args CreateNotificationArgs) error {
+	notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
 	DeletedAt := time.Now()
 	notification := &model.Notification{
-		NotificationTypeID: notificationType.ID,
+		NotificationTypeID: notificationType.ID.String(),
 		SenderID:           args.SenderID,
 		ReceiverID:         args.ReceiverID,
 		PostID:             args.PostID,
@@ -146,11 +147,11 @@ func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 	return &status, nil
 }
 
-func (s *Service) CreatePostMentionNotifications(args CreatePostMentionNotificationsArgs) {
+func (s *Service) CreatePostMentionNotifications(ctx context.Context, args CreatePostMentionNotificationsArgs) {
 	for _, receiverID := range args.UserIDs {
 		if receiverID != args.SenderID {
-			s.CreateNotification(CreateNotificationArgs{
-				Name:       model.NotificationTypeNameMentionInPost,
+			s.CreateNotification(ctx, CreateNotificationArgs{
+				Name:       db.NotificationTypeNameMentionInPost,
 				SenderID:   args.SenderID,
 				ReceiverID: receiverID,
 				Url:        "/p/" + args.Post.Url,

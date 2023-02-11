@@ -51,6 +51,7 @@ type ResolverRoot interface {
 	LikedPostsEdge() LikedPostsEdgeResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
+	NotificationType() NotificationTypeResolver
 	NotificationsEdge() NotificationsEdgeResolver
 	Post() PostResolver
 	PostsEdge() PostsEdgeResolver
@@ -518,11 +519,14 @@ type MutationResolver interface {
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
 type NotificationResolver interface {
-	NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error)
+	NotificationType(ctx context.Context, obj *model.Notification) (*db.NotificationType, error)
 	Sender(ctx context.Context, obj *model.Notification) (*model.User, error)
 	Receiver(ctx context.Context, obj *model.Notification) (*model.User, error)
 	Post(ctx context.Context, obj *model.Notification) (*model.Post, error)
 	Reply(ctx context.Context, obj *model.Notification) (*model.Post, error)
+}
+type NotificationTypeResolver interface {
+	Name(ctx context.Context, obj *db.NotificationType) (model.NotificationTypeName, error)
 }
 type NotificationsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error)
@@ -2887,7 +2891,7 @@ type Subscription {
 }
 
 type NotificationType {
-  id: ID!
+  id: UUID!
   name: NotificationTypeName!
   template: String!
 }
@@ -8924,9 +8928,9 @@ func (ec *executionContext) _Notification_notificationType(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.NotificationType)
+	res := resTmp.(*db.NotificationType)
 	fc.Result = res
-	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx, field.Selections, res)
+	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_notificationType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9435,7 +9439,7 @@ func (ec *executionContext) fieldContext_Notification_updatedAt(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_id(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_id(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9461,9 +9465,9 @@ func (ec *executionContext) _NotificationType_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationType_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9473,13 +9477,13 @@ func (ec *executionContext) fieldContext_NotificationType_id(ctx context.Context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_name(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_name(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9493,7 +9497,7 @@ func (ec *executionContext) _NotificationType_name(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return ec.resolvers.NotificationType().Name(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9514,8 +9518,8 @@ func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "NotificationType",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type NotificationTypeName does not have child fields")
 		},
@@ -9523,7 +9527,7 @@ func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_template(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_template(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_template(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -20385,7 +20389,7 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 
 var notificationTypeImplementors = []string{"NotificationType"}
 
-func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.SelectionSet, obj *db.NotificationType) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationTypeImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20398,21 +20402,34 @@ func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.Selec
 			out.Values[i] = ec._NotificationType_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
+			field := field
 
-			out.Values[i] = ec._NotificationType_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NotificationType_name(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "template":
 
 			out.Values[i] = ec._NotificationType_template(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -23281,11 +23298,11 @@ func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋplogtoᚋcoreᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v db.NotificationType) graphql.Marshaler {
 	return ec._NotificationType(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *db.NotificationType) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")

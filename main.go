@@ -79,6 +79,7 @@ func main() {
 		Files:                                 database.Files{Queries: queries},
 		InvitedUsers:                          database.InvitedUsers{Queries: queries},
 		LikedPosts:                            database.LikedPosts{Queries: queries},
+		NotificationTypes:                     database.NotificationTypes{Queries: queries},
 		Users:                                 users,
 		Passwords:                             database.Passwords{DB: DB},
 		Posts:                                 database.Posts{DB: DB},
@@ -92,7 +93,6 @@ func main() {
 		SavedPosts:                            database.SavedPosts{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 		Notifications:                         database.Notifications{DB: DB},
-		NotificationTypes:                     database.NotificationTypes{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graphResolver.Resolver{Service: s}}
