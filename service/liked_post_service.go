@@ -37,12 +37,12 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 		likedPost, err := s.LikedPosts.CreateLikedPost(ctx, userID, PostID)
 
 		if validation.IsLikedPostExists(likedPost) {
-			var name = model.NotificationTypeNameLikePost
+			var name = db.NotificationTypeNameLikePost
 			if post.ParentID != nil {
-				name = model.NotificationTypeNameLikeReply
+				name = db.NotificationTypeNameLikeReply
 			}
 
-			s.CreateNotification(CreateNotificationArgs{
+			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       name,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
@@ -56,8 +56,8 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 	} else {
 		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(ctx, likedPost.ID)
 
-		s.RemoveNotification(CreateNotificationArgs{
-			Name:       model.NotificationTypeNameLikePost,
+		s.RemoveNotification(ctx, CreateNotificationArgs{
+			Name:       db.NotificationTypeNameLikePost,
 			SenderID:   user.ID,
 			ReceiverID: post.UserID,
 			Url:        "/p/" + post.Url,

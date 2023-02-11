@@ -678,7 +678,7 @@ type Notification struct {
 
 type NotificationType struct {
 	ID        uuid.UUID
-	Name      string
+	Name      NotificationTypeName
 	Template  string
 	DeletedAt sql.NullTime
 }

@@ -87,7 +87,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 				ReceiverID:   inviter.ID,
 				Status:       model.CreditTransactionStatusApproved,
 				Type:         model.CreditTransactionTypeOrder,
-				TemplateName: model.CreditTransactionTemplateNameInviteUser,
+				TemplateName: db.CreditTransactionTemplateNameInviteUser,
 			})
 
 			if err != nil {
@@ -108,7 +108,7 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 				ReceiverID:   newUser.ID,
 				Status:       model.CreditTransactionStatusApproved,
 				Type:         model.CreditTransactionTypeOrder,
-				TemplateName: model.CreditTransactionTemplateNameRegisterByInvitationCode,
+				TemplateName: db.CreditTransactionTemplateNameRegisterByInvitationCode,
 			})
 
 			if err != nil {
@@ -128,8 +128,8 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 
 	plogAccount, _ := s.GetPlogAccount()
 	if validation.IsUserExists(plogAccount) {
-		s.CreateNotification(CreateNotificationArgs{
-			Name:       model.NotificationTypeNameWelcome,
+		s.CreateNotification(ctx, CreateNotificationArgs{
+			Name:       db.NotificationTypeNameWelcome,
 			SenderID:   plogAccount.ID,
 			ReceiverID: newUser.ID,
 			Url:        "/" + plogAccount.Username,

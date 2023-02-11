@@ -252,7 +252,7 @@ ADD
 -- Notification Types
 CREATE TABLE notification_types (
 	id uuid DEFAULT uuid_generate_v4() NOT NULL,
-	NAME CHARACTER VARYING(100) NOT NULL,
+	NAME notification_type_name NOT NULL,
 	TEMPLATE TEXT NOT NULL,
 	deleted_at TIMESTAMP WITHOUT TIME ZONE
 );

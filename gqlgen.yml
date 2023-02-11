@@ -113,6 +113,8 @@ models:
         resolver: true
       node:
         resolver: true
+  NotificationType:
+    model: github.com/plogto/core/db.NotificationType
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -243,5 +245,3 @@ models:
         resolver: true
       reply:
         resolver: true
-  NotificationType:
-    model: github.com/plogto/core/graph/model.NotificationType

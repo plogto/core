@@ -46,8 +46,8 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection
 	})
 
 	if validation.IsConnectionStatusAccepted(newConnection) {
-		s.CreateNotification(CreateNotificationArgs{
-			Name:       model.NotificationTypeNameFollowUser,
+		s.CreateNotification(ctx, CreateNotificationArgs{
+			Name:       db.NotificationTypeNameFollowUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -75,8 +75,8 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*db.Connecti
 	deletedConnection, _ := s.Connections.DeleteConnection(ctx, connection.ID)
 
 	if validation.IsConnectionExists(deletedConnection) {
-		s.RemoveNotification(CreateNotificationArgs{
-			Name:       model.NotificationTypeNameFollowUser,
+		s.RemoveNotification(ctx, CreateNotificationArgs{
+			Name:       db.NotificationTypeNameFollowUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
@@ -120,8 +120,8 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*db.Connection
 		Status:      connection.Status,
 	})
 	if validation.IsConnectionExists(connection) {
-		s.CreateNotification(CreateNotificationArgs{
-			Name:       model.NotificationTypeNameAcceptUser,
+		s.CreateNotification(ctx, CreateNotificationArgs{
+			Name:       db.NotificationTypeNameAcceptUser,
 			SenderID:   user.ID,
 			ReceiverID: userID,
 			Url:        "/" + user.Username,
