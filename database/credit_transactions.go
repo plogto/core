@@ -90,7 +90,7 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx contex
 	}
 
 	return &model.CreditTransactions{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,

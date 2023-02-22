@@ -13,7 +13,7 @@ type ConnectionsEdge {
 }
 
 type Connections {
-  totalCount: TotalCount
+  totalCount: TotalCount!
   edges: [ConnectionsEdge]!
   pageInfo: PageInfo!
 }

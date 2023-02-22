@@ -32,7 +32,7 @@ type ChangePasswordInput struct {
 }
 
 type Connections struct {
-	TotalCount *int64             `json:"totalCount"`
+	TotalCount int64              `json:"totalCount"`
 	Edges      []*ConnectionsEdge `json:"edges"`
 	PageInfo   *PageInfo          `json:"pageInfo"`
 }
@@ -49,7 +49,7 @@ type CreateTicketInput struct {
 }
 
 type CreditTransactions struct {
-	TotalCount *int64                    `json:"totalCount"`
+	TotalCount int64                     `json:"totalCount"`
 	Edges      []*CreditTransactionsEdge `json:"edges"`
 	PageInfo   *PageInfo                 `json:"pageInfo"`
 }
@@ -107,15 +107,15 @@ type LoginInput struct {
 }
 
 type Notifications struct {
-	TotalCount               *int                 `json:"totalCount"`
+	TotalCount               int64                `json:"totalCount"`
 	Edges                    []*NotificationsEdge `json:"edges"`
-	UnreadNotificationsCount *int                 `json:"unreadNotificationsCount"`
+	UnreadNotificationsCount int64                `json:"unreadNotificationsCount"`
 	PageInfo                 *PageInfo            `json:"pageInfo"`
 }
 
 type NotificationsEdge struct {
-	Cursor string        `json:"cursor"`
-	Node   *Notification `json:"node"`
+	Cursor string           `json:"cursor"`
+	Node   *db.Notification `json:"node"`
 }
 
 type OAuthGoogleInput struct {

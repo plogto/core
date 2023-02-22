@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
@@ -20,43 +19,53 @@ func (r *mutationResolver) ReadNotifications(ctx context.Context) (*bool, error)
 }
 
 // NotificationType is the resolver for the notificationType field.
-func (r *notificationResolver) NotificationType(ctx context.Context, obj *model.Notification) (*db.NotificationType, error) {
-	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID)
+func (r *notificationResolver) NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error) {
+	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID.String())
 }
 
 // Sender is the resolver for the sender field.
-func (r *notificationResolver) Sender(ctx context.Context, obj *model.Notification) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.SenderID)
+func (r *notificationResolver) Sender(ctx context.Context, obj *db.Notification) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.SenderID.String())
 }
 
 // Receiver is the resolver for the receiver field.
-func (r *notificationResolver) Receiver(ctx context.Context, obj *model.Notification) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.ReceiverID)
+func (r *notificationResolver) Receiver(ctx context.Context, obj *db.Notification) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.ReceiverID.String())
 }
 
 // Post is the resolver for the post field.
-func (r *notificationResolver) Post(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, obj.PostID)
+func (r *notificationResolver) Post(ctx context.Context, obj *db.Notification) (*model.Post, error) {
+	if obj == nil {
+		return nil, nil
+	} else {
+		postID := obj.PostID.UUID.String()
+		return r.Service.GetPostByID(ctx, &postID)
+	}
 }
 
 // Reply is the resolver for the reply field.
-func (r *notificationResolver) Reply(ctx context.Context, obj *model.Notification) (*model.Post, error) {
-	return r.Service.GetPostByID(ctx, obj.ReplyID)
+func (r *notificationResolver) Reply(ctx context.Context, obj *db.Notification) (*model.Post, error) {
+	if obj == nil {
+		return nil, nil
+	} else {
+		replyID := obj.ReplyID.UUID.String()
+		return r.Service.GetPostByID(ctx, &replyID)
+	}
 }
 
 // Name is the resolver for the name field.
 func (r *notificationTypeResolver) Name(ctx context.Context, obj *db.NotificationType) (model.NotificationTypeName, error) {
-	panic(fmt.Errorf("not implemented: Name - name"))
+	return model.NotificationTypeName(obj.Name), nil
 }
 
 // Cursor is the resolver for the cursor field.
 func (r *notificationsEdgeResolver) Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error) {
-	return util.ConvertCreateAtToCursor(*obj.Node.CreatedAt), nil
+	return util.ConvertCreateAtToCursor(obj.Node.CreatedAt), nil
 }
 
 // Node is the resolver for the node field.
-func (r *notificationsEdgeResolver) Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error) {
-	return r.Service.GetNotificationByID(ctx, obj.Node.ID)
+func (r *notificationsEdgeResolver) Node(ctx context.Context, obj *model.NotificationsEdge) (*db.Notification, error) {
+	return r.Service.GetNotificationByID(ctx, obj.Node.ID.String())
 }
 
 // GetNotifications is the resolver for the getNotifications field.

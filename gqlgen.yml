@@ -115,6 +115,25 @@ models:
         resolver: true
   NotificationType:
     model: github.com/plogto/core/db.NotificationType
+  Notification:
+    model: github.com/plogto/core/db.Notification
+    fields:
+      notificationType:
+        resolver: true
+      sender:
+        resolver: true
+      receiver:
+        resolver: true
+      post:
+        resolver: true
+      reply:
+        resolver: true
+  NotificationsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -225,23 +244,4 @@ models:
       cursor:
         resolver: true
       node:
-        resolver: true
-  NotificationsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  Notification:
-    model: github.com/plogto/core/graph/model.Notification
-    fields:
-      notificationType:
-        resolver: true
-      sender:
-        resolver: true
-      receiver:
-        resolver: true
-      post:
-        resolver: true
-      reply:
         resolver: true

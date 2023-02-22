@@ -128,10 +128,13 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 
 	plogAccount, _ := s.GetPlogAccount()
 	if validation.IsUserExists(plogAccount) {
+		// FIXME
+		senderID, _ := uuid.Parse(plogAccount.ID)
+		receiverID, _ := uuid.Parse(newUser.ID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameWelcome,
-			SenderID:   plogAccount.ID,
-			ReceiverID: newUser.ID,
+			SenderID:   senderID,
+			ReceiverID: receiverID,
 			Url:        "/" + plogAccount.Username,
 		})
 	}

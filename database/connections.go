@@ -73,7 +73,7 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 	}
 
 	return &model.Connections{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
@@ -123,7 +123,7 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 	}
 
 	return &model.Connections{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,

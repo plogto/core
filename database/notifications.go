@@ -1,57 +1,71 @@
 package database
 
 import (
-	"github.com/go-pg/pg/v10"
+	"context"
+	"database/sql"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type Notifications struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (n *Notifications) GetNotificationByID(id string) (*model.Notification, error) {
-	var notification model.Notification
-	err := n.DB.Model(&notification).Where("id = ?", id).Where("deleted_at is ?", nil).First()
-	return &notification, err
+func (n *Notifications) GetNotificationByID(ctx context.Context, id string) (*db.Notification, error) {
+	// FIXME
+	ID, _ := uuid.Parse(id)
+	notification, err := n.Queries.GetNotificationByID(ctx, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return notification, nil
 }
 
-func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID string, limit int, after string) (*model.Notifications, error) {
-	var notifications []*model.Notification
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID string, limit int32, after string) (*model.Notifications, error) {
 	var edges []*model.NotificationsEdge
 	var endCursor string
 
-	query := n.DB.Model(&notifications).
-		Where("receiver_id = ?", receiverID).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC")
+	createdAt, _ := time.Parse(time.RFC3339, after)
+	// FIXME
+	ReceiverID, _ := uuid.Parse(receiverID)
 
-	if len(after) > 0 {
-		query.Where("created_at < ?", after)
-	}
+	notifications, err := n.Queries.GetNotificationsByReceiverIDAndPageInfo(ctx, db.GetNotificationsByReceiverIDAndPageInfoParams{
+		Limit:      limit,
+		ReceiverID: ReceiverID,
+		CreatedAt:  createdAt,
+	})
 
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := n.Queries.CountNotificationsByReceiverIDAndPageInfo(ctx, db.CountNotificationsByReceiverIDAndPageInfoParams{
+		ReceiverID: ReceiverID,
+		CreatedAt:  createdAt,
+	})
 
-	unreadNotificationsCount, _ := n.CountUnreadNotificationsByReceiverID(receiverID)
+	unreadNotificationsCount, _ := n.CountUnreadNotificationsByReceiverID(ctx, receiverID)
 
 	for _, value := range notifications {
-		edges = append(edges, &model.NotificationsEdge{Node: &model.Notification{
+		edges = append(edges, &model.NotificationsEdge{Node: &db.Notification{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Notifications{
-		TotalCount:               &totalCount,
+		TotalCount:               totalCount,
 		Edges:                    edges,
 		UnreadNotificationsCount: unreadNotificationsCount,
 		PageInfo: &model.PageInfo{
@@ -61,73 +75,61 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(receiverID strin
 	}, err
 }
 
-func (n *Notifications) CountUnreadNotificationsByReceiverID(receiverID string) (*int, error) {
-	count, err := n.DB.Model((*model.Notification)(nil)).
-		Where("receiver_id = ?", receiverID).
-		Where("read = ?", false).
-		Where("deleted_at is ?", nil).
-		Returning("*").
-		Count()
-
-	return &count, err
-}
-
-func (n *Notifications) CreateNotification(notification *model.Notification) (*model.Notification, error) {
-	query := n.DB.Model(notification).
-		Where("notification_type_id = ?notification_type_id").
-		Where("sender_id = ?sender_id").
-		Where("receiver_id = ?receiver_id").
-		Where("deleted_at is ?", nil)
-
-	if notification.PostID != nil {
-		query.Where("post_id = ?post_id")
-	}
-
-	if notification.ReplyID != nil {
-		query.Where("reply_id = ?reply_id")
-	}
-
-	_, err := query.Returning("*").SelectOrInsert()
-	return notification, err
-}
-
-func (n *Notifications) RemoveNotification(notification *model.Notification) (*model.Notification, error) {
-	query := n.DB.Model(notification).
-		Where("notification_type_id = ?notification_type_id").
-		Where("sender_id = ?sender_id").
-		Where("receiver_id = ?receiver_id")
-
-	if notification.PostID != nil {
-		query.Where("post_id = ?post_id")
-	}
-
-	if notification.ReplyID != nil {
-		query.Where("reply_id = ?reply_id")
-	}
-
-	_, err := query.Set("deleted_at = ?deleted_at").Returning("*").Update()
-	return notification, err
-}
-
-func (n *Notifications) RemovePostNotificationsByPostID(notification *model.Notification) ([]*model.Notification, error) {
-	var notifications []*model.Notification
-	query := n.DB.Model(&notifications).
-		Where("post_id = ?", notification.PostID)
-
-	_, err := query.Set("deleted_at = ?", notification.DeletedAt).Update()
-	return notifications, err
-}
-
-func (n *Notifications) UpdateReadNotifications(receiverID string) (bool, error) {
-	var notifications []*model.Notification
-
-	query := n.DB.Model(&notifications).
-		Where("receiver_id = ?", receiverID)
-
-	_, err := query.Set("read = ?", true).Returning("*").Update()
+func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID string) (int64, error) {
+	// FIXME
+	ReceiverID, _ := uuid.Parse(receiverID)
+	count, err := n.Queries.CountUnreadNotificationsByReceiverID(ctx, ReceiverID)
 
 	if err != nil {
-		return false, nil
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
+	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams(arg))
+
+	if notification != nil {
+		return notification, nil
+	}
+
+	newNotification, _ := n.Queries.CreateNotification(ctx, arg)
+
+	return newNotification, nil
+}
+
+func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNotificationParams) (*db.Notification, error) {
+	notification, err := n.Queries.RemoveNotification(ctx, arg)
+
+	return notification, err
+}
+
+func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID string) ([]*db.Notification, error) {
+	// FIXME
+	tempPostID, _ := uuid.Parse(postID)
+	PostID := uuid.NullUUID{tempPostID, true}
+	DeletedAt := sql.NullTime{time.Now(), true}
+
+	notifications, err := n.Queries.RemovePostNotificationsByPostID(ctx, db.RemovePostNotificationsByPostIDParams{
+		PostID:    PostID,
+		DeletedAt: DeletedAt,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return notifications, nil
+}
+
+func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID string) (bool, error) {
+	// FIXME
+	ReceiverID, _ := uuid.Parse(receiverID)
+	_, err := n.Queries.UpdateReadNotifications(ctx, ReceiverID)
+
+	if err != nil {
+		return false, err
 	}
 
 	return true, nil

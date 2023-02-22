@@ -41,13 +41,17 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 			if post.ParentID != nil {
 				name = db.NotificationTypeNameLikeReply
 			}
+			// 	// FIXME
+			senderID, _ := uuid.Parse(user.ID)
+			receiverID, _ := uuid.Parse(post.UserID)
+			postID, _ := uuid.Parse(post.ID)
 
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       name,
-				SenderID:   user.ID,
-				ReceiverID: post.UserID,
+				SenderID:   senderID,
+				ReceiverID: receiverID,
 				Url:        "/p/" + post.Url,
-				PostID:     &post.ID,
+				PostID:     uuid.NullUUID{postID, true},
 			})
 		}
 
@@ -55,13 +59,16 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 
 	} else {
 		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(ctx, likedPost.ID)
-
+		// FIXME
+		senderID, _ := uuid.Parse(user.ID)
+		receiverID, _ := uuid.Parse(post.UserID)
+		postID, _ := uuid.Parse(post.ID)
 		s.RemoveNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameLikePost,
-			SenderID:   user.ID,
-			ReceiverID: post.UserID,
+			SenderID:   senderID,
+			ReceiverID: receiverID,
 			Url:        "/p/" + post.Url,
-			PostID:     &post.ID,
+			PostID:     uuid.NullUUID{postID, true},
 		})
 
 		return unlikedPost, err

@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -13,11 +15,11 @@ import (
 
 type CreateNotificationArgs struct {
 	Name       db.NotificationTypeName
-	SenderID   string
-	ReceiverID string
+	SenderID   uuid.UUID
+	ReceiverID uuid.UUID
 	Url        string
-	PostID     *string
-	ReplyID    *string
+	PostID     uuid.NullUUID
+	ReplyID    uuid.NullUUID
 }
 
 type RemovePostNotificationsArgs struct {
@@ -40,17 +42,17 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInp
 
 	pageInfoInput := util.ExtractPageInfo(input)
 
-	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After)
+	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
 }
 
-func (s *Service) GetNotificationByID(ctx context.Context, id string) (*model.Notification, error) {
+func (s *Service) GetNotificationByID(ctx context.Context, id string) (*db.Notification, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return s.Notifications.GetNotificationByID(id)
+	return s.Notifications.GetNotificationByID(ctx, id)
 }
 
 func (s *Service) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
@@ -81,23 +83,22 @@ func (s *Service) CreateNotification(ctx context.Context, args CreateNotificatio
 
 	if args.SenderID != args.ReceiverID {
 		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
-		notification := &model.Notification{
-			NotificationTypeID: notificationType.ID.String(),
+
+		notification, _ := s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
+			NotificationTypeID: notificationType.ID,
 			SenderID:           args.SenderID,
 			ReceiverID:         args.ReceiverID,
-			URL:                args.Url,
+			Url:                args.Url,
 			PostID:             args.PostID,
 			ReplyID:            args.ReplyID,
-		}
-
-		s.Notifications.CreateNotification(notification)
+		})
 
 		notificationEdge := &model.NotificationsEdge{
-			Cursor: util.ConvertCreateAtToCursor(*notification.CreatedAt),
+			Cursor: util.ConvertCreateAtToCursor(notification.CreatedAt),
 			Node:   notification,
 		}
 
-		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID)
+		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID.String())
 
 		if onlineUser != nil {
 			s.mu.Lock()
@@ -111,17 +112,15 @@ func (s *Service) CreateNotification(ctx context.Context, args CreateNotificatio
 
 func (s *Service) RemoveNotification(ctx context.Context, args CreateNotificationArgs) error {
 	notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
-	DeletedAt := time.Now()
-	notification := &model.Notification{
-		NotificationTypeID: notificationType.ID.String(),
+	DeletedAt := sql.NullTime{time.Now(), true}
+	s.Notifications.RemoveNotification(ctx, db.RemoveNotificationParams{
+		NotificationTypeID: notificationType.ID,
 		SenderID:           args.SenderID,
 		ReceiverID:         args.ReceiverID,
 		PostID:             args.PostID,
 		ReplyID:            args.ReplyID,
-		DeletedAt:          &DeletedAt,
-	}
-
-	s.Notifications.RemoveNotification(notification)
+		DeletedAt:          DeletedAt,
+	})
 
 	// TODO: add removed type for Notification
 	// onlineUser, _ := s.OnlineUser.GetOnlineUserByUserID(args.ReceiverID)
@@ -142,7 +141,7 @@ func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 		return nil, err
 	}
 
-	status, _ := s.Notifications.UpdateReadNotifications(user.ID)
+	status, _ := s.Notifications.UpdateReadNotifications(ctx, user.ID)
 
 	return &status, nil
 }
@@ -150,12 +149,16 @@ func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 func (s *Service) CreatePostMentionNotifications(ctx context.Context, args CreatePostMentionNotificationsArgs) {
 	for _, receiverID := range args.UserIDs {
 		if receiverID != args.SenderID {
+			// FIXME
+			senderID, _ := uuid.Parse(args.SenderID)
+			receiverID, _ := uuid.Parse(receiverID)
+			postID, _ := uuid.Parse(args.Post.ID)
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameMentionInPost,
-				SenderID:   args.SenderID,
+				SenderID:   senderID,
 				ReceiverID: receiverID,
 				Url:        "/p/" + args.Post.Url,
-				PostID:     &args.Post.ID,
+				PostID:     uuid.NullUUID{postID, true},
 			})
 		}
 	}

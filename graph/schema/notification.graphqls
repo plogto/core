@@ -15,7 +15,7 @@ type NotificationType {
 }
 
 type Notification {
-  id: ID!
+  id: UUID!
   notificationType: NotificationType!
   sender: User!
   receiver: User!
@@ -33,9 +33,9 @@ type NotificationsEdge {
 }
 
 type Notifications {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [NotificationsEdge]!
-  unreadNotificationsCount: Int
+  unreadNotificationsCount: TotalCount!
   pageInfo: PageInfo!
 }
 

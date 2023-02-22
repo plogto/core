@@ -228,8 +228,8 @@ type ComplexityRoot struct {
 		Receiver         func(childComplexity int) int
 		Reply            func(childComplexity int) int
 		Sender           func(childComplexity int) int
-		URL              func(childComplexity int) int
 		UpdatedAt        func(childComplexity int) int
+		Url              func(childComplexity int) int
 	}
 
 	NotificationType struct {
@@ -519,18 +519,18 @@ type MutationResolver interface {
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
 type NotificationResolver interface {
-	NotificationType(ctx context.Context, obj *model.Notification) (*db.NotificationType, error)
-	Sender(ctx context.Context, obj *model.Notification) (*model.User, error)
-	Receiver(ctx context.Context, obj *model.Notification) (*model.User, error)
-	Post(ctx context.Context, obj *model.Notification) (*model.Post, error)
-	Reply(ctx context.Context, obj *model.Notification) (*model.Post, error)
+	NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error)
+	Sender(ctx context.Context, obj *db.Notification) (*model.User, error)
+	Receiver(ctx context.Context, obj *db.Notification) (*model.User, error)
+	Post(ctx context.Context, obj *db.Notification) (*model.Post, error)
+	Reply(ctx context.Context, obj *db.Notification) (*model.Post, error)
 }
 type NotificationTypeResolver interface {
 	Name(ctx context.Context, obj *db.NotificationType) (model.NotificationTypeName, error)
 }
 type NotificationsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error)
-	Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error)
+	Node(ctx context.Context, obj *model.NotificationsEdge) (*db.Notification, error)
 }
 type PostResolver interface {
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
@@ -1417,19 +1417,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Notification.Sender(childComplexity), true
 
-	case "Notification.url":
-		if e.complexity.Notification.URL == nil {
-			break
-		}
-
-		return e.complexity.Notification.URL(childComplexity), true
-
 	case "Notification.updatedAt":
 		if e.complexity.Notification.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Notification.UpdatedAt(childComplexity), true
+
+	case "Notification.url":
+		if e.complexity.Notification.Url == nil {
+			break
+		}
+
+		return e.complexity.Notification.Url(childComplexity), true
 
 	case "NotificationType.id":
 		if e.complexity.NotificationType.ID == nil {
@@ -2672,7 +2672,7 @@ type ConnectionsEdge {
 }
 
 type Connections {
-  totalCount: TotalCount
+  totalCount: TotalCount!
   edges: [ConnectionsEdge]!
   pageInfo: PageInfo!
 }
@@ -2770,7 +2770,7 @@ type CreditTransactionsEdge {
 }
 
 type CreditTransactions {
-  totalCount: TotalCount
+  totalCount: TotalCount!
   edges: [CreditTransactionsEdge]!
   pageInfo: PageInfo!
 }
@@ -2897,7 +2897,7 @@ type NotificationType {
 }
 
 type Notification {
-  id: ID!
+  id: UUID!
   notificationType: NotificationType!
   sender: User!
   receiver: User!
@@ -2915,9 +2915,9 @@ type NotificationsEdge {
 }
 
 type Notifications {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [NotificationsEdge]!
-  unreadNotificationsCount: Int
+  unreadNotificationsCount: TotalCount!
   pageInfo: PageInfo!
 }
 
@@ -4676,11 +4676,14 @@ func (ec *executionContext) _Connections_totalCount(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int64)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOTotalCount2ᚖint64(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connections_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6089,11 +6092,14 @@ func (ec *executionContext) _CreditTransactions_totalCount(ctx context.Context, 
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int64)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOTotalCount2ᚖint64(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactions_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8858,7 +8864,7 @@ func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8884,9 +8890,9 @@ func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8896,13 +8902,13 @@ func (ec *executionContext) fieldContext_Notification_id(ctx context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_notificationType(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_notificationType(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_notificationType(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8954,7 +8960,7 @@ func (ec *executionContext) fieldContext_Notification_notificationType(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_sender(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_sender(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_sender(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9042,7 +9048,7 @@ func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_receiver(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_receiver(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_receiver(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9130,7 +9136,7 @@ func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_post(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_post(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9201,7 +9207,7 @@ func (ec *executionContext) fieldContext_Notification_post(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_reply(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_reply(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_reply(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9272,7 +9278,7 @@ func (ec *executionContext) fieldContext_Notification_reply(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_url(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_url(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9286,7 +9292,7 @@ func (ec *executionContext) _Notification_url(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
+		return obj.Url, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9316,7 +9322,7 @@ func (ec *executionContext) fieldContext_Notification_url(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_read(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_read(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_read(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9339,9 +9345,9 @@ func (ec *executionContext) _Notification_read(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_read(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9357,7 +9363,7 @@ func (ec *executionContext) fieldContext_Notification_read(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9380,9 +9386,9 @@ func (ec *executionContext) _Notification_createdAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9398,7 +9404,7 @@ func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9421,9 +9427,9 @@ func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9592,11 +9598,14 @@ func (ec *executionContext) _Notifications_totalCount(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notifications_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9606,7 +9615,7 @@ func (ec *executionContext) fieldContext_Notifications_totalCount(ctx context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9683,11 +9692,14 @@ func (ec *executionContext) _Notifications_unreadNotificationsCount(ctx context.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notifications_unreadNotificationsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9697,7 +9709,7 @@ func (ec *executionContext) fieldContext_Notifications_unreadNotificationsCount(
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9820,9 +9832,9 @@ func (ec *executionContext) _NotificationsEdge_node(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Notification)
+	res := resTmp.(*db.Notification)
 	fc.Result = res
-	return ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -19153,6 +19165,9 @@ func (ec *executionContext) _Connections(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._Connections_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Connections_edges(ctx, field, obj)
@@ -19683,6 +19698,9 @@ func (ec *executionContext) _CreditTransactions(ctx context.Context, sel ast.Sel
 
 			out.Values[i] = ec._CreditTransactions_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._CreditTransactions_edges(ctx, field, obj)
@@ -20248,7 +20266,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var notificationImplementors = []string{"Notification"}
 
-func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *model.Notification) graphql.Marshaler {
+func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *db.Notification) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20456,6 +20474,9 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._Notifications_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Notifications_edges(ctx, field, obj)
@@ -20467,6 +20488,9 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._Notifications_unreadNotificationsCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._Notifications_pageInfo(ctx, field, obj)
@@ -24487,7 +24511,7 @@ func (ec *executionContext) marshalOLikedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋco
 	return ec._LikedPostsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotification(ctx context.Context, sel ast.SelectionSet, v *db.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
