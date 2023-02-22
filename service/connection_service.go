@@ -46,10 +46,13 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection
 	})
 
 	if validation.IsConnectionStatusAccepted(newConnection) {
+		// FIXME
+		senderID, _ := uuid.Parse(user.ID)
+		receiverID, _ := uuid.Parse(userID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameFollowUser,
-			SenderID:   user.ID,
-			ReceiverID: userID,
+			SenderID:   senderID,
+			ReceiverID: receiverID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -73,12 +76,14 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*db.Connecti
 	}
 
 	deletedConnection, _ := s.Connections.DeleteConnection(ctx, connection.ID)
-
+	// FIXME
+	senderID, _ := uuid.Parse(user.ID)
+	receiverID, _ := uuid.Parse(userID)
 	if validation.IsConnectionExists(deletedConnection) {
 		s.RemoveNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameFollowUser,
-			SenderID:   user.ID,
-			ReceiverID: userID,
+			SenderID:   senderID,
+			ReceiverID: receiverID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -120,10 +125,13 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*db.Connection
 		Status:      connection.Status,
 	})
 	if validation.IsConnectionExists(connection) {
+		// FIXME
+		senderID, _ := uuid.Parse(user.ID)
+		receiverID, _ := uuid.Parse(userID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameAcceptUser,
-			SenderID:   user.ID,
-			ReceiverID: userID,
+			SenderID:   senderID,
+			ReceiverID: receiverID,
 			Url:        "/" + user.Username,
 		})
 	}

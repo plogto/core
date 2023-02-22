@@ -19,6 +19,7 @@ type Service struct {
 	InvitedUsers                          database.InvitedUsers
 	LikedPosts                            database.LikedPosts
 	NotificationTypes                     database.NotificationTypes
+	Notifications                         database.Notifications
 	Users                                 database.Users
 	Passwords                             database.Passwords
 	Posts                                 database.Posts
@@ -31,7 +32,6 @@ type Service struct {
 	PostMentions                          database.PostMentions
 	SavedPosts                            database.SavedPosts
 	OnlineUsers                           database.OnlineUsers
-	Notifications                         database.Notifications
 	OnlineNotifications                   map[string]chan *model.NotificationsEdge
 	mu                                    sync.Mutex
 }
@@ -47,6 +47,7 @@ func New(service Service) *Service {
 		InvitedUsers:                          service.InvitedUsers,
 		LikedPosts:                            service.LikedPosts,
 		NotificationTypes:                     service.NotificationTypes,
+		Notifications:                         service.Notifications,
 		Users:                                 service.Users,
 		Passwords:                             service.Passwords,
 		Posts:                                 service.Posts,
@@ -59,7 +60,6 @@ func New(service Service) *Service {
 		PostAttachments:                       service.PostAttachments,
 		SavedPosts:                            service.SavedPosts,
 		OnlineUsers:                           service.OnlineUsers,
-		Notifications:                         service.Notifications,
 		OnlineNotifications:                   map[string]chan *model.NotificationsEdge{},
 	}
 }
