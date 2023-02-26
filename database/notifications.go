@@ -15,6 +15,18 @@ type Notifications struct {
 	Queries *db.Queries
 }
 
+func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
+	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams(arg))
+
+	if notification != nil {
+		return notification, nil
+	}
+
+	newNotification, _ := n.Queries.CreateNotification(ctx, arg)
+
+	return newNotification, nil
+}
+
 func (n *Notifications) GetNotificationByID(ctx context.Context, id string) (*db.Notification, error) {
 	// FIXME
 	ID, _ := uuid.Parse(id)
@@ -87,16 +99,16 @@ func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context
 	return count, nil
 }
 
-func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
-	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams(arg))
+func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID string) (bool, error) {
+	// FIXME
+	ReceiverID, _ := uuid.Parse(receiverID)
+	_, err := n.Queries.UpdateReadNotifications(ctx, ReceiverID)
 
-	if notification != nil {
-		return notification, nil
+	if err != nil {
+		return false, err
 	}
 
-	newNotification, _ := n.Queries.CreateNotification(ctx, arg)
-
-	return newNotification, nil
+	return true, nil
 }
 
 func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNotificationParams) (*db.Notification, error) {
@@ -121,16 +133,4 @@ func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, pos
 	}
 
 	return notifications, nil
-}
-
-func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID string) (bool, error) {
-	// FIXME
-	ReceiverID, _ := uuid.Parse(receiverID)
-	_, err := n.Queries.UpdateReadNotifications(ctx, ReceiverID)
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }

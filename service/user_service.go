@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
+	"github.com/plogto/core/util"
 )
 
 func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
@@ -43,13 +45,13 @@ func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Use
 	return users, nil
 }
 
-func (s *Service) CheckUserAccess(user *model.User, followingUser *model.User) bool {
+func (s *Service) CheckUserAccess(ctx context.Context, user *model.User, followingUser *model.User) bool {
 	if followingUser.IsPrivate == bool(true) {
 		if user != nil {
-			connection, _ := s.Connections.GetConnection(followingUser.ID, user.ID)
+			connection, _ := s.Connections.GetConnection(ctx, followingUser.ID, user.ID)
 
 			if followingUser.ID != user.ID {
-				if len(connection.ID) < 1 || *connection.Status < 2 {
+				if len(connection.ID) < 1 || connection.Status < int32(2) {
 					return false
 				}
 			}
@@ -137,18 +139,24 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		return nil, errors.New(err.Error())
 	}
 
-	password, _ := s.Passwords.GetPasswordByUserID(user.ID)
+	password, _ := s.Passwords.GetPasswordByUserID(ctx, user.ID)
 
-	if err = password.ComparePassword(input.OldPassword); err != nil {
+	if err = util.ComparePassword(password.Password, input.OldPassword); err != nil {
 		return nil, errors.New("old password is not valid")
 	}
 
-	if err = password.HashPassword(input.NewPassword); err != nil {
+	hashedPassword, err := util.HashPassword(input.NewPassword)
+
+	if err != nil {
+		password.Password = *hashedPassword
 		log.Printf("error while hashing password: %v", err)
 		return nil, errors.New("something went wrong")
 	}
 
-	if _, err := s.Passwords.UpdatePassword(password); err != nil {
+	if _, err := s.Passwords.UpdatePassword(ctx, db.UpdatePasswordParams{
+		UserID:   password.UserID,
+		Password: *hashedPassword,
+	}); err != nil {
 		log.Printf("error white updating password: %v", err)
 		return nil, err
 	}

@@ -21,12 +21,12 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 		return nil, errors.New("username or password is not valid")
 	}
 
-	password, err := s.Passwords.GetPasswordByUserID(user.ID)
+	password, err := s.Passwords.GetPasswordByUserID(ctx, user.ID)
 	if err != nil {
 		return nil, errors.New("username or password is not valid")
 	}
 
-	err = password.ComparePassword(input.Password)
+	err = util.ComparePassword(password.Password, input.Password)
 	if err != nil {
 		return nil, errors.New("username or password is not valid")
 	}
@@ -53,16 +53,19 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 	}
 
 	if !isOAuth {
-		password := &model.Password{
-			UserID: newUser.ID,
+		userID, _ := uuid.Parse(newUser.ID)
+		password := db.CreatePasswordParams{
+			UserID: userID,
 		}
 
-		if err = password.HashPassword(input.Password); err != nil {
+		hashedPassword, err := util.HashPassword(input.Password)
+		if err != nil {
+			password.Password = *hashedPassword
 			log.Printf("error while hashing password: %v", err)
 			return nil, errors.New("something went wrong")
 		}
 
-		if _, err := s.Passwords.AddPassword(password); err != nil {
+		if _, err := s.Passwords.AddPassword(ctx, password); err != nil {
 			log.Printf("error white adding password: %v", err)
 			return nil, err
 		}

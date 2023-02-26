@@ -39,7 +39,6 @@ func (f *Files) GetFilesByTicketMessageID(ctx context.Context, ticketMessageID u
 	}
 
 	return files, nil
-
 }
 
 func (f *Files) GetFileByHash(ctx context.Context, hash string) (*db.File, error) {

@@ -1,32 +1,44 @@
 package database
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
 type Passwords struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (p *Passwords) GetPasswordByField(field, value string) (*model.Password, error) {
-	var password model.Password
-	err := p.DB.Model(&password).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	return &password, err
+func (p *Passwords) GetPasswordByUserID(ctx context.Context, id string) (*db.Password, error) {
+	// FIXME
+	ID, _ := uuid.Parse(id)
+	password, err := p.Queries.GetPasswordByUserID(ctx, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return password, nil
 }
 
-func (p *Passwords) GetPasswordByUserID(id string) (*model.Password, error) {
-	return p.GetPasswordByField("user_id", id)
+func (p *Passwords) AddPassword(ctx context.Context, arg db.CreatePasswordParams) (*db.Password, error) {
+	password, err := p.Queries.CreatePassword(ctx, arg)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return password, nil
 }
 
-func (p *Passwords) AddPassword(password *model.Password) (*model.Password, error) {
-	_, err := p.DB.Model(password).Returning("*").Insert()
-	return password, err
-}
+func (p *Passwords) UpdatePassword(ctx context.Context, arg db.UpdatePasswordParams) (*db.Password, error) {
+	password, err := p.Queries.UpdatePassword(ctx, arg)
 
-func (p *Passwords) UpdatePassword(password *model.Password) (*model.Password, error) {
-	_, err := p.DB.Model(password).WherePK().Returning("*").Update()
-	return password, err
+	if err != nil {
+		return nil, err
+	}
+
+	return password, nil
 }
