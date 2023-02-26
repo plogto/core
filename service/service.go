@@ -20,8 +20,8 @@ type Service struct {
 	LikedPosts                            database.LikedPosts
 	NotificationTypes                     database.NotificationTypes
 	Notifications                         database.Notifications
-	Users                                 database.Users
 	Passwords                             database.Passwords
+	Users                                 database.Users
 	Posts                                 database.Posts
 	Tickets                               database.Tickets
 	TicketMessages                        database.TicketMessages
@@ -48,8 +48,8 @@ func New(service Service) *Service {
 		LikedPosts:                            service.LikedPosts,
 		NotificationTypes:                     service.NotificationTypes,
 		Notifications:                         service.Notifications,
-		Users:                                 service.Users,
 		Passwords:                             service.Passwords,
+		Users:                                 service.Users,
 		Posts:                                 service.Posts,
 		Tickets:                               service.Tickets,
 		TicketMessages:                        service.TicketMessages,

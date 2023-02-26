@@ -83,7 +83,6 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 			EndCursor: endCursor,
 		},
 	}, err
-
 }
 
 func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
