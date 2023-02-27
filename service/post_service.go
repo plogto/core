@@ -73,9 +73,11 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check attachment
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			s.PostAttachments.CreatePostAttachment(&model.PostAttachment{
-				PostID: post.ID,
-				FileID: v,
+			PostID, _ := uuid.Parse(post.ID)
+			V, _ := uuid.Parse(v)
+			s.PostAttachments.CreatePostAttachment(ctx, db.CreatePostAttachmentParams{
+				PostID: PostID,
+				FileID: V,
 			})
 		}
 	}
