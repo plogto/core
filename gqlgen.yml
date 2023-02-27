@@ -134,6 +134,10 @@ models:
         resolver: true
       node:
         resolver: true
+  Password:
+    model: github.com/plogto/core/db.Password
+  PostAttachment:
+    model: github.com/plogto/core/db.PostAttachment
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
