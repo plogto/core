@@ -724,6 +724,14 @@ type PostAttachment struct {
 	DeletedAt sql.NullTime
 }
 
+type PostMention struct {
+	ID        uuid.UUID
+	PostID    uuid.UUID
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
 type PostTag struct {
 	ID        uuid.UUID
 	TagID     uuid.UUID

@@ -16,7 +16,14 @@ type Notifications struct {
 }
 
 func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
-	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams(arg))
+	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams{
+		NotificationTypeID: arg.NotificationTypeID,
+		SenderID:           arg.SenderID,
+		ReceiverID:         arg.ReceiverID,
+		PostID:             arg.PostID,
+		ReplyID:            arg.ReplyID,
+		Url:                arg.Url,
+	})
 
 	if notification != nil {
 		return notification, nil

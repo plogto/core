@@ -13,18 +13,20 @@ VALUES
 	($1, $2, $3, $4, $5, $6, $7) RETURNING *;
 
 -- name: GetNotification :one
-INSERT INTO
-	notifications (
-		notification_type_id,
-		sender_id,
-		receiver_id,
-		deleted_at,
-		post_id,
-		reply_id,
-		url
-	)
-VALUES
-	($1, $2, $3, $4, $5, $6, $7) RETURNING *;
+SELECT
+	*
+FROM
+	notifications
+WHERE
+	notification_type_id = $1
+	AND sender_id = $2
+	AND receiver_id = $3
+	AND post_id = $4
+	AND reply_id = $5
+	AND url = $6
+	AND deleted_at IS NULL
+LIMIT
+	1;
 
 -- name: GetNotificationByID :one
 SELECT

@@ -373,6 +373,30 @@ ALTER TABLE
 ADD
 	CONSTRAINT post_attachments_fk1 FOREIGN KEY (file_id) REFERENCES files(id);
 
+-- Post Mentions
+CREATE TABLE post_mentions (
+	id uuid DEFAULT uuid_generate_v4() NOT NULL,
+	post_id uuid NOT NULL,
+	user_id uuid NOT NULL,
+	created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
+	deleted_at TIMESTAMP WITHOUT TIME ZONE
+);
+
+ALTER TABLE
+	ONLY post_mentions
+ADD
+	CONSTRAINT post_mentions_pk PRIMARY KEY (id);
+
+ALTER TABLE
+	ONLY post_mentions
+ADD
+	CONSTRAINT post_mentions_fk0 FOREIGN KEY (post_id) REFERENCES posts(id);
+
+ALTER TABLE
+	ONLY post_mentions
+ADD
+	CONSTRAINT post_mentions_fk1 FOREIGN KEY (user_id) REFERENCES users(id);
+
 -- Post Tags
 CREATE TABLE post_tags (
 	id uuid DEFAULT uuid_generate_v4() NOT NULL,
