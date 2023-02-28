@@ -83,6 +83,7 @@ func main() {
 		Notifications:                         database.Notifications{Queries: queries},
 		Passwords:                             database.Passwords{Queries: queries},
 		PostAttachments:                       database.PostAttachments{Queries: queries},
+		PostMentions:                          database.PostMentions{Queries: queries},
 		Users:                                 users,
 		Posts:                                 database.Posts{DB: DB},
 		Tickets:                               database.Tickets{DB: DB},
@@ -90,7 +91,6 @@ func main() {
 		Tags:                                  database.Tags{DB: DB},
 		TicketMessageAttachments:              database.TicketMessageAttachments{DB: DB},
 		PostTags:                              database.PostTags{DB: DB},
-		PostMentions:                          database.PostMentions{DB: DB},
 		SavedPosts:                            database.SavedPosts{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 	})

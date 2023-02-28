@@ -22,6 +22,7 @@ type Service struct {
 	Notifications                         database.Notifications
 	Passwords                             database.Passwords
 	PostAttachments                       database.PostAttachments
+	PostMentions                          database.PostMentions
 	Users                                 database.Users
 	Posts                                 database.Posts
 	Tickets                               database.Tickets
@@ -29,7 +30,6 @@ type Service struct {
 	Tags                                  database.Tags
 	TicketMessageAttachments              database.TicketMessageAttachments
 	PostTags                              database.PostTags
-	PostMentions                          database.PostMentions
 	SavedPosts                            database.SavedPosts
 	OnlineUsers                           database.OnlineUsers
 	OnlineNotifications                   map[string]chan *model.NotificationsEdge
@@ -50,13 +50,13 @@ func New(service Service) *Service {
 		Notifications:                         service.Notifications,
 		Passwords:                             service.Passwords,
 		PostAttachments:                       service.PostAttachments,
+		PostMentions:                          service.PostMentions,
 		Users:                                 service.Users,
 		Posts:                                 service.Posts,
 		Tickets:                               service.Tickets,
 		TicketMessages:                        service.TicketMessages,
 		Tags:                                  service.Tags,
 		PostTags:                              service.PostTags,
-		PostMentions:                          service.PostMentions,
 		TicketMessageAttachments:              service.TicketMessageAttachments,
 		SavedPosts:                            service.SavedPosts,
 		OnlineUsers:                           service.OnlineUsers,

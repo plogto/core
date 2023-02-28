@@ -5,7 +5,6 @@ import (
 	"errors"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
@@ -67,7 +66,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	s.Posts.CreatePost(post)
 
 	if validation.IsPostExists(post) {
-		s.CreatePostMentions(userIDs, post.ID)
+		s.CreatePostMentions(ctx, userIDs, post.ID)
 	}
 
 	// check attachment
@@ -145,7 +144,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 			})
 
 			// removed users
-			s.DeletePostMentions(oldUserIDs, postID)
+			s.DeletePostMentions(ctx, oldUserIDs, postID)
 			for _, oldUser := range oldUserIDs {
 				// FIXME
 				senderID, _ := uuid.Parse(user.ID)
@@ -160,7 +159,7 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 				})
 			}
 			// added users
-			s.CreatePostMentions(userIDs, postID)
+			s.CreatePostMentions(ctx, userIDs, postID)
 			s.CreatePostMentionNotifications(ctx, CreatePostMentionNotificationsArgs{
 				UserIDs:  userIDs,
 				SenderID: user.ID,
@@ -219,7 +218,6 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 		}
 	}
 
-	deletedAt := time.Now()
 	deletedPost, err := s.Posts.DeletePostByID(postID)
 
 	if err == nil {
@@ -227,10 +225,7 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 			postID,
 		)
 
-		s.PostMentions.DeletePostMentionsByPostID(&model.PostMention{
-			PostID:    postID,
-			DeletedAt: &deletedAt,
-		})
+		s.PostMentions.DeletePostMentionsByPostID(ctx, postID)
 	}
 
 	return deletedPost, nil

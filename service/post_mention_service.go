@@ -1,36 +1,17 @@
 package service
 
 import (
-	"time"
-
-	"github.com/plogto/core/graph/model"
+	"context"
 )
 
-func (s *Service) CreatePostMentions(userIDs []string, postID string) {
+func (s *Service) CreatePostMentions(ctx context.Context, userIDs []string, postID string) {
 	for _, userID := range userIDs {
-		postMention := &model.PostMention{
-			UserID: userID,
-			PostID: postID,
-		}
-		s.PostMentions.CreatePostMention(postMention)
+		s.PostMentions.CreatePostMention(ctx, userID, postID)
 	}
 }
 
-func (s *Service) DeletePostMentions(userIDs []string, postID string) {
+func (s *Service) DeletePostMentions(ctx context.Context, userIDs []string, postID string) {
 	for _, userID := range userIDs {
-		postMention := &model.PostMention{
-			UserID: userID,
-			PostID: postID,
-		}
-		s.PostMentions.DeletePostMention(postMention)
+		s.PostMentions.DeletePostMention(ctx, userID, postID)
 	}
-}
-
-func (s *Service) DeletePostMentionsByPostID(postID string) {
-	DeletedAt := time.Now()
-	postMention := &model.PostMention{
-		DeletedAt: &DeletedAt,
-		PostID:    postID,
-	}
-	s.PostMentions.DeletePostMentionsByPostID(postMention)
 }
