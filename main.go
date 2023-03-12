@@ -84,13 +84,13 @@ func main() {
 		Passwords:                             database.Passwords{Queries: queries},
 		PostAttachments:                       database.PostAttachments{Queries: queries},
 		PostMentions:                          database.PostMentions{Queries: queries},
+		PostTags:                              database.PostTags{Queries: queries},
+		Tags:                                  database.Tags{Queries: queries},
 		Users:                                 users,
 		Posts:                                 database.Posts{DB: DB},
 		Tickets:                               database.Tickets{DB: DB},
 		TicketMessages:                        database.TicketMessages{DB: DB},
-		Tags:                                  database.Tags{DB: DB},
 		TicketMessageAttachments:              database.TicketMessageAttachments{DB: DB},
-		PostTags:                              database.PostTags{DB: DB},
 		SavedPosts:                            database.SavedPosts{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 	})
@@ -142,7 +142,7 @@ func main() {
 	queryHandler.Use(extension.Introspection{})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", graphDataloader.DataloaderMiddleware(DB, queryHandler))
+	router.Handle("/query", graphDataloader.DataloaderMiddleware(DB, queries, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))

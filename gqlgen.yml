@@ -138,6 +138,19 @@ models:
     model: github.com/plogto/core/db.Password
   PostAttachment:
     model: github.com/plogto/core/db.PostAttachment
+  PostTag:
+    model: github.com/plogto/core/db.PostTag
+  Tag:
+    model: github.com/plogto/core/graph/model.Tag
+    fields:
+      count:
+        resolver: true
+  TagsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -175,11 +188,6 @@ models:
       isLiked:
         resolver: true
       isSaved:
-        resolver: true
-  Tag:
-    model: github.com/plogto/core/graph/model.Tag
-    fields:
-      count:
         resolver: true
   SavedPost:
     model: github.com/plogto/core/graph/model.SavedPost
@@ -232,12 +240,6 @@ models:
       user:
         resolver: true
   UsersEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  TagsEdge:
     fields:
       cursor:
         resolver: true

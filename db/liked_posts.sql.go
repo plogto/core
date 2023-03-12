@@ -57,15 +57,15 @@ WITH _count_wrapper AS (
 		INNER JOIN users ON users.id = posts.user_id
 		INNER JOIN connections ON connections.following_id = posts.user_id
 	WHERE
-		(liked_post.user_id = $1)
-		AND (liked_post.deleted_at IS NULL)
-		AND (posts.deleted_at IS NULL)
+		liked_post.user_id = $1
+		AND liked_post.deleted_at IS NULL
+		AND posts.deleted_at IS NULL
 		AND (
-			(users.id = $1)
-			OR (connections.status = 2)
-			OR (users.is_private = FALSE)
+			users.id = $1
+			OR connections.status = 2
+			OR users.is_private = FALSE
 		)
-		AND (connections.deleted_at IS NULL)
+		AND connections.deleted_at IS NULL
 		AND liked_post.created_at < $2
 	GROUP BY
 		connections.id,
