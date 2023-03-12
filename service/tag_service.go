@@ -14,7 +14,7 @@ import (
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
 	var limit = constants.TAGS_PAGE_LIMIT
 
-	return s.Tags.GetTagsByTagNameAndPageInfo(expression+"%", limit)
+	return s.Tags.GetTagsByTagNameAndPageInfo(ctx, expression+"%", limit)
 }
 
 func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
@@ -26,7 +26,7 @@ func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error
 		limit = *first
 	}
 
-	return s.PostTags.GetTagsOrderByCountTags(limit)
+	return s.PostTags.GetTagsOrderByCountTags(ctx, limit)
 }
 
 func (s *Service) GetTagByID(ctx context.Context, id string) (*model.Tag, error) {
@@ -34,10 +34,10 @@ func (s *Service) GetTagByID(ctx context.Context, id string) (*model.Tag, error)
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
-	return s.Tags.GetTagByName(tagName)
+	return s.Tags.GetTagByName(ctx, tagName)
 }
 
-func (s *Service) SaveTagsPost(postID, content string) {
+func (s *Service) SaveTagsPost(ctx context.Context, postID, content string) {
 	r := regexp.MustCompile("#(\\w|_)+")
 	tags := r.FindAllString(content, -1)
 	for i, tag := range tags {
@@ -47,12 +47,8 @@ func (s *Service) SaveTagsPost(postID, content string) {
 		tag := &model.Tag{
 			Name: strings.ToLower(tagName),
 		}
-		s.Tags.CreateTag(tag)
+		s.Tags.CreateTag(ctx, tag.Name)
 
-		postTag := &model.PostTag{
-			TagID:  tag.ID,
-			PostID: postID,
-		}
-		s.PostTags.CreatePostTag(postTag)
+		s.PostTags.CreatePostTag(ctx, tag.ID.String(), postID)
 	}
 }

@@ -91,7 +91,7 @@ type InvitedUsersEdge struct {
 }
 
 type LikedPosts struct {
-	TotalCount *int64            `json:"totalCount"`
+	TotalCount int64             `json:"totalCount"`
 	Edges      []*LikedPostsEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 }

@@ -77,7 +77,7 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 	}
 
 	return &model.LikedPosts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor: endCursor,
@@ -137,7 +137,7 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 	}
 
 	return &model.LikedPosts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,

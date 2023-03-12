@@ -1,7 +1,7 @@
 type Tag {
-  id: ID!
+  id: UUID!
   name: String!
-  count: Int
+  count: TotalCount!
   createdAt: Time
   updatedAt: Time
 }
