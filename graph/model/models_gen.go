@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 )
 
@@ -134,14 +135,14 @@ type PageInfoInput struct {
 }
 
 type Posts struct {
-	TotalCount *int         `json:"totalCount"`
+	TotalCount int64        `json:"totalCount"`
 	Edges      []*PostsEdge `json:"edges"`
 	PageInfo   *PageInfo    `json:"pageInfo"`
 }
 
 type PostsEdge struct {
-	Cursor string `json:"cursor"`
-	Node   *Post  `json:"node"`
+	Cursor string   `json:"cursor"`
+	Node   *db.Post `json:"node"`
 }
 
 type RegisterInput struct {
@@ -215,7 +216,7 @@ type UsersEdge struct {
 }
 
 type AddPostInput struct {
-	ParentID   *string     `json:"parentId"`
+	ParentID   *uuid.UUID  `json:"parentId"`
 	Content    *string     `json:"content"`
 	Status     *PostStatus `json:"status"`
 	Attachment []string    `json:"attachment"`

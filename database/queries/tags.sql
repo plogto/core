@@ -19,7 +19,7 @@ SELECT
 FROM
 	tags
 WHERE
-	lower(tag.name) = lower(sqlc.arg(NAME))
+	lower(NAME) = lower(sqlc.arg(NAME))
 	AND deleted_at IS NULL;
 
 -- name: GetTagsByTagNameAndPageInfo :many

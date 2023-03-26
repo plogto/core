@@ -140,6 +140,31 @@ models:
     model: github.com/plogto/core/db.PostAttachment
   PostTag:
     model: github.com/plogto/core/db.PostTag
+  Post:
+    model: github.com/plogto/core/db.Post
+    fields:
+      user:
+        resolver: true
+      content:
+        resolver: true
+      parent:
+        resolver: true
+      attachment:
+        resolver: true
+      likes:
+        resolver: true
+      replies:
+        resolver: true
+      isLiked:
+        resolver: true
+      isSaved:
+        resolver: true
+  PostsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag
     fields:
@@ -169,25 +194,6 @@ models:
       postsCount:
         resolver: true
       credits:
-        resolver: true
-  Post:
-    model: github.com/plogto/core/graph/model.Post
-    fields:
-      user:
-        resolver: true
-      content:
-        resolver: true
-      parent:
-        resolver: true
-      attachment:
-        resolver: true
-      likes:
-        resolver: true
-      replies:
-        resolver: true
-      isLiked:
-        resolver: true
-      isSaved:
         resolver: true
   SavedPost:
     model: github.com/plogto/core/graph/model.SavedPost
@@ -240,12 +246,6 @@ models:
       user:
         resolver: true
   UsersEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  PostsEdge:
     fields:
       cursor:
         resolver: true

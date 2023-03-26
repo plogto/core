@@ -35,3 +35,27 @@ func TestIsPostExists(t *testing.T) {
 		assert.Equal(t, value.Expected, value.Actual, value.Message)
 	}
 }
+
+func TestIsParentPostExists(t *testing.T) {
+	var testData = []PostTestData{
+		{
+			Expected: false,
+			Actual:   IsParentPostExists(nil),
+			Message:  "Should return false if post is nil",
+		},
+		{
+			Expected: false,
+			Actual:   IsParentPostExists(fixtures.EmptyPost),
+			Message:  "Should return false if post.ParentID is not exist",
+		},
+		{
+			Expected: true,
+			Actual:   IsParentPostExists(fixtures.PostWithParentID),
+			Message:  "Should return true if post.ParentID is exist",
+		},
+	}
+
+	for _, value := range testData {
+		assert.Equal(t, value.Expected, value.Actual, value.Message)
+	}
+}

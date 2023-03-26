@@ -79,7 +79,7 @@ SELECT
 FROM
 	tags
 WHERE
-	lower(tag.name) = lower($1)
+	lower(NAME) = lower($1)
 	AND deleted_at IS NULL
 `
 

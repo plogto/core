@@ -24,9 +24,9 @@ type Service struct {
 	PostAttachments                       database.PostAttachments
 	PostMentions                          database.PostMentions
 	PostTags                              database.PostTags
+	Posts                                 database.Posts
 	Tags                                  database.Tags
 	Users                                 database.Users
-	Posts                                 database.Posts
 	Tickets                               database.Tickets
 	TicketMessages                        database.TicketMessages
 	TicketMessageAttachments              database.TicketMessageAttachments
@@ -52,9 +52,9 @@ func New(service Service) *Service {
 		PostAttachments:                       service.PostAttachments,
 		PostMentions:                          service.PostMentions,
 		PostTags:                              service.PostTags,
+		Posts:                                 service.Posts,
 		Tags:                                  service.Tags,
 		Users:                                 service.Users,
-		Posts:                                 service.Posts,
 		Tickets:                               service.Tickets,
 		TicketMessages:                        service.TicketMessages,
 		TicketMessageAttachments:              service.TicketMessageAttachments,

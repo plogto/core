@@ -17,7 +17,7 @@ func DataloaderMiddleware(db *pg.DB, queries *db.Queries, next http.Handler) htt
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userLoader := PrepareUserLoader(db)
-		postLoader := PreparePostLoader(db)
+		postLoader := PreparePostLoader(r.Context(), queries)
 		tagLoader := PrepareTagLoader(r.Context(), queries)
 
 		ctxUser := context.WithValue(r.Context(), constants.USER_LOADER_KEY, &userLoader)
@@ -73,29 +73,29 @@ func PrepareUserLoader(db *pg.DB) UserLoader {
 	}
 }
 
-func PreparePostLoader(db *pg.DB) PostLoader {
+func PreparePostLoader(ctx context.Context, queries *db.Queries) PostLoader {
 	return PostLoader{
 		maxBatch: 100,
 		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*model.Post, []error) {
-			var posts []*model.Post
+		fetch: func(ids []string) ([]*db.Post, []error) {
 
-			err := db.Model(&posts).Where("id in (?)", pg.In(ids)).Select()
+			posts, err := queries.GetPostsByIDs(ctx, convertor.StringsToUUIDs(ids))
 
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			p := make(map[string]*model.Post, len(posts))
+			p := make(map[uuid.UUID]*db.Post, len(posts))
 
 			for _, post := range posts {
 				p[post.ID] = post
 			}
 
-			result := make([]*model.Post, len(ids))
+			result := make([]*db.Post, len(ids))
 
 			for i, id := range ids {
-				result[i] = p[id]
+				ID, _ := uuid.Parse(id)
+				result[i] = p[ID]
 			}
 
 			return result, nil

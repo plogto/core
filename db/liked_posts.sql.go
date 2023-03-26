@@ -126,7 +126,8 @@ UPDATE
 SET
 	deleted_at = $1
 WHERE
-	id = $2 RETURNING id, user_id, post_id, created_at, updated_at, deleted_at
+	id = $2
+	AND deleted_at IS NULL RETURNING id, user_id, post_id, created_at, updated_at, deleted_at
 `
 
 type DeleteLikedPostByIDParams struct {

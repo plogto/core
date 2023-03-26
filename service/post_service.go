@@ -2,9 +2,11 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
@@ -17,7 +19,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
+func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error) {
 	// authentication
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
@@ -25,15 +27,15 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	// check parent post
-	var parentPost *model.Post
+	var parentPost *db.Post
 	if input.ParentID != nil {
-		parentPost, _ = graph.GetPostLoader(ctx).Load(*input.ParentID)
+		parentPost, _ = graph.GetPostLoader(ctx).Load(input.ParentID.String())
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
 		}
 
-		followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID)
+		followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
 		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 			return nil, errors.New("access denied")
 		}
@@ -55,27 +57,27 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	content, userIDs := s.FormatPostContent(*input.Content)
 
-	post := &model.Post{
-		ParentID: input.ParentID,
-		UserID:   user.ID,
-		Content:  &content,
-		Status:   input.Status,
-		Url:      util.RandomString(20),
-	}
+	userID, _ := uuid.Parse(user.ID)
+	parentID, _ := uuid.Parse(input.ParentID.String())
 
-	s.Posts.CreatePost(post)
+	post, err := s.Posts.CreatePost(ctx, db.CreatePostParams{
+		ParentID: uuid.NullUUID{parentID, true},
+		UserID:   userID,
+		Content:  sql.NullString{content, true},
+		Status:   db.PostStatus(input.Status.String()),
+		Url:      util.RandomString(20),
+	})
 
 	if validation.IsPostExists(post) {
-		s.CreatePostMentions(ctx, userIDs, post.ID)
+		s.CreatePostMentions(ctx, userIDs, post.ID.String())
 	}
 
 	// check attachment
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			PostID, _ := uuid.Parse(post.ID)
 			V, _ := uuid.Parse(v)
 			s.PostAttachments.CreatePostAttachment(ctx, db.CreatePostAttachmentParams{
-				PostID: PostID,
+				PostID: post.ID,
 				FileID: V,
 			})
 		}
@@ -83,7 +85,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	if validation.IsPostExists(post) {
 		if lo.IsNotEmpty(post.Content) {
-			s.SaveTagsPost(post.ID, *post.Content)
+			s.SaveTagsPost(ctx, post.ID.String(), post.Content.String)
 			s.CreatePostMentionNotifications(ctx, CreatePostMentionNotificationsArgs{
 				UserIDs:  userIDs,
 				SenderID: user.ID,
@@ -94,16 +96,14 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		if lo.IsNotEmpty(input.ParentID) {
 			// FIXME
 			senderID, _ := uuid.Parse(user.ID)
-			receiverID, _ := uuid.Parse(post.UserID)
-			postID, _ := uuid.Parse(*input.ParentID)
-			replyID, _ := uuid.Parse(post.ID)
+			postID, _ := uuid.Parse(input.ParentID.String())
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameReplyPost,
 				SenderID:   senderID,
-				ReceiverID: receiverID,
-				Url:        "/p/" + post.Url + "#" + post.ID,
+				ReceiverID: post.UserID,
+				Url:        "/p/" + post.Url + "#" + post.ID.String(),
 				PostID:     uuid.NullUUID{postID, true},
-				ReplyID:    uuid.NullUUID{replyID, true},
+				ReplyID:    uuid.NullUUID{post.ID, true},
 			})
 		}
 	}
@@ -111,14 +111,14 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	return post, nil
 }
 
-func (s *Service) EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error) {
+func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	if post == nil || post.UserID != user.ID {
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	if post == nil || post.UserID.String() != user.ID {
 		return nil, errors.New("access denied")
 	}
 
@@ -126,8 +126,8 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 
 	if lo.IsNotEmpty(input.Content) {
 		content, userIDs := s.FormatPostContent(*input.Content)
-		if post.Content != &content {
-			oldUserIDs := s.ExtractUserIDsFromPostContent(*post.Content)
+		if post.Content.String != content {
+			oldUserIDs := s.ExtractUserIDsFromPostContent(post.Content.String)
 
 			oldUserIDs = lo.Reject(oldUserIDs, func(oldUser string, _ int) bool {
 				_, ok := lo.Find(userIDs, func(user string) bool {
@@ -144,12 +144,11 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 			})
 
 			// removed users
-			s.DeletePostMentions(ctx, oldUserIDs, postID)
+			s.DeletePostMentions(ctx, oldUserIDs, postID.String())
 			for _, oldUser := range oldUserIDs {
 				// FIXME
 				senderID, _ := uuid.Parse(user.ID)
 				receiverID, _ := uuid.Parse(oldUser)
-				postID, _ := uuid.Parse(postID)
 				s.RemoveNotification(ctx, CreateNotificationArgs{
 					Name:       db.NotificationTypeNameMentionInPost,
 					SenderID:   senderID,
@@ -159,23 +158,23 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 				})
 			}
 			// added users
-			s.CreatePostMentions(ctx, userIDs, postID)
+			s.CreatePostMentions(ctx, userIDs, postID.String())
 			s.CreatePostMentionNotifications(ctx, CreatePostMentionNotificationsArgs{
 				UserIDs:  userIDs,
 				SenderID: user.ID,
 				Post:     *post,
 			})
 
-			s.PostTags.DeletePostTagsByPostID(post.ID)
-			s.SaveTagsPost(post.ID, content)
+			s.PostTags.DeletePostTagsByPostID(ctx, post.ID.String())
+			s.SaveTagsPost(ctx, post.ID.String(), content)
 
-			post.Content = &content
+			post.Content = sql.NullString{content, true}
 			didUpdate = true
 		}
 	}
 
-	if input.Status != nil && post.Status != input.Status {
-		post.Status = input.Status
+	if input.Status != nil && post.Status != db.PostStatus(input.Status.String()) {
+		post.Status = db.PostStatus(input.Status.String())
 		didUpdate = true
 	}
 
@@ -183,49 +182,46 @@ func (s *Service) EditPost(ctx context.Context, postID string, input model.EditP
 		return nil, nil
 	}
 
-	return s.Posts.UpdatePost(post)
+	return s.Posts.UpdatePost(ctx, post)
 }
 
-func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
+func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	if post == nil || post.UserID != user.ID {
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	if post == nil || post.UserID.String() != user.ID {
 		return nil, errors.New("access denied")
 	}
 
-	if post.ParentID != nil {
-		parentPost, _ := graph.GetPostLoader(ctx).Load(*post.ParentID)
+	if validation.IsParentPostExists(post) {
+		parentPost, _ := graph.GetPostLoader(ctx).Load(post.ParentID.UUID.String())
 
 		if parentPost != nil && len(parentPost.ID) > 0 {
 			// remove notification for reply
 			// FIXME
 			senderID, _ := uuid.Parse(user.ID)
-			receiverID, _ := uuid.Parse(parentPost.UserID)
-			postID, _ := uuid.Parse(parentPost.ID)
-			replyID, _ := uuid.Parse(post.ID)
 			s.RemoveNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameReplyPost,
 				SenderID:   senderID,
-				ReceiverID: receiverID,
-				Url:        "/p/" + parentPost.Url + "#" + post.ID,
-				PostID:     uuid.NullUUID{postID, true},
-				ReplyID:    uuid.NullUUID{replyID, true},
+				ReceiverID: parentPost.UserID,
+				Url:        "/p/" + parentPost.Url + "#" + post.ID.String(),
+				PostID:     uuid.NullUUID{parentPost.ID, true},
+				ReplyID:    uuid.NullUUID{post.ID, true},
 			})
 		}
 	}
 
-	deletedPost, err := s.Posts.DeletePostByID(postID)
+	deletedPost, err := s.Posts.DeletePostByID(ctx, postID)
 
 	if err == nil {
 		s.Notifications.RemovePostNotificationsByPostID(ctx,
-			postID,
+			postID.String(),
 		)
 
-		s.PostMentions.DeletePostMentionsByPostID(ctx, postID)
+		s.PostMentions.DeletePostMentionsByPostID(ctx, postID.String())
 	}
 
 	return deletedPost, nil
@@ -234,16 +230,18 @@ func (s *Service) DeletePost(ctx context.Context, postID string) (*model.Post, e
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	parentPost, _ := graph.GetPostLoader(ctx).Load(parentID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
+	now := time.Now()
+	after := now.Format(time.RFC3339)
 
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
 		if validation.IsUserExists(user) {
-			return s.Posts.GetPostsByParentIDAndPageInfo(&user.ID, parentPost.ID, 50, "")
+			return s.Posts.GetPostsByParentIDAndPageInfo(ctx, &user.ID, parentPost.ID.String(), 50, after)
 		} else {
-			return s.Posts.GetPostsByParentIDAndPageInfo(nil, parentPost.ID, 50, "")
+			return s.Posts.GetPostsByParentIDAndPageInfo(ctx, nil, parentPost.ID.String(), 50, after)
 		}
 	}
 }
@@ -261,7 +259,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 
 		pageInfoInput := util.ExtractPageInfo(input)
 
-		return s.Posts.GetPostsByUserIDAndPageInfo(followingUser.ID, nil, pageInfoInput.First, pageInfoInput.After)
+		return s.Posts.GetPostsByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfoInput.First), pageInfoInput.After)
 	}
 }
 
@@ -278,27 +276,27 @@ func (s *Service) GetRepliesByUsername(ctx context.Context, username string, inp
 
 		pageInfoInput := util.ExtractPageInfo(input)
 
-		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(followingUser.ID, pageInfoInput.First, pageInfoInput.After)
+		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfoInput.First), pageInfoInput.After)
 	}
 }
 
 func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PageInfoInput) (*model.Posts, error) {
-	tag, err := s.Tags.GetTagByName(tagName)
+	tag, err := s.Tags.GetTagByName(ctx, tagName)
 
 	if err != nil {
 		return nil, errors.New("tag not found")
 	} else {
 		pageInfoInput := util.ExtractPageInfo(input)
-		return s.Posts.GetPostsByTagIDAndPageInfo(tag.ID, pageInfoInput.First, pageInfoInput.After)
+		return s.Posts.GetPostsByTagIDAndPageInfo(ctx, tag.ID.String(), int32(pageInfoInput.First), pageInfoInput.After)
 	}
 
 }
 
-func (s *Service) GetPostsCount(ctx context.Context, userID string) (int, error) {
-	return s.Posts.CountPostsByUserID(userID)
+func (s *Service) GetPostsCount(ctx context.Context, userID string) (int64, error) {
+	return s.Posts.CountPostsByUserID(ctx, userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id *string) (*db.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if id == nil {
@@ -307,7 +305,7 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*model.Post, err
 
 	post, err := graph.GetPostLoader(ctx).Load(*id)
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 
@@ -323,21 +321,21 @@ func (s *Service) GetPostContentByPostID(ctx context.Context, id *string) (*stri
 
 	post, err := graph.GetPostLoader(ctx).Load(*id)
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 
-	content := s.ParsePostContent(ctx, *post.Content)
+	content := s.ParsePostContent(ctx, post.Content.String)
 
 	return &content, err
 }
 
-func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
+func (s *Service) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, err := s.Posts.GetPostByURL(url)
+	post, err := s.Posts.GetPostByURL(ctx, url)
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 
@@ -349,14 +347,14 @@ func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PageInfoInp
 	pageInfoInput := util.ExtractPageInfo(input)
 
 	// FIXME
-	return s.Posts.GetTimelinePostsByPageInfo(user.ID, pageInfoInput.First, pageInfoInput.After)
+	return s.Posts.GetTimelinePostsByPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
 }
 
 func (s *Service) GetExplorePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
 	pageInfo := util.ExtractPageInfo(pageInfoInput)
 
 	// FIXME
-	return s.Posts.GetExplorePostsByPageInfo(pageInfo.First, pageInfo.After)
+	return s.Posts.GetExplorePostsByPageInfo(ctx, int32(pageInfo.First), pageInfo.After)
 }
 
 func (s *Service) FormatPostContent(content string) (string, []string) {
