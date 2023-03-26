@@ -21,7 +21,7 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 	}
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
@@ -38,20 +38,18 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 
 		if validation.IsLikedPostExists(likedPost) {
 			var name = db.NotificationTypeNameLikePost
-			if post.ParentID != nil {
+			if post.ParentID.Valid {
 				name = db.NotificationTypeNameLikeReply
 			}
 			// 	// FIXME
 			senderID, _ := uuid.Parse(user.ID)
-			receiverID, _ := uuid.Parse(post.UserID)
-			postID, _ := uuid.Parse(post.ID)
 
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       name,
 				SenderID:   senderID,
-				ReceiverID: receiverID,
+				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url,
-				PostID:     uuid.NullUUID{postID, true},
+				PostID:     uuid.NullUUID{post.ID, true},
 			})
 		}
 
@@ -61,14 +59,12 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(ctx, likedPost.ID)
 		// FIXME
 		senderID, _ := uuid.Parse(user.ID)
-		receiverID, _ := uuid.Parse(post.UserID)
-		postID, _ := uuid.Parse(post.ID)
 		s.RemoveNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameLikePost,
 			SenderID:   senderID,
-			ReceiverID: receiverID,
+			ReceiverID: post.UserID,
 			Url:        "/p/" + post.Url,
-			PostID:     uuid.NullUUID{postID, true},
+			PostID:     uuid.NullUUID{post.ID, true},
 		})
 
 		return unlikedPost, err
@@ -79,7 +75,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) || !validation.IsUserExists(user) {
 		return nil, nil
@@ -114,7 +110,7 @@ func (s *Service) IsPostLiked(ctx context.Context, postID string) (*db.LikedPost
 	}
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 
 	// FIXME
 	userID, _ := uuid.Parse(user.ID)
@@ -143,7 +139,7 @@ func (s *Service) GetLikedPostByID(ctx context.Context, id *string) (*db.LikedPo
 	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, ID)
 	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 

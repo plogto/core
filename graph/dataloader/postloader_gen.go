@@ -6,13 +6,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/db"
 )
 
 // PostLoaderConfig captures the config to create a new PostLoader
 type PostLoaderConfig struct {
 	// Fetch is a method that provides the data for the loader
-	Fetch func(keys []string) ([]*model.Post, []error)
+	Fetch func(keys []string) ([]*db.Post, []error)
 
 	// Wait is how long wait before sending a batch
 	Wait time.Duration
@@ -33,7 +33,7 @@ func NewPostLoader(config PostLoaderConfig) *PostLoader {
 // PostLoader batches and caches requests
 type PostLoader struct {
 	// this method provides the data for the loader
-	fetch func(keys []string) ([]*model.Post, []error)
+	fetch func(keys []string) ([]*db.Post, []error)
 
 	// how long to done before sending a batch
 	wait time.Duration
@@ -44,7 +44,7 @@ type PostLoader struct {
 	// INTERNAL
 
 	// lazily created cache
-	cache map[string]*model.Post
+	cache map[string]*db.Post
 
 	// the current batch. keys will continue to be collected until timeout is hit,
 	// then everything will be sent to the fetch method and out to the listeners
@@ -56,25 +56,25 @@ type PostLoader struct {
 
 type postLoaderBatch struct {
 	keys    []string
-	data    []*model.Post
+	data    []*db.Post
 	error   []error
 	closing bool
 	done    chan struct{}
 }
 
 // Load a Post by key, batching and caching will be applied automatically
-func (l *PostLoader) Load(key string) (*model.Post, error) {
+func (l *PostLoader) Load(key string) (*db.Post, error) {
 	return l.LoadThunk(key)()
 }
 
 // LoadThunk returns a function that when called will block waiting for a Post.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *PostLoader) LoadThunk(key string) func() (*model.Post, error) {
+func (l *PostLoader) LoadThunk(key string) func() (*db.Post, error) {
 	l.mu.Lock()
 	if it, ok := l.cache[key]; ok {
 		l.mu.Unlock()
-		return func() (*model.Post, error) {
+		return func() (*db.Post, error) {
 			return it, nil
 		}
 	}
@@ -85,10 +85,10 @@ func (l *PostLoader) LoadThunk(key string) func() (*model.Post, error) {
 	pos := batch.keyIndex(l, key)
 	l.mu.Unlock()
 
-	return func() (*model.Post, error) {
+	return func() (*db.Post, error) {
 		<-batch.done
 
-		var data *model.Post
+		var data *db.Post
 		if pos < len(batch.data) {
 			data = batch.data[pos]
 		}
@@ -113,14 +113,14 @@ func (l *PostLoader) LoadThunk(key string) func() (*model.Post, error) {
 
 // LoadAll fetches many keys at once. It will be broken into appropriate sized
 // sub batches depending on how the loader is configured
-func (l *PostLoader) LoadAll(keys []string) ([]*model.Post, []error) {
-	results := make([]func() (*model.Post, error), len(keys))
+func (l *PostLoader) LoadAll(keys []string) ([]*db.Post, []error) {
+	results := make([]func() (*db.Post, error), len(keys))
 
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
 
-	posts := make([]*model.Post, len(keys))
+	posts := make([]*db.Post, len(keys))
 	errors := make([]error, len(keys))
 	for i, thunk := range results {
 		posts[i], errors[i] = thunk()
@@ -131,13 +131,13 @@ func (l *PostLoader) LoadAll(keys []string) ([]*model.Post, []error) {
 // LoadAllThunk returns a function that when called will block waiting for a Posts.
 // This method should be used if you want one goroutine to make requests to many
 // different data loaders without blocking until the thunk is called.
-func (l *PostLoader) LoadAllThunk(keys []string) func() ([]*model.Post, []error) {
-	results := make([]func() (*model.Post, error), len(keys))
+func (l *PostLoader) LoadAllThunk(keys []string) func() ([]*db.Post, []error) {
+	results := make([]func() (*db.Post, error), len(keys))
 	for i, key := range keys {
 		results[i] = l.LoadThunk(key)
 	}
-	return func() ([]*model.Post, []error) {
-		posts := make([]*model.Post, len(keys))
+	return func() ([]*db.Post, []error) {
+		posts := make([]*db.Post, len(keys))
 		errors := make([]error, len(keys))
 		for i, thunk := range results {
 			posts[i], errors[i] = thunk()
@@ -149,7 +149,7 @@ func (l *PostLoader) LoadAllThunk(keys []string) func() ([]*model.Post, []error)
 // Prime the cache with the provided key and value. If the key already exists, no change is made
 // and false is returned.
 // (To forcefully prime the cache, clear the key first with loader.clear(key).prime(key, value).)
-func (l *PostLoader) Prime(key string, value *model.Post) bool {
+func (l *PostLoader) Prime(key string, value *db.Post) bool {
 	l.mu.Lock()
 	var found bool
 	if _, found = l.cache[key]; !found {
@@ -169,9 +169,9 @@ func (l *PostLoader) Clear(key string) {
 	l.mu.Unlock()
 }
 
-func (l *PostLoader) unsafeSet(key string, value *model.Post) {
+func (l *PostLoader) unsafeSet(key string, value *db.Post) {
 	if l.cache == nil {
-		l.cache = map[string]*model.Post{}
+		l.cache = map[string]*db.Post{}
 	}
 	l.cache[key] = value
 }

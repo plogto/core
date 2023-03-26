@@ -38,7 +38,7 @@ type User {
   followingCount: TotalCount!
   followersCount: TotalCount!
   followRequestsCount: TotalCount!
-  postsCount: Int!
+  postsCount: TotalCount!
   createdAt: Time
   updatedAt: Time
 }

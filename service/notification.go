@@ -29,7 +29,7 @@ type RemovePostNotificationsArgs struct {
 
 type CreatePostMentionNotificationsArgs struct {
 	UserIDs  []string
-	Post     model.Post
+	Post     db.Post
 	SenderID string
 }
 
@@ -152,13 +152,12 @@ func (s *Service) CreatePostMentionNotifications(ctx context.Context, args Creat
 			// FIXME
 			senderID, _ := uuid.Parse(args.SenderID)
 			receiverID, _ := uuid.Parse(receiverID)
-			postID, _ := uuid.Parse(args.Post.ID)
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameMentionInPost,
 				SenderID:   senderID,
 				ReceiverID: receiverID,
 				Url:        "/p/" + args.Post.Url,
-				PostID:     uuid.NullUUID{postID, true},
+				PostID:     uuid.NullUUID{args.Post.ID, true},
 			})
 		}
 	}

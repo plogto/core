@@ -4,7 +4,7 @@ enum PostStatus {
 }
 
 type Post {
-  id: ID!
+  id: UUID!
   status: PostStatus!
   parent: Post
   child: Post
@@ -26,13 +26,13 @@ type PostsEdge {
 }
 
 type Posts {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [PostsEdge]!
   pageInfo: PageInfo!
 }
 
 input addPostInput {
-  parentId: ID
+  parentId: UUID
   content: String
   status: PostStatus
   attachment: [String!]
@@ -54,6 +54,6 @@ extend type Query {
 
 extend type Mutation {
   addPost(input: addPostInput!): Post
-  editPost(postId: ID!, input: editPostInput!): Post
-  deletePost(postId: ID!): Post
+  editPost(postId: UUID!, input: editPostInput!): Post
+  deletePost(postId: UUID!): Post
 }

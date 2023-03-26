@@ -202,8 +202,8 @@ type ComplexityRoot struct {
 		AddTicketMessage   func(childComplexity int, ticketID string, input model.AddTicketMessageInput) int
 		ChangePassword     func(childComplexity int, input model.ChangePasswordInput) int
 		CreateTicket       func(childComplexity int, input model.CreateTicketInput) int
-		DeletePost         func(childComplexity int, postID string) int
-		EditPost           func(childComplexity int, postID string, input model.EditPostInput) int
+		DeletePost         func(childComplexity int, postID uuid.UUID) int
+		EditPost           func(childComplexity int, postID uuid.UUID, input model.EditPostInput) int
 		EditUser           func(childComplexity int, input model.EditUserInput) int
 		FollowUser         func(childComplexity int, userID string) int
 		LikePost           func(childComplexity int, postID string) int
@@ -490,7 +490,7 @@ type CreditTransactionsEdgeResolver interface {
 }
 type LikedPostResolver interface {
 	User(ctx context.Context, obj *db.LikedPost) (*model.User, error)
-	Post(ctx context.Context, obj *db.LikedPost) (*model.Post, error)
+	Post(ctx context.Context, obj *db.LikedPost) (*db.Post, error)
 }
 type LikedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.LikedPostsEdge) (string, error)
@@ -507,9 +507,9 @@ type MutationResolver interface {
 	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error)
 	LikePost(ctx context.Context, postID string) (*db.LikedPost, error)
 	ReadNotifications(ctx context.Context) (*bool, error)
-	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
-	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
-	DeletePost(ctx context.Context, postID string) (*model.Post, error)
+	AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error)
+	EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error)
+	DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error)
 	SavePost(ctx context.Context, postID string) (*model.SavedPost, error)
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
 	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
@@ -522,8 +522,8 @@ type NotificationResolver interface {
 	NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error)
 	Sender(ctx context.Context, obj *db.Notification) (*model.User, error)
 	Receiver(ctx context.Context, obj *db.Notification) (*model.User, error)
-	Post(ctx context.Context, obj *db.Notification) (*model.Post, error)
-	Reply(ctx context.Context, obj *db.Notification) (*model.Post, error)
+	Post(ctx context.Context, obj *db.Notification) (*db.Post, error)
+	Reply(ctx context.Context, obj *db.Notification) (*db.Post, error)
 }
 type NotificationTypeResolver interface {
 	Name(ctx context.Context, obj *db.NotificationType) (model.NotificationTypeName, error)
@@ -533,20 +533,21 @@ type NotificationsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.NotificationsEdge) (*db.Notification, error)
 }
 type PostResolver interface {
-	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
-	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
-	User(ctx context.Context, obj *model.Post) (*model.User, error)
-	Content(ctx context.Context, obj *model.Post) (*string, error)
-	Attachment(ctx context.Context, obj *model.Post) ([]*db.File, error)
+	Status(ctx context.Context, obj *db.Post) (model.PostStatus, error)
+	Parent(ctx context.Context, obj *db.Post) (*db.Post, error)
+	Child(ctx context.Context, obj *db.Post) (*db.Post, error)
+	User(ctx context.Context, obj *db.Post) (*model.User, error)
+	Content(ctx context.Context, obj *db.Post) (*string, error)
+	Attachment(ctx context.Context, obj *db.Post) ([]*db.File, error)
 
-	Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error)
-	Replies(ctx context.Context, obj *model.Post) (*model.Posts, error)
-	IsLiked(ctx context.Context, obj *model.Post) (*db.LikedPost, error)
-	IsSaved(ctx context.Context, obj *model.Post) (*model.SavedPost, error)
+	Likes(ctx context.Context, obj *db.Post) (*model.LikedPosts, error)
+	Replies(ctx context.Context, obj *db.Post) (*model.Posts, error)
+	IsLiked(ctx context.Context, obj *db.Post) (*db.LikedPost, error)
+	IsSaved(ctx context.Context, obj *db.Post) (*model.SavedPost, error)
 }
 type PostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.PostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error)
+	Node(ctx context.Context, obj *model.PostsEdge) (*db.Post, error)
 }
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
@@ -562,7 +563,7 @@ type QueryResolver interface {
 	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
-	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
+	GetPostByURL(ctx context.Context, url string) (*db.Post, error)
 	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error)
@@ -579,7 +580,7 @@ type QueryResolver interface {
 }
 type SavedPostResolver interface {
 	User(ctx context.Context, obj *model.SavedPost) (*model.User, error)
-	Post(ctx context.Context, obj *model.SavedPost) (*model.Post, error)
+	Post(ctx context.Context, obj *model.SavedPost) (*db.Post, error)
 }
 type SavedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.SavedPostsEdge) (string, error)
@@ -629,7 +630,7 @@ type UserResolver interface {
 	FollowingCount(ctx context.Context, obj *model.User) (int64, error)
 	FollowersCount(ctx context.Context, obj *model.User) (int64, error)
 	FollowRequestsCount(ctx context.Context, obj *model.User) (int64, error)
-	PostsCount(ctx context.Context, obj *model.User) (int, error)
+	PostsCount(ctx context.Context, obj *model.User) (int64, error)
 }
 type UsersEdgeResolver interface {
 	Node(ctx context.Context, obj *model.UsersEdge) (*model.User, error)
@@ -1196,7 +1197,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(string)), true
+		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(uuid.UUID)), true
 
 	case "Mutation.editPost":
 		if e.complexity.Mutation.EditPost == nil {
@@ -1208,7 +1209,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(string), args["input"].(model.EditPostInput)), true
+		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(uuid.UUID), args["input"].(model.EditPostInput)), true
 
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
@@ -2949,7 +2950,7 @@ extend type Subscription {
 }
 
 type Post {
-  id: ID!
+  id: UUID!
   status: PostStatus!
   parent: Post
   child: Post
@@ -2971,13 +2972,13 @@ type PostsEdge {
 }
 
 type Posts {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [PostsEdge]!
   pageInfo: PageInfo!
 }
 
 input addPostInput {
-  parentId: ID
+  parentId: UUID
   content: String
   status: PostStatus
   attachment: [String!]
@@ -2999,8 +3000,8 @@ extend type Query {
 
 extend type Mutation {
   addPost(input: addPostInput!): Post
-  editPost(postId: ID!, input: editPostInput!): Post
-  deletePost(postId: ID!): Post
+  editPost(postId: UUID!, input: editPostInput!): Post
+  deletePost(postId: UUID!): Post
 }
 `, BuiltIn: false},
 	{Name: "../schema/saved_post.graphqls", Input: `type SavedPost {
@@ -3191,7 +3192,7 @@ type User {
   followingCount: TotalCount!
   followersCount: TotalCount!
   followRequestsCount: TotalCount!
-  postsCount: Int!
+  postsCount: TotalCount!
   createdAt: Time
   updatedAt: Time
 }
@@ -3328,10 +3329,10 @@ func (ec *executionContext) field_Mutation_createTicket_args(ctx context.Context
 func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3343,10 +3344,10 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_editPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7183,9 +7184,9 @@ func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8180,9 +8181,9 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8253,7 +8254,7 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(string), fc.Args["input"].(model.EditPostInput))
+		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(uuid.UUID), fc.Args["input"].(model.EditPostInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8262,9 +8263,9 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8335,7 +8336,7 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(string))
+		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8344,9 +8345,9 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deletePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9182,9 +9183,9 @@ func (ec *executionContext) _Notification_post(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9253,9 +9254,9 @@ func (ec *executionContext) _Notification_reply(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_reply(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10282,7 +10283,7 @@ func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10308,9 +10309,9 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10320,13 +10321,13 @@ func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10340,7 +10341,7 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.Post().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10352,17 +10353,17 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostStatus)
+	res := resTmp.(model.PostStatus)
 	fc.Result = res
-	return ec.marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
+	return ec.marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type PostStatus does not have child fields")
 		},
@@ -10370,7 +10371,7 @@ func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_parent(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10393,9 +10394,9 @@ func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_parent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10441,7 +10442,7 @@ func (ec *executionContext) fieldContext_Post_parent(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_child(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_child(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_child(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10464,9 +10465,9 @@ func (ec *executionContext) _Post_child(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10512,7 +10513,7 @@ func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_user(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_user(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10600,7 +10601,7 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_content(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_content(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10641,7 +10642,7 @@ func (ec *executionContext) fieldContext_Post_content(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_attachment(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10692,7 +10693,7 @@ func (ec *executionContext) fieldContext_Post_attachment(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10736,7 +10737,7 @@ func (ec *executionContext) fieldContext_Post_url(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_likes(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10785,7 +10786,7 @@ func (ec *executionContext) fieldContext_Post_likes(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_replies(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_replies(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_replies(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10834,7 +10835,7 @@ func (ec *executionContext) fieldContext_Post_replies(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_isLiked(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10887,7 +10888,7 @@ func (ec *executionContext) fieldContext_Post_isLiked(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_isSaved(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10940,7 +10941,7 @@ func (ec *executionContext) fieldContext_Post_isSaved(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10963,9 +10964,9 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10981,7 +10982,7 @@ func (ec *executionContext) fieldContext_Post_createdAt(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -11004,9 +11005,9 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11043,11 +11044,14 @@ func (ec *executionContext) _Posts_totalCount(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Posts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11057,7 +11061,7 @@ func (ec *executionContext) fieldContext_Posts_totalCount(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11230,9 +11234,9 @@ func (ec *executionContext) _PostsEdge_node(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12077,9 +12081,9 @@ func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPostByUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13372,9 +13376,9 @@ func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16557,9 +16561,9 @@ func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_postsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16569,7 +16573,7 @@ func (ec *executionContext) fieldContext_User_postsCount(ctx context.Context, fi
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -18977,7 +18981,7 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -20729,7 +20733,7 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 
 var postImplementors = []string{"Post"}
 
-func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *model.Post) graphql.Marshaler {
+func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *db.Post) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, postImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20745,12 +20749,25 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
+			field := field
 
-			out.Values[i] = ec._Post_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "parent":
 			field := field
 
@@ -20947,6 +20964,9 @@ func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Values[i] = ec._Posts_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Posts_edges(ctx, field, obj)
@@ -23282,21 +23302,6 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-	}
-	return res
-}
-
 func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v interface{}) (int32, error) {
 	res, err := graphql.UnmarshalInt32(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23470,11 +23475,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋg
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v db.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v *db.Post) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23484,19 +23489,13 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (*model.PostStatus, error) {
-	var res = new(model.PostStatus)
+func (ec *executionContext) unmarshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (model.PostStatus, error) {
+	var res model.PostStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *model.PostStatus) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
+func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v model.PostStatus) graphql.Marshaler {
 	return v
 }
 
@@ -24498,22 +24497,6 @@ func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐ
 	return ec._File(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalID(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalID(*v)
-	return res
-}
-
 func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface{}) (int32, error) {
 	res, err := graphql.UnmarshalInt32(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -24611,7 +24594,7 @@ func (ec *executionContext) unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v *db.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24897,6 +24880,22 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	res := graphql.MarshalTime(*v)
+	return res
+}
+
+func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := db.UnmarshalUUID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v *uuid.UUID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := db.MarshalUUID(*v)
 	return res
 }
 

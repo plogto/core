@@ -6,7 +6,7 @@ import (
 )
 
 func IsConnectionExists(connection *db.Connection) bool {
-	return lo.IsNotEmpty(connection)
+	return connection != nil && lo.IsNotEmpty(connection.ID)
 }
 
 func IsConnectionStatusAccepted(connection *db.Connection) bool {
