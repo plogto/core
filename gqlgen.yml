@@ -165,6 +165,19 @@ models:
         resolver: true
       node:
         resolver: true
+  SavedPost:
+    model: github.com/plogto/core/db.SavedPost
+    fields:
+      user:
+        resolver: true
+      post:
+        resolver: true
+  SavedPostsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   Tag:
     model: github.com/plogto/core/graph/model.Tag
     fields:
@@ -194,13 +207,6 @@ models:
       postsCount:
         resolver: true
       credits:
-        resolver: true
-  SavedPost:
-    model: github.com/plogto/core/graph/model.SavedPost
-    fields:
-      user:
-        resolver: true
-      post:
         resolver: true
   Ticket:
     model: github.com/plogto/core/graph/model.Ticket
@@ -234,12 +240,7 @@ models:
         resolver: true
       node:
         resolver: true
-  SavedPostsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
+  
   OnlineUser:
     model: github.com/plogto/core/graph/model.OnlineUser
     fields:

@@ -86,12 +86,12 @@ func main() {
 		PostMentions:                          database.PostMentions{Queries: queries},
 		PostTags:                              database.PostTags{Queries: queries},
 		Posts:                                 database.Posts{Queries: queries},
+		SavedPosts:                            database.SavedPosts{Queries: queries},
 		Tags:                                  database.Tags{Queries: queries},
 		Users:                                 users,
 		Tickets:                               database.Tickets{DB: DB},
 		TicketMessages:                        database.TicketMessages{DB: DB},
 		TicketMessageAttachments:              database.TicketMessageAttachments{DB: DB},
-		SavedPosts:                            database.SavedPosts{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 	})
 

@@ -25,12 +25,12 @@ type Service struct {
 	PostMentions                          database.PostMentions
 	PostTags                              database.PostTags
 	Posts                                 database.Posts
+	SavedPosts                            database.SavedPosts
 	Tags                                  database.Tags
 	Users                                 database.Users
 	Tickets                               database.Tickets
 	TicketMessages                        database.TicketMessages
 	TicketMessageAttachments              database.TicketMessageAttachments
-	SavedPosts                            database.SavedPosts
 	OnlineUsers                           database.OnlineUsers
 	OnlineNotifications                   map[string]chan *model.NotificationsEdge
 	mu                                    sync.Mutex
@@ -53,12 +53,12 @@ func New(service Service) *Service {
 		PostMentions:                          service.PostMentions,
 		PostTags:                              service.PostTags,
 		Posts:                                 service.Posts,
+		SavedPosts:                            service.SavedPosts,
 		Tags:                                  service.Tags,
 		Users:                                 service.Users,
 		Tickets:                               service.Tickets,
 		TicketMessages:                        service.TicketMessages,
 		TicketMessageAttachments:              service.TicketMessageAttachments,
-		SavedPosts:                            service.SavedPosts,
 		OnlineUsers:                           service.OnlineUsers,
 		OnlineNotifications:                   map[string]chan *model.NotificationsEdge{},
 	}

@@ -14,7 +14,7 @@ import (
 
 type AddTicketMessageInput struct {
 	Message    string    `json:"message"`
-	Attachment []*string `json:"attachment"`
+	Attachment []*string `json:"attachment,omitempty"`
 }
 
 type AuthResponse struct {
@@ -40,13 +40,13 @@ type Connections struct {
 
 type ConnectionsEdge struct {
 	Cursor string         `json:"cursor"`
-	Node   *db.Connection `json:"node"`
+	Node   *db.Connection `json:"node,omitempty"`
 }
 
 type CreateTicketInput struct {
 	Subject    string    `json:"subject"`
 	Message    string    `json:"message"`
-	Attachment []*string `json:"attachment"`
+	Attachment []*string `json:"attachment,omitempty"`
 }
 
 type CreditTransactions struct {
@@ -57,38 +57,38 @@ type CreditTransactions struct {
 
 type CreditTransactionsEdge struct {
 	Cursor string                `json:"cursor"`
-	Node   *db.CreditTransaction `json:"node"`
+	Node   *db.CreditTransaction `json:"node,omitempty"`
 }
 
 type EditUserInput struct {
-	Username        *string          `json:"username"`
-	BackgroundColor *BackgroundColor `json:"backgroundColor"`
-	PrimaryColor    *PrimaryColor    `json:"primaryColor"`
-	Avatar          *string          `json:"avatar"`
-	Background      *string          `json:"background"`
-	FullName        *string          `json:"fullName"`
-	Email           *string          `json:"email"`
-	Bio             *string          `json:"bio"`
-	IsPrivate       *bool            `json:"isPrivate"`
+	Username        *string          `json:"username,omitempty"`
+	BackgroundColor *BackgroundColor `json:"backgroundColor,omitempty"`
+	PrimaryColor    *PrimaryColor    `json:"primaryColor,omitempty"`
+	Avatar          *string          `json:"avatar,omitempty"`
+	Background      *string          `json:"background,omitempty"`
+	FullName        *string          `json:"fullName,omitempty"`
+	Email           *string          `json:"email,omitempty"`
+	Bio             *string          `json:"bio,omitempty"`
+	IsPrivate       *bool            `json:"isPrivate,omitempty"`
 }
 
 type InvitedUser struct {
 	ID        string     `json:"id"`
 	Inviter   *User      `json:"inviter"`
 	Invitee   *User      `json:"invitee"`
-	CreatedAt *time.Time `json:"createdAt"`
-	UpdatedAt *time.Time `json:"updatedAt"`
+	CreatedAt *time.Time `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 type InvitedUsers struct {
-	TotalCount *int                `json:"totalCount"`
+	TotalCount *int                `json:"totalCount,omitempty"`
 	Edges      []*InvitedUsersEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 }
 
 type InvitedUsersEdge struct {
 	Cursor string       `json:"cursor"`
-	Node   *InvitedUser `json:"node"`
+	Node   *InvitedUser `json:"node,omitempty"`
 }
 
 type LikedPosts struct {
@@ -99,7 +99,7 @@ type LikedPosts struct {
 
 type LikedPostsEdge struct {
 	Cursor string        `json:"cursor"`
-	Node   *db.LikedPost `json:"node"`
+	Node   *db.LikedPost `json:"node,omitempty"`
 }
 
 type LoginInput struct {
@@ -116,22 +116,22 @@ type Notifications struct {
 
 type NotificationsEdge struct {
 	Cursor string           `json:"cursor"`
-	Node   *db.Notification `json:"node"`
+	Node   *db.Notification `json:"node,omitempty"`
 }
 
 type OAuthGoogleInput struct {
 	Credential     string  `json:"credential"`
-	InvitationCode *string `json:"invitationCode"`
+	InvitationCode *string `json:"invitationCode,omitempty"`
 }
 
 type PageInfo struct {
 	EndCursor   string `json:"endCursor"`
-	HasNextPage *bool  `json:"hasNextPage"`
+	HasNextPage *bool  `json:"hasNextPage,omitempty"`
 }
 
 type PageInfoInput struct {
-	First *int    `json:"first"`
-	After *string `json:"after"`
+	First *int    `json:"first,omitempty"`
+	After *string `json:"after,omitempty"`
 }
 
 type Posts struct {
@@ -142,30 +142,30 @@ type Posts struct {
 
 type PostsEdge struct {
 	Cursor string   `json:"cursor"`
-	Node   *db.Post `json:"node"`
+	Node   *db.Post `json:"node,omitempty"`
 }
 
 type RegisterInput struct {
 	FullName       string  `json:"fullName"`
 	Email          string  `json:"email"`
 	Password       string  `json:"password"`
-	InvitationCode *string `json:"invitationCode"`
+	InvitationCode *string `json:"invitationCode,omitempty"`
 }
 
 type SavedPosts struct {
-	TotalCount *int              `json:"totalCount"`
+	TotalCount int64             `json:"totalCount"`
 	Edges      []*SavedPostsEdge `json:"edges"`
 	PageInfo   *PageInfo         `json:"pageInfo"`
 }
 
 type SavedPostsEdge struct {
-	Cursor string     `json:"cursor"`
-	Node   *SavedPost `json:"node"`
+	Cursor string        `json:"cursor"`
+	Node   *db.SavedPost `json:"node,omitempty"`
 }
 
 type Search struct {
-	User *Users `json:"user"`
-	Tag  *Tags  `json:"tag"`
+	User *Users `json:"user,omitempty"`
+	Tag  *Tags  `json:"tag,omitempty"`
 }
 
 type Tags struct {
@@ -173,38 +173,38 @@ type Tags struct {
 }
 
 type TagsEdge struct {
-	Node *Tag `json:"node"`
+	Node *Tag `json:"node,omitempty"`
 }
 
 type Test struct {
-	Content *string `json:"content"`
+	Content *string `json:"content,omitempty"`
 }
 
 type TestInput struct {
-	Content *string `json:"content"`
+	Content *string `json:"content,omitempty"`
 }
 
 type TicketMessages struct {
-	TotalCount *int                  `json:"totalCount"`
-	Ticket     *Ticket               `json:"ticket"`
+	TotalCount *int                  `json:"totalCount,omitempty"`
+	Ticket     *Ticket               `json:"ticket,omitempty"`
 	Edges      []*TicketMessagesEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 }
 
 type TicketMessagesEdge struct {
 	Cursor string         `json:"cursor"`
-	Node   *TicketMessage `json:"node"`
+	Node   *TicketMessage `json:"node,omitempty"`
 }
 
 type Tickets struct {
-	TotalCount *int           `json:"totalCount"`
+	TotalCount *int           `json:"totalCount,omitempty"`
 	Edges      []*TicketsEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 }
 
 type TicketsEdge struct {
 	Cursor string  `json:"cursor"`
-	Node   *Ticket `json:"node"`
+	Node   *Ticket `json:"node,omitempty"`
 }
 
 type Users struct {
@@ -212,19 +212,19 @@ type Users struct {
 }
 
 type UsersEdge struct {
-	Node *User `json:"node"`
+	Node *User `json:"node,omitempty"`
 }
 
 type AddPostInput struct {
-	ParentID   *uuid.UUID  `json:"parentId"`
-	Content    *string     `json:"content"`
-	Status     *PostStatus `json:"status"`
-	Attachment []string    `json:"attachment"`
+	ParentID   *uuid.UUID  `json:"parentId,omitempty"`
+	Content    *string     `json:"content,omitempty"`
+	Status     *PostStatus `json:"status,omitempty"`
+	Attachment []string    `json:"attachment,omitempty"`
 }
 
 type EditPostInput struct {
-	Content *string     `json:"content"`
-	Status  *PostStatus `json:"status"`
+	Content *string     `json:"content,omitempty"`
+	Status  *PostStatus `json:"status,omitempty"`
 }
 
 type BackgroundColor string
