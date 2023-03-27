@@ -76,10 +76,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
 			V, _ := uuid.Parse(v)
-			s.PostAttachments.CreatePostAttachment(ctx, db.CreatePostAttachmentParams{
-				PostID: post.ID,
-				FileID: V,
-			})
+			s.PostAttachments.CreatePostAttachment(ctx, post.ID, V)
 		}
 	}
 

@@ -31,10 +31,9 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID string, input m
 
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			s.TicketMessageAttachments.CreateTicketMessageAttachment(&model.TicketMessageAttachment{
-				TicketMessageID: ticketMessage.ID,
-				FileID:          *v,
-			})
+			V, _ := uuid.Parse(*v)
+			TicketMessageID, _ := uuid.Parse(ticketMessage.ID)
+			s.TicketMessageAttachments.CreateTicketMessageAttachment(ctx, TicketMessageID, V)
 		}
 	}
 
@@ -64,7 +63,7 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 		return nil, nil
 	}
 
-	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, pageInfo.First, pageInfo.After.String())
+	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ticket.ID, pageInfo.First, pageInfo.After)
 }
 
 func (s *Service) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {

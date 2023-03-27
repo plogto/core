@@ -1,15 +1,25 @@
 package database
 
 import (
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
 type TicketMessageAttachments struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (t *TicketMessageAttachments) CreateTicketMessageAttachment(ticketMessageAttachment *model.TicketMessageAttachment) (*model.TicketMessageAttachment, error) {
-	_, err := t.DB.Model(ticketMessageAttachment).Returning("*").Insert()
-	return ticketMessageAttachment, err
+func (t *TicketMessageAttachments) CreateTicketMessageAttachment(ctx context.Context, ticketMessageID, fileID uuid.UUID) (*db.TicketMessageAttachment, error) {
+	ticketMessageAttachment, err := t.Queries.CreateTicketMessageAttachment(ctx, db.CreateTicketMessageAttachmentParams{
+		TicketMessageID: ticketMessageID,
+		FileID:          fileID,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ticketMessageAttachment, nil
 }
