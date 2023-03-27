@@ -212,7 +212,7 @@ type ComplexityRoot struct {
 		ReadTicketMessages func(childComplexity int, ticketID string) int
 		Register           func(childComplexity int, input model.RegisterInput) int
 		RejectUser         func(childComplexity int, userID string) int
-		SavePost           func(childComplexity int, postID string) int
+		SavePost           func(childComplexity int, postID uuid.UUID) int
 		Test               func(childComplexity int, input model.TestInput) int
 		UnfollowUser       func(childComplexity int, userID string) int
 		UpdateTicketStatus func(childComplexity int, ticketID string, status model.TicketStatus) int
@@ -510,7 +510,7 @@ type MutationResolver interface {
 	AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error)
 	EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error)
 	DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error)
-	SavePost(ctx context.Context, postID string) (*model.SavedPost, error)
+	SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error)
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
 	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
 	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
@@ -543,7 +543,7 @@ type PostResolver interface {
 	Likes(ctx context.Context, obj *db.Post) (*model.LikedPosts, error)
 	Replies(ctx context.Context, obj *db.Post) (*model.Posts, error)
 	IsLiked(ctx context.Context, obj *db.Post) (*db.LikedPost, error)
-	IsSaved(ctx context.Context, obj *db.Post) (*model.SavedPost, error)
+	IsSaved(ctx context.Context, obj *db.Post) (*db.SavedPost, error)
 }
 type PostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.PostsEdge) (string, error)
@@ -579,12 +579,12 @@ type QueryResolver interface {
 	CheckEmail(ctx context.Context, email string) (*model.User, error)
 }
 type SavedPostResolver interface {
-	User(ctx context.Context, obj *model.SavedPost) (*model.User, error)
-	Post(ctx context.Context, obj *model.SavedPost) (*db.Post, error)
+	User(ctx context.Context, obj *db.SavedPost) (*model.User, error)
+	Post(ctx context.Context, obj *db.SavedPost) (*db.Post, error)
 }
 type SavedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.SavedPostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.SavedPostsEdge) (*model.SavedPost, error)
+	Node(ctx context.Context, obj *model.SavedPostsEdge) (*db.SavedPost, error)
 }
 type SubscriptionResolver interface {
 	Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error)
@@ -1312,7 +1312,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(string)), true
+		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(uuid.UUID)), true
 
 	case "Mutation.test":
 		if e.complexity.Mutation.Test == nil {
@@ -3005,7 +3005,7 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../schema/saved_post.graphqls", Input: `type SavedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -3018,7 +3018,7 @@ type SavedPostsEdge {
 }
 
 type SavedPosts {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [SavedPostsEdge]!
   pageInfo: PageInfo!
 }
@@ -3028,7 +3028,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: ID!): SavedPost
+  savePost(postId: UUID!): SavedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/search.graphqls", Input: `type Search {
@@ -3473,10 +3473,10 @@ func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_savePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8418,7 +8418,7 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(string))
+		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8427,9 +8427,9 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_savePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10911,9 +10911,9 @@ func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_isSaved(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13218,7 +13218,7 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13244,9 +13244,9 @@ func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13256,13 +13256,13 @@ func (ec *executionContext) fieldContext_SavedPost_id(ctx context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_user(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_user(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13350,7 +13350,7 @@ func (ec *executionContext) fieldContext_SavedPost_user(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13424,7 +13424,7 @@ func (ec *executionContext) fieldContext_SavedPost_post(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13447,9 +13447,9 @@ func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13465,7 +13465,7 @@ func (ec *executionContext) fieldContext_SavedPost_createdAt(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13488,9 +13488,9 @@ func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13527,11 +13527,14 @@ func (ec *executionContext) _SavedPosts_totalCount(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPosts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13541,7 +13544,7 @@ func (ec *executionContext) fieldContext_SavedPosts_totalCount(ctx context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13714,9 +13717,9 @@ func (ec *executionContext) _SavedPostsEdge_node(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -21634,7 +21637,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var savedPostImplementors = []string{"SavedPost"}
 
-func (ec *executionContext) _SavedPost(ctx context.Context, sel ast.SelectionSet, obj *model.SavedPost) graphql.Marshaler {
+func (ec *executionContext) _SavedPost(ctx context.Context, sel ast.SelectionSet, obj *db.SavedPost) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, savedPostImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -21722,6 +21725,9 @@ func (ec *executionContext) _SavedPosts(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._SavedPosts_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._SavedPosts_edges(ctx, field, obj)
@@ -24647,7 +24653,7 @@ func (ec *executionContext) marshalOPrimaryColor2ᚖgithubᚗcomᚋplogtoᚋcore
 	return v
 }
 
-func (ec *executionContext) marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx context.Context, sel ast.SelectionSet, v *model.SavedPost) graphql.Marshaler {
+func (ec *executionContext) marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx context.Context, sel ast.SelectionSet, v *db.SavedPost) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

@@ -3,7 +3,7 @@ module github.com/plogto/core
 go 1.19
 
 require (
-	github.com/99designs/gqlgen v0.17.26
+	github.com/99designs/gqlgen v0.17.27
 	github.com/aws/aws-sdk-go v1.44.114
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-chi/chi v4.1.2+incompatible

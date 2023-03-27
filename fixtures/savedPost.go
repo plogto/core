@@ -1,6 +1,10 @@
 package fixtures
 
-import "github.com/plogto/core/graph/model"
+import (
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
+)
 
-var EmptySavedPost = &model.SavedPost{}
-var SavedPostWithID = &model.SavedPost{ID: "id"}
+var SavedPostID, _ = uuid.NewUUID()
+var EmptySavedPost = &db.SavedPost{}
+var SavedPostWithID = &db.SavedPost{ID: SavedPostID}
