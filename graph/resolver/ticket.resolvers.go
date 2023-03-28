@@ -6,7 +6,9 @@ package graph
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -14,23 +16,23 @@ import (
 )
 
 // CreateTicket is the resolver for the createTicket field.
-func (r *mutationResolver) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error) {
+func (r *mutationResolver) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*db.Ticket, error) {
 	return r.Service.CreateTicket(ctx, input)
 }
 
 // AddTicketMessage is the resolver for the addTicketMessage field.
-func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
+func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
 	return r.Service.AddTicketMessage(ctx, ticketID, input)
 }
 
 // ReadTicketMessages is the resolver for the readTicketMessages field.
-func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {
+func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error) {
 	return r.Service.ReadTicketMessages(ctx, ticketID)
 }
 
 // UpdateTicketStatus is the resolver for the updateTicketStatus field.
-func (r *mutationResolver) UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error) {
-	return r.Service.UpdateTicketStatus(ctx, ticketID, status)
+func (r *mutationResolver) UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status model.TicketStatus) (*db.Ticket, error) {
+	return r.Service.UpdateTicketStatus(ctx, ticketID, db.TicketStatusType(status))
 }
 
 // GetTickets is the resolver for the getTickets field.
@@ -44,17 +46,27 @@ func (r *queryResolver) GetTicketMessagesByTicketURL(ctx context.Context, ticket
 }
 
 // User is the resolver for the user field.
-func (r *ticketResolver) User(ctx context.Context, obj *model.Ticket) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID)
+func (r *ticketResolver) User(ctx context.Context, obj *db.Ticket) (*model.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID.String())
+}
+
+// Status is the resolver for the status field.
+func (r *ticketResolver) Status(ctx context.Context, obj *db.Ticket) (model.TicketStatus, error) {
+	return model.TicketStatus(obj.Status), nil
+}
+
+// URL is the resolver for the url field.
+func (r *ticketResolver) URL(ctx context.Context, obj *db.Ticket) (*string, error) {
+	return &obj.Url, nil
 }
 
 // LastMessage is the resolver for the lastMessage field.
-func (r *ticketResolver) LastMessage(ctx context.Context, obj *model.Ticket) (*db.TicketMessage, error) {
+func (r *ticketResolver) LastMessage(ctx context.Context, obj *db.Ticket) (*db.TicketMessage, error) {
 	return r.Service.GetLastTicketMessageByTicketID(ctx, obj.ID)
 }
 
 // Permissions is the resolver for the permissions field.
-func (r *ticketResolver) Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error) {
+func (r *ticketResolver) Permissions(ctx context.Context, obj *db.Ticket) ([]*model.TicketPermission, error) {
 	return r.Service.GetTicketPermissionsByTicketID(ctx, obj.ID)
 }
 
@@ -64,8 +76,8 @@ func (r *ticketMessageResolver) Sender(ctx context.Context, obj *db.TicketMessag
 }
 
 // Ticket is the resolver for the ticket field.
-func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *db.TicketMessage) (*model.Ticket, error) {
-	return r.Service.GetTicketByID(ctx, obj.TicketID.String())
+func (r *ticketMessageResolver) Ticket(ctx context.Context, obj *db.TicketMessage) (*db.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.TicketID)
 }
 
 // Attachment is the resolver for the attachment field.
@@ -74,8 +86,8 @@ func (r *ticketMessageResolver) Attachment(ctx context.Context, obj *db.TicketMe
 }
 
 // Ticket is the resolver for the ticket field.
-func (r *ticketMessagesResolver) Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error) {
-	return r.Service.GetTicketByID(ctx, obj.Edges[0].Node.TicketID.String())
+func (r *ticketMessagesResolver) Ticket(ctx context.Context, obj *model.TicketMessages) (*db.Ticket, error) {
+	return r.Service.GetTicketByID(ctx, obj.Edges[0].Node.TicketID)
 }
 
 // Cursor is the resolver for the cursor field.
@@ -90,11 +102,11 @@ func (r *ticketMessagesEdgeResolver) Node(ctx context.Context, obj *model.Ticket
 
 // Cursor is the resolver for the cursor field.
 func (r *ticketsEdgeResolver) Cursor(ctx context.Context, obj *model.TicketsEdge) (string, error) {
-	return util.ConvertCreateAtToCursor(*obj.Node.UpdatedAt), nil
+	return util.ConvertCreateAtToCursor(obj.Node.UpdatedAt), nil
 }
 
 // Node is the resolver for the node field.
-func (r *ticketsEdgeResolver) Node(ctx context.Context, obj *model.TicketsEdge) (*model.Ticket, error) {
+func (r *ticketsEdgeResolver) Node(ctx context.Context, obj *model.TicketsEdge) (*db.Ticket, error) {
 	return r.Service.GetTicketByID(ctx, obj.Node.ID)
 }
 
@@ -122,3 +134,13 @@ type ticketMessageResolver struct{ *Resolver }
 type ticketMessagesResolver struct{ *Resolver }
 type ticketMessagesEdgeResolver struct{ *Resolver }
 type ticketsEdgeResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *ticketResolver) ID(ctx context.Context, obj *db.Ticket) (string, error) {
+	panic(fmt.Errorf("not implemented: ID - id"))
+}

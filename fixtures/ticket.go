@@ -1,13 +1,19 @@
 package fixtures
 
-import "github.com/plogto/core/graph/model"
+import (
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
+)
 
-var EmptyTicket = &model.Ticket{}
-var TicketWithID = &model.Ticket{ID: "id"}
-var TicketWithUserID = &model.Ticket{ID: "id", UserID: UserWithID.ID}
-var OpenTicket = &model.Ticket{ID: "id", Status: model.TicketStatusOpen}
-var ClosedTicket = &model.Ticket{ID: "id", Status: model.TicketStatusClosed}
-var AcceptedTicket = &model.Ticket{ID: "id", Status: model.TicketStatusAccepted}
-var RejectedTicket = &model.Ticket{ID: "id", Status: model.TicketStatusRejected}
-var ApprovedTicket = &model.Ticket{ID: "id", Status: model.TicketStatusApproved}
-var SolvedTicket = &model.Ticket{ID: "id", Status: model.TicketStatusSolved}
+var TicketID, _ = uuid.NewUUID()
+var EmptyTicket = &db.Ticket{}
+var TicketWithID = &db.Ticket{ID: TicketID}
+
+// TODO: remove uuid.MustParse
+var TicketWithUserID = &db.Ticket{ID: TicketID, UserID: uuid.MustParse(UserWithID.ID)}
+var OpenTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeOpen}
+var ClosedTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeClosed}
+var AcceptedTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeAccepted}
+var RejectedTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeRejected}
+var ApprovedTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeApproved}
+var SolvedTicket = &db.Ticket{ID: TicketID, Status: db.TicketStatusTypeSolved}

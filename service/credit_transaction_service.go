@@ -171,7 +171,7 @@ func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Co
 			Url:     &tag.Name,
 		}
 	case db.CreditTransactionDescriptionVariableTypeTicket:
-		ticket, _ := s.Tickets.GetTicketByID(contentID.String())
+		ticket, _ := s.Tickets.GetTicketByID(ctx, contentID)
 		descriptionVariable = DescriptionVariable{
 			Content: ticket.Subject,
 			Url:     &ticket.Url,

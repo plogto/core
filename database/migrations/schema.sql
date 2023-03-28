@@ -559,7 +559,7 @@ CREATE TABLE tickets (
 	user_id uuid NOT NULL,
 	subject TEXT NOT NULL,
 	status ticket_status_type DEFAULT 'open' :: ticket_status_type NOT NULL,
-	url CHARACTER VARYING(9),
+	url CHARACTER VARYING(9) NOT NULL,
 	created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
 	updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
 	deleted_at TIMESTAMP WITHOUT TIME ZONE

@@ -25,6 +25,27 @@ func (p *Posts) CreatePost(ctx context.Context, arg db.CreatePostParams) (*db.Po
 	return post, nil
 }
 
+func (p *Posts) GetPostByID(ctx context.Context, id string) (*db.Post, error) {
+	ID, _ := uuid.Parse(id)
+	post, err := p.Queries.GetPostByID(ctx, ID)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
+func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
+	post, err := p.Queries.GetPostByURL(ctx, url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return post, nil
+}
+
 func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
@@ -298,27 +319,6 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 			HasNextPage: &hasNextPage,
 		},
 	}, err
-}
-
-func (p *Posts) GetPostByID(ctx context.Context, id string) (*db.Post, error) {
-	ID, _ := uuid.Parse(id)
-	post, err := p.Queries.GetPostByID(ctx, ID)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return post, nil
-}
-
-func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
-	post, err := p.Queries.GetPostByURL(ctx, url)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return post, nil
 }
 
 func (p *Posts) CountPostsByUserID(ctx context.Context, userID string) (int64, error) {

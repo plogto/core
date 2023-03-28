@@ -4,23 +4,20 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/constants/e"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
 	"github.com/plogto/core/util"
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error) {
+func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInput) (*db.Ticket, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	ticket := &model.Ticket{
-		UserID:  user.ID,
-		Subject: input.Subject,
-		Url:     util.RandomHexString(9),
-	}
 
-	s.Tickets.CreateTicket(ticket)
+	ticket, _ := s.Tickets.CreateTicket(ctx, user.ID, input.Subject)
 
 	if validation.IsTicketExist(ticket) {
 		s.AddTicketMessage(ctx, ticket.ID, model.AddTicketMessageInput{
@@ -32,25 +29,25 @@ func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInpu
 	return ticket, nil
 }
 
-func (s *Service) GetTicketByID(ctx context.Context, id string) (*model.Ticket, error) {
-	return s.Tickets.GetTicketByID(id)
+func (s *Service) GetTicketByID(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
+	return s.Tickets.GetTicketByID(ctx, id)
 }
 
 func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	pageInfo := util.ExtractPageInfo(pageInfoInput)
+	pagination := util.ExtractPageInfo(pageInfoInput)
 
-	if user.Role == model.UserRoleUser {
-		return s.Tickets.GetTicketsByUserIDAndPageInfo(&user.ID, *pageInfo.First, *pageInfo.After)
+	if validation.IsUser(user) {
+		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, &user.ID, int32(pagination.First), pagination.After)
 	}
 
-	return s.Tickets.GetTicketsByUserIDAndPageInfo(nil, *pageInfo.First, *pageInfo.After)
+	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nil, int32(pagination.First), pagination.After)
 }
 
-func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID string) ([]*model.TicketPermission, error) {
+func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*model.TicketPermission, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	ticket, _ := s.Tickets.GetTicketByID(ticketID)
+	ticket, _ := s.Tickets.GetTicketByID(ctx, ticketID)
 	var permissions []*model.TicketPermission
 
 	if !validation.IsUserAllowToUpdateTicket(user, ticket) {
@@ -58,24 +55,24 @@ func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID s
 	}
 
 	switch ticket.Status {
-	case model.TicketStatusOpen:
+	case db.TicketStatusTypeOpen:
 		return s.GetPermissionsForOpenTicket(*user, *ticket)
-	case model.TicketStatusClosed:
+	case db.TicketStatusTypeClosed:
 		return s.GetPermissionsForClosedTicket(*user)
-	case model.TicketStatusAccepted:
+	case db.TicketStatusTypeAccepted:
 		return s.GetPermissionsForAcceptedTicket(*user)
-	case model.TicketStatusApproved:
+	case db.TicketStatusTypeApproved:
 		return s.GetPermissionsForApprovedTicket(*user)
-	case model.TicketStatusRejected:
+	case db.TicketStatusTypeRejected:
 		return s.GetPermissionsForRejectedTicket(*user)
-	case model.TicketStatusSolved:
+	case db.TicketStatusTypeSolved:
 		return s.GetPermissionsForSolvedTicket(*user)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket model.Ticket) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket db.Ticket) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
@@ -88,7 +85,7 @@ func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket model.Tick
 			&constants.CLOSE,
 		)
 	case model.UserRoleAdmin:
-		if ticket.UserID != user.ID {
+		if ticket.UserID.String() != user.ID {
 			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.ACCEPT, &constants.CLOSE)
 		} else {
 			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
@@ -167,33 +164,30 @@ func (s *Service) GetPermissionsForSolvedTicket(user model.User) ([]*model.Ticke
 	return permissions, nil
 }
 
-func (s *Service) CloseTicket(ticket model.Ticket) (*model.Ticket, error) {
-	ticket.Status = model.TicketStatusClosed
-	closedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+func (s *Service) CloseTicket(ctx context.Context, ticket db.Ticket) (*db.Ticket, error) {
+	closedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeClosed)
 
 	return closedTicket, nil
 }
 
-func (s *Service) OpenTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	ticket.Status = model.TicketStatusOpen
-	openTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+func (s *Service) OpenTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+	openTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeOpen)
 	return openTicket, nil
 }
 
-func (s *Service) AcceptTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	ticket.Status = model.TicketStatusAccepted
-	acceptedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+func (s *Service) AcceptTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+	acceptedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeAccepted)
 
-	transactionCreditInfo, _ := s.TransferCreditFromAdmin(TransferCreditFromAdminParams{
-		ReceiverID:   ticket.UserID,
+	transactionCreditInfo, _ := s.TransferCreditFromAdmin(ctx, TransferCreditFromAdminParams{
+		ReceiverID:   ticket.UserID.String(),
 		Status:       model.CreditTransactionStatusPending,
 		Type:         model.CreditTransactionTypeOrder,
-		TemplateName: model.CreditTransactionTemplateNameApproveTicket,
+		TemplateName: db.CreditTransactionTemplateNameApproveTicket,
 	})
 
-	s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(&model.CreditTransactionDescriptionVariable{
+	s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(ctx, db.CreateCreditTransactionDescriptionVariableParams{
 		CreditTransactionInfoID: transactionCreditInfo.ID,
-		Type:                    model.CreditTransactionDescriptionVariableTypeTicket,
+		Type:                    db.CreditTransactionDescriptionVariableTypeTicket,
 		Key:                     "ticket",
 		ContentID:               ticket.ID,
 	})
@@ -201,53 +195,59 @@ func (s *Service) AcceptTicket(user model.User, ticket model.Ticket) (*model.Tic
 	return acceptedTicket, nil
 }
 
-func (s *Service) ApproveTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
+func (s *Service) ApproveTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
 	oldStatus := ticket.Status
 
-	if oldStatus != model.TicketStatusAccepted {
-		s.AcceptTicket(user, ticket)
+	if oldStatus != db.TicketStatusTypeAccepted {
+		s.AcceptTicket(ctx, user, ticket)
 	}
 
-	ticket.Status = model.TicketStatusApproved
-	approvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
-	creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ticket.ID)
-	creditTransactionInfo := model.CreditTransactionInfo{
+	approvedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeApproved)
+	// FIXME
+	creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ctx, ticket.ID)
+	creditTransactionInfo := db.CreditTransactionInfo{
+		// FIXME
 		ID:     creditTransactionDescriptionVariables.CreditTransactionInfoID,
-		Status: model.CreditTransactionStatusApproved,
+		Status: db.CreditTransactionStatusApproved,
 	}
 
-	s.CreditTransactionInfos.UpdateCreditTransactionInfoStatus(&creditTransactionInfo)
+	s.CreditTransactionInfos.UpdateCreditTransactionInfoStatus(ctx, db.UpdateCreditTransactionInfoStatusParams{
+		ID:     creditTransactionInfo.ID,
+		Status: creditTransactionInfo.Status,
+	})
 
 	return approvedTicket, nil
 }
 
-func (s *Service) RejectTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
+func (s *Service) RejectTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
 	oldStatus := ticket.Status
-	ticket.Status = model.TicketStatusRejected
-	rejectedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+	rejectedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeRejected)
 
-	if oldStatus == model.TicketStatusAccepted {
-		creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ticket.ID)
-		creditTransactionInfo := model.CreditTransactionInfo{
+	if oldStatus == db.TicketStatusTypeAccepted {
+		creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ctx, ticket.ID)
+		creditTransactionInfo := db.CreditTransactionInfo{
+			// FIXME
 			ID:     creditTransactionDescriptionVariables.CreditTransactionInfoID,
-			Status: model.CreditTransactionStatusCanceled,
+			Status: db.CreditTransactionStatusCanceled,
 		}
 
-		s.CreditTransactionInfos.UpdateCreditTransactionInfoStatus(&creditTransactionInfo)
+		s.CreditTransactionInfos.UpdateCreditTransactionInfoStatus(ctx, db.UpdateCreditTransactionInfoStatusParams{
+			ID:     creditTransactionInfo.ID,
+			Status: creditTransactionInfo.Status,
+		})
 	}
 
 	return rejectedTicket, nil
 }
 
-func (s *Service) SolveTicket(user model.User, ticket model.Ticket) (*model.Ticket, error) {
-	ticket.Status = model.TicketStatusSolved
-	solvedTicket, _ := s.Tickets.UpdateTicketStatus(&ticket)
+func (s *Service) SolveTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+	solvedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeSolved)
 	return solvedTicket, nil
 }
 
-func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error) {
+func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status db.TicketStatusType) (*db.Ticket, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	ticket, _ := s.Tickets.GetTicketByID(ticketID)
+	ticket, _ := s.Tickets.GetTicketByID(ctx, ticketID)
 
 	if !validation.IsTicketExist(ticket) {
 		return nil, e.ErrorTicketNotFound
@@ -264,18 +264,18 @@ func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID string, statu
 	}
 
 	switch status {
-	case model.TicketStatusOpen:
-		return s.OpenTicket(*user, *ticket)
-	case model.TicketStatusClosed:
-		return s.CloseTicket(*ticket)
-	case model.TicketStatusAccepted:
-		return s.AcceptTicket(*user, *ticket)
-	case model.TicketStatusApproved:
-		return s.ApproveTicket(*user, *ticket)
-	case model.TicketStatusRejected:
-		return s.RejectTicket(*user, *ticket)
-	case model.TicketStatusSolved:
-		return s.SolveTicket(*user, *ticket)
+	case db.TicketStatusTypeOpen:
+		return s.OpenTicket(ctx, *user, *ticket)
+	case db.TicketStatusTypeClosed:
+		return s.CloseTicket(ctx, *ticket)
+	case db.TicketStatusTypeAccepted:
+		return s.AcceptTicket(ctx, *user, *ticket)
+	case db.TicketStatusTypeApproved:
+		return s.ApproveTicket(ctx, *user, *ticket)
+	case db.TicketStatusTypeRejected:
+		return s.RejectTicket(ctx, *user, *ticket)
+	case db.TicketStatusTypeSolved:
+		return s.SolveTicket(ctx, *user, *ticket)
 	}
 
 	return nil, nil

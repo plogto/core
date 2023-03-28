@@ -90,8 +90,8 @@ func main() {
 		Tags:                                  database.Tags{Queries: queries},
 		TicketMessageAttachments:              database.TicketMessageAttachments{Queries: queries},
 		TicketMessages:                        database.TicketMessages{Queries: queries},
+		Tickets:                               database.Tickets{Queries: queries},
 		Users:                                 users,
-		Tickets:                               database.Tickets{DB: DB},
 		OnlineUsers:                           database.OnlineUsers{DB: DB},
 	})
 
