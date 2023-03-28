@@ -512,7 +512,7 @@ type MutationResolver interface {
 	DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error)
 	SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error)
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
-	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
+	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error)
 	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
 	UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
@@ -599,22 +599,22 @@ type TagsEdgeResolver interface {
 type TicketResolver interface {
 	User(ctx context.Context, obj *model.Ticket) (*model.User, error)
 
-	LastMessage(ctx context.Context, obj *model.Ticket) (*model.TicketMessage, error)
+	LastMessage(ctx context.Context, obj *model.Ticket) (*db.TicketMessage, error)
 	Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error)
 }
 type TicketMessageResolver interface {
-	Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error)
+	Sender(ctx context.Context, obj *db.TicketMessage) (*model.User, error)
 
-	Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error)
+	Ticket(ctx context.Context, obj *db.TicketMessage) (*model.Ticket, error)
 
-	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*db.File, error)
+	Attachment(ctx context.Context, obj *db.TicketMessage) ([]*db.File, error)
 }
 type TicketMessagesResolver interface {
 	Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error)
 }
 type TicketMessagesEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketMessagesEdge) (string, error)
-	Node(ctx context.Context, obj *model.TicketMessagesEdge) (*model.TicketMessage, error)
+	Node(ctx context.Context, obj *model.TicketMessagesEdge) (*db.TicketMessage, error)
 }
 type TicketsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketsEdge) (string, error)
@@ -3093,7 +3093,7 @@ type Ticket {
 }
 
 type TicketMessage {
-  id: ID!
+  id: UUID!
   sender: User!
   message: String!
   ticket: Ticket!
@@ -3120,7 +3120,7 @@ type TicketMessagesEdge {
 }
 
 type TicketMessages {
-  totalCount: Int
+  totalCount: TotalCount!
   ticket: Ticket
   edges: [TicketMessagesEdge]!
   pageInfo: PageInfo!
@@ -8563,9 +8563,9 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addTicketMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14611,9 +14611,9 @@ func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14773,7 +14773,7 @@ func (ec *executionContext) fieldContext_Ticket_updatedAt(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14799,9 +14799,9 @@ func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14811,13 +14811,13 @@ func (ec *executionContext) fieldContext_TicketMessage_id(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_sender(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_sender(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_sender(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14905,7 +14905,7 @@ func (ec *executionContext) fieldContext_TicketMessage_sender(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_message(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_message(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_message(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14949,7 +14949,7 @@ func (ec *executionContext) fieldContext_TicketMessage_message(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_ticket(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15013,7 +15013,7 @@ func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_read(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15036,9 +15036,9 @@ func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_read(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15054,7 +15054,7 @@ func (ec *executionContext) fieldContext_TicketMessage_read(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_attachment(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15105,7 +15105,7 @@ func (ec *executionContext) fieldContext_TicketMessage_attachment(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15128,9 +15128,9 @@ func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15146,7 +15146,7 @@ func (ec *executionContext) fieldContext_TicketMessage_createdAt(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15169,9 +15169,9 @@ func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15208,11 +15208,14 @@ func (ec *executionContext) _TicketMessages_totalCount(ctx context.Context, fiel
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessages_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15222,7 +15225,7 @@ func (ec *executionContext) fieldContext_TicketMessages_totalCount(ctx context.C
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15456,9 +15459,9 @@ func (ec *executionContext) _TicketMessagesEdge_node(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessagesEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22132,7 +22135,7 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 
 var ticketMessageImplementors = []string{"TicketMessage"}
 
-func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.SelectionSet, obj *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.SelectionSet, obj *db.TicketMessage) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, ticketMessageImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -22248,6 +22251,9 @@ func (ec *executionContext) _TicketMessages(ctx context.Context, sel ast.Selecti
 
 			out.Values[i] = ec._TicketMessages_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "ticket":
 			field := field
 
@@ -23668,11 +23674,11 @@ func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgra
 	return ec._Ticket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v db.TicketMessage) graphql.Marshaler {
 	return ec._TicketMessage(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *db.TicketMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24812,7 +24818,7 @@ func (ec *executionContext) marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgra
 	return ec._Ticket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *db.TicketMessage) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
