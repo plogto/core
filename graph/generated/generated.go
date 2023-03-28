@@ -199,7 +199,7 @@ type ComplexityRoot struct {
 	Mutation struct {
 		AcceptUser         func(childComplexity int, userID string) int
 		AddPost            func(childComplexity int, input model.AddPostInput) int
-		AddTicketMessage   func(childComplexity int, ticketID string, input model.AddTicketMessageInput) int
+		AddTicketMessage   func(childComplexity int, ticketID uuid.UUID, input model.AddTicketMessageInput) int
 		ChangePassword     func(childComplexity int, input model.ChangePasswordInput) int
 		CreateTicket       func(childComplexity int, input model.CreateTicketInput) int
 		DeletePost         func(childComplexity int, postID uuid.UUID) int
@@ -209,13 +209,13 @@ type ComplexityRoot struct {
 		LikePost           func(childComplexity int, postID string) int
 		OAuthGoogle        func(childComplexity int, input model.OAuthGoogleInput) int
 		ReadNotifications  func(childComplexity int) int
-		ReadTicketMessages func(childComplexity int, ticketID string) int
+		ReadTicketMessages func(childComplexity int, ticketID uuid.UUID) int
 		Register           func(childComplexity int, input model.RegisterInput) int
 		RejectUser         func(childComplexity int, userID string) int
 		SavePost           func(childComplexity int, postID uuid.UUID) int
 		Test               func(childComplexity int, input model.TestInput) int
 		UnfollowUser       func(childComplexity int, userID string) int
-		UpdateTicketStatus func(childComplexity int, ticketID string, status model.TicketStatus) int
+		UpdateTicketStatus func(childComplexity int, ticketID uuid.UUID, status model.TicketStatus) int
 		UploadFiles        func(childComplexity int, files []*graphql.Upload) int
 	}
 
@@ -379,8 +379,8 @@ type ComplexityRoot struct {
 		Permissions func(childComplexity int) int
 		Status      func(childComplexity int) int
 		Subject     func(childComplexity int) int
+		URL         func(childComplexity int) int
 		UpdatedAt   func(childComplexity int) int
-		Url         func(childComplexity int) int
 		User        func(childComplexity int) int
 	}
 
@@ -511,10 +511,10 @@ type MutationResolver interface {
 	EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error)
 	DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error)
 	SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error)
-	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
-	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error)
-	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
-	UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error)
+	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*db.Ticket, error)
+	AddTicketMessage(ctx context.Context, ticketID uuid.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error)
+	ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error)
+	UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status model.TicketStatus) (*db.Ticket, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
@@ -597,20 +597,22 @@ type TagsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error)
 }
 type TicketResolver interface {
-	User(ctx context.Context, obj *model.Ticket) (*model.User, error)
+	User(ctx context.Context, obj *db.Ticket) (*model.User, error)
 
-	LastMessage(ctx context.Context, obj *model.Ticket) (*db.TicketMessage, error)
-	Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error)
+	Status(ctx context.Context, obj *db.Ticket) (model.TicketStatus, error)
+	URL(ctx context.Context, obj *db.Ticket) (*string, error)
+	LastMessage(ctx context.Context, obj *db.Ticket) (*db.TicketMessage, error)
+	Permissions(ctx context.Context, obj *db.Ticket) ([]*model.TicketPermission, error)
 }
 type TicketMessageResolver interface {
 	Sender(ctx context.Context, obj *db.TicketMessage) (*model.User, error)
 
-	Ticket(ctx context.Context, obj *db.TicketMessage) (*model.Ticket, error)
+	Ticket(ctx context.Context, obj *db.TicketMessage) (*db.Ticket, error)
 
 	Attachment(ctx context.Context, obj *db.TicketMessage) ([]*db.File, error)
 }
 type TicketMessagesResolver interface {
-	Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error)
+	Ticket(ctx context.Context, obj *model.TicketMessages) (*db.Ticket, error)
 }
 type TicketMessagesEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketMessagesEdge) (string, error)
@@ -618,7 +620,7 @@ type TicketMessagesEdgeResolver interface {
 }
 type TicketsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketsEdge) (string, error)
-	Node(ctx context.Context, obj *model.TicketsEdge) (*model.Ticket, error)
+	Node(ctx context.Context, obj *model.TicketsEdge) (*db.Ticket, error)
 }
 type UserResolver interface {
 	Avatar(ctx context.Context, obj *model.User) (*db.File, error)
@@ -1161,7 +1163,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(string), args["input"].(model.AddTicketMessageInput)), true
+		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(uuid.UUID), args["input"].(model.AddTicketMessageInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -1276,7 +1278,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(string)), true
+		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(uuid.UUID)), true
 
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
@@ -1348,7 +1350,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(string), args["status"].(model.TicketStatus)), true
+		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(uuid.UUID), args["status"].(model.TicketStatus)), true
 
 	case "Mutation.uploadFiles":
 		if e.complexity.Mutation.UploadFiles == nil {
@@ -2211,19 +2213,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Ticket.Subject(childComplexity), true
 
+	case "Ticket.url":
+		if e.complexity.Ticket.URL == nil {
+			break
+		}
+
+		return e.complexity.Ticket.URL(childComplexity), true
+
 	case "Ticket.updatedAt":
 		if e.complexity.Ticket.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Ticket.UpdatedAt(childComplexity), true
-
-	case "Ticket.url":
-		if e.complexity.Ticket.Url == nil {
-			break
-		}
-
-		return e.complexity.Ticket.Url(childComplexity), true
 
 	case "Ticket.user":
 		if e.complexity.Ticket.User == nil {
@@ -3081,7 +3083,7 @@ enum TicketPermission {
 }
 
 type Ticket {
-  id: ID!
+  id: UUID!
   user: User!
   subject: String!
   status: TicketStatus!
@@ -3109,7 +3111,7 @@ type TicketsEdge {
 }
 
 type Tickets {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [TicketsEdge]!
   pageInfo: PageInfo!
 }
@@ -3147,9 +3149,12 @@ extend type Query {
 
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
-  addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
-  readTicketMessages(ticketId: ID!): Boolean
-  updateTicketStatus(ticketId: ID!, status: TicketStatus!): Ticket
+  addTicketMessage(
+    ticketId: UUID!
+    input: AddTicketMessageInput!
+  ): TicketMessage
+  readTicketMessages(ticketId: UUID!): Boolean
+  updateTicketStatus(ticketId: UUID!, status: TicketStatus!): Ticket
 }
 `, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `enum UserRole {
@@ -3275,10 +3280,10 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 func (ec *executionContext) field_Mutation_addTicketMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3428,10 +3433,10 @@ func (ec *executionContext) field_Mutation_oAuthGoogle_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_readTicketMessages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3518,10 +3523,10 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 func (ec *executionContext) field_Mutation_updateTicketStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -8491,9 +8496,9 @@ func (ec *executionContext) _Mutation_createTicket(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTicket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8554,7 +8559,7 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(string), fc.Args["input"].(model.AddTicketMessageInput))
+		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(uuid.UUID), fc.Args["input"].(model.AddTicketMessageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8624,7 +8629,7 @@ func (ec *executionContext) _Mutation_readTicketMessages(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(string))
+		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8676,7 +8681,7 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(string), fc.Args["status"].(model.TicketStatus))
+		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(uuid.UUID), fc.Args["status"].(model.TicketStatus))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8685,9 +8690,9 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTicketStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14324,7 +14329,7 @@ func (ec *executionContext) fieldContext_Test_content(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14350,9 +14355,9 @@ func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14362,13 +14367,13 @@ func (ec *executionContext) fieldContext_Ticket_id(ctx context.Context, field gr
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_user(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_user(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14456,7 +14461,7 @@ func (ec *executionContext) fieldContext_Ticket_user(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_subject(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_subject(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_subject(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14500,7 +14505,7 @@ func (ec *executionContext) fieldContext_Ticket_subject(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14514,7 +14519,7 @@ func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.Ticket().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14535,8 +14540,8 @@ func (ec *executionContext) fieldContext_Ticket_status(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Ticket",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TicketStatus does not have child fields")
 		},
@@ -14544,7 +14549,7 @@ func (ec *executionContext) fieldContext_Ticket_status(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14558,7 +14563,7 @@ func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Url, nil
+		return ec.resolvers.Ticket().URL(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14567,17 +14572,17 @@ func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(*string)
 	fc.Result = res
-	return ec.marshalOString2string(ctx, field.Selections, res)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Ticket",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -14585,7 +14590,7 @@ func (ec *executionContext) fieldContext_Ticket_url(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_lastMessage(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14647,7 +14652,7 @@ func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_permissions(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_permissions(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_permissions(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14691,7 +14696,7 @@ func (ec *executionContext) fieldContext_Ticket_permissions(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14714,9 +14719,9 @@ func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14732,7 +14737,7 @@ func (ec *executionContext) fieldContext_Ticket_createdAt(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14755,9 +14760,9 @@ func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14975,9 +14980,9 @@ func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15254,9 +15259,9 @@ func (ec *executionContext) _TicketMessages_ticket(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessages_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15516,11 +15521,14 @@ func (ec *executionContext) _Tickets_totalCount(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tickets_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15530,7 +15538,7 @@ func (ec *executionContext) fieldContext_Tickets_totalCount(ctx context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15703,9 +15711,9 @@ func (ec *executionContext) _TicketsEdge_node(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -22021,7 +22029,7 @@ func (ec *executionContext) _Test(ctx context.Context, sel ast.SelectionSet, obj
 
 var ticketImplementors = []string{"Ticket"}
 
-func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, obj *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, obj *db.Ticket) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, ticketImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -22064,16 +22072,42 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
+			field := field
 
-			out.Values[i] = ec._Ticket_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Ticket_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "url":
+			field := field
 
-			out.Values[i] = ec._Ticket_url(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Ticket_url(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "lastMessage":
 			field := field
 
@@ -22368,6 +22402,9 @@ func (ec *executionContext) _Tickets(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = ec._Tickets_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Tickets_edges(ctx, field, obj)
@@ -23660,11 +23697,11 @@ func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋg
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v db.Ticket) graphql.Marshaler {
 	return ec._Ticket(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v *db.Ticket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -24811,7 +24848,7 @@ func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Test(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v *db.Ticket) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}

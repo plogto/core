@@ -206,6 +206,21 @@ models:
     fields:
       ticket:
         resolver: true
+  Ticket:
+    model: github.com/plogto/core/db.Ticket
+    fields:
+      user:
+        resolver: true
+      lastMessage:
+        resolver: true
+      permissions:
+        resolver: true
+  TicketsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -224,21 +239,6 @@ models:
       postsCount:
         resolver: true
       credits:
-        resolver: true
-  Ticket:
-    model: github.com/plogto/core/graph/model.Ticket
-    fields:
-      user:
-        resolver: true
-      lastMessage:
-        resolver: true
-      permissions:
-        resolver: true
-  TicketsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
         resolver: true
   OnlineUser:
     model: github.com/plogto/core/graph/model.OnlineUser

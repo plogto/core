@@ -763,7 +763,7 @@ type Ticket struct {
 	UserID    uuid.UUID
 	Subject   string
 	Status    TicketStatusType
-	Url       sql.NullString
+	Url       string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 	DeletedAt sql.NullTime

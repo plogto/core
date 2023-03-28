@@ -12,7 +12,7 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
+func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	for _, id := range input.Attachment {
@@ -24,15 +24,14 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID string, input m
 	}
 
 	UserID, _ := uuid.Parse(user.ID)
-	TicketID, _ := uuid.Parse(ticketID)
 
 	ticketMessage, _ := s.TicketMessages.CreateTicketMessage(ctx, db.CreateTicketMessageParams{
 		SenderID: UserID,
-		TicketID: TicketID,
+		TicketID: ticketID,
 		Message:  input.Message,
 	})
 
-	s.Tickets.UpdateTicketUpdatedAt(ticketID)
+	s.Tickets.UpdateTicketUpdatedAt(ctx, ticketID)
 
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
@@ -48,7 +47,7 @@ func (s *Service) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.T
 	return s.TicketMessages.GetTicketMessageByID(ctx, id)
 }
 
-func (s *Service) GetLastTicketMessageByTicketID(ctx context.Context, ticketID string) (*db.TicketMessage, error) {
+func (s *Service) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
 	return s.TicketMessages.GetLastTicketMessageByTicketID(ctx, ticketID)
 }
 
@@ -61,23 +60,23 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 
 	pagination := util.ExtractPageInfo(pageInfo)
 
-	ticket, _ := s.Tickets.GetTicketByURL(ticketURL)
+	ticket, _ := s.Tickets.GetTicketByURL(ctx, ticketURL)
 
-	if validation.IsUser(user) && user.ID != ticket.UserID {
+	if validation.IsUser(user) && user.ID != ticket.UserID.String() {
 		return nil, nil
 	}
 
 	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ctx, ticket.ID, int32(pagination.First), pagination.After)
 }
 
-func (s *Service) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {
+func (s *Service) ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
 		return nil, nil
 	}
 
-	ticket, _ := s.Tickets.GetTicketByID(ticketID)
+	ticket, _ := s.Tickets.GetTicketByID(ctx, ticketID)
 
 	status, _ := s.TicketMessages.UpdateReadTicketMessagesByUserIDAndTicketID(ctx, user.ID, ticket.ID)
 

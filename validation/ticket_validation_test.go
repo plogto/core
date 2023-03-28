@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/fixtures"
 	"github.com/plogto/core/graph/model"
 	"github.com/stretchr/testify/assert"
@@ -107,7 +108,7 @@ func TestCheckUserPermission(t *testing.T) {
 	var testData = []TicketTestData{
 		{
 			Expected: false,
-			Actual:   CheckUserPermission(nil, model.TicketStatusOpen),
+			Actual:   CheckUserPermission(nil, db.TicketStatusTypeOpen),
 			Message:  "Should return false if permission is nil",
 		},
 		{
@@ -115,7 +116,7 @@ func TestCheckUserPermission(t *testing.T) {
 			Actual: CheckUserPermission(append(
 				permissions,
 				&constants.CLOSE,
-			), model.TicketStatusOpen),
+			), db.TicketStatusTypeOpen),
 			Message: "Should return false if ticket status is not included in the permissions",
 		},
 		{
@@ -123,7 +124,7 @@ func TestCheckUserPermission(t *testing.T) {
 			Actual: CheckUserPermission(append(
 				permissions,
 				&constants.OPEN,
-			), model.TicketStatusOpen),
+			), db.TicketStatusTypeOpen),
 			Message: "Should return false if ticket status is included in the permissions",
 		},
 	}
@@ -137,37 +138,37 @@ func TestConvertTicketStatusToPermission(t *testing.T) {
 	var testData = []TicketPermissionTestData{
 		{
 			Expected: "",
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatus("")),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusType("")),
 			Message:  "Should return empty string if ticket status is empty",
 		},
 		{
 			Expected: model.TicketPermissionOpen,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusOpen),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeOpen),
 			Message:  "Should return OPEN if ticket status is OPEN",
 		},
 		{
 			Expected: model.TicketPermissionClose,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusClosed),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeClosed),
 			Message:  "Should return CLOSE if ticket status is OPENED",
 		},
 		{
 			Expected: model.TicketPermissionAccept,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusAccepted),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeAccepted),
 			Message:  "Should return ACCEPT if ticket status is ACCEPTED",
 		},
 		{
 			Expected: model.TicketPermissionApprove,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusApproved),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeApproved),
 			Message:  "Should return APPROVE if ticket status is APPROVED",
 		},
 		{
 			Expected: model.TicketPermissionReject,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusRejected),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeRejected),
 			Message:  "Should return REJECT if ticket status is REJECTED",
 		},
 		{
 			Expected: model.TicketPermissionSolve,
-			Actual:   ConvertTicketStatusToPermission(model.TicketStatusSolved),
+			Actual:   ConvertTicketStatusToPermission(db.TicketStatusTypeSolved),
 			Message:  "Should return SOLVE if ticket status is SOLVED",
 		},
 	}

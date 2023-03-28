@@ -186,7 +186,7 @@ type TestInput struct {
 
 type TicketMessages struct {
 	TotalCount int64                 `json:"totalCount"`
-	Ticket     *Ticket               `json:"ticket,omitempty"`
+	Ticket     *db.Ticket            `json:"ticket,omitempty"`
 	Edges      []*TicketMessagesEdge `json:"edges"`
 	PageInfo   *PageInfo             `json:"pageInfo"`
 }
@@ -197,14 +197,14 @@ type TicketMessagesEdge struct {
 }
 
 type Tickets struct {
-	TotalCount *int           `json:"totalCount,omitempty"`
+	TotalCount int64          `json:"totalCount"`
 	Edges      []*TicketsEdge `json:"edges"`
 	PageInfo   *PageInfo      `json:"pageInfo"`
 }
 
 type TicketsEdge struct {
-	Cursor string  `json:"cursor"`
-	Node   *Ticket `json:"node,omitempty"`
+	Cursor string     `json:"cursor"`
+	Node   *db.Ticket `json:"node,omitempty"`
 }
 
 type Users struct {

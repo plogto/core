@@ -1,104 +1,127 @@
 package database
 
 import (
-	"fmt"
+	"context"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type Tickets struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (t *Tickets) GetTicketByField(field string, value string) (*model.Ticket, error) {
-	var ticket model.Ticket
-	err := t.DB.Model(&ticket).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	if len(ticket.ID) < 1 {
-		return nil, nil
+func (t *Tickets) CreateTicket(ctx context.Context, userID, subject string) (*db.Ticket, error) {
+	UserID, _ := uuid.Parse(userID)
+
+	newTicket := db.CreateTicketParams{
+		Subject: subject,
+		UserID:  UserID,
+		Url:     util.RandomHexString(9),
 	}
-	return &ticket, err
+
+	ticket, err := t.Queries.CreateTicket(ctx, newTicket)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ticket, nil
 }
 
-func (t *Tickets) GetTicketsByUserIDAndPageInfo(userID *string, limit int, after string) (*model.Tickets, error) {
-	var tickets []*model.Ticket
+func (t *Tickets) GetTicketByID(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
+	ticket, err := t.Queries.GetTicketByID(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ticket, nil
+}
+
+func (t *Tickets) GetTicketByURL(ctx context.Context, url string) (*db.Ticket, error) {
+	ticket, err := t.Queries.GetTicketByURL(ctx, url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return ticket, nil
+}
+
+func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID *string, limit int32, after string) (*model.Tickets, error) {
 	var edges []*model.TicketsEdge
 	var endCursor string
+	var UserID uuid.NullUUID
 
-	query := t.DB.Model(&tickets).
-		Where("deleted_at is ?", nil).
-		Order("updated_at DESC")
-
+	updatedAt, _ := time.Parse(time.RFC3339, after)
+	// FIXME
 	if userID != nil {
-		query.Where("user_id = ?", userID)
+		id, _ := uuid.Parse(*userID)
+		UserID = uuid.NullUUID{id, true}
 	}
 
-	if len(after) > 0 {
+	tickets, err := t.Queries.GetTicketsByUserIDAndPageInfo(ctx, db.GetTicketsByUserIDAndPageInfoParams{
+		UserID:    UserID,
+		Limit:     limit,
+		UpdatedAt: updatedAt,
+	})
 
-		query.Where("updated_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := t.Queries.CountTicketsByUserIDAndPageInfo(ctx, db.CountTicketsByUserIDAndPageInfoParams{
+		UserID:    UserID,
+		Limit:     limit,
+		UpdatedAt: updatedAt,
+	})
 
 	for _, value := range tickets {
-		edges = append(edges, &model.TicketsEdge{Node: &model.Ticket{
+		edges = append(edges, &model.TicketsEdge{Node: &db.Ticket{
 			ID:        value.ID,
 			UpdatedAt: value.UpdatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.UpdatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.UpdatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > int64(limit) {
+		hasNextPage = true
 	}
 
 	return &model.Tickets{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
 	}, err
 }
 
-func (t *Tickets) GetTicketByID(id string) (*model.Ticket, error) {
-	return t.GetTicketByField("id", id)
-}
+func (t *Tickets) UpdateTicketStatus(ctx context.Context, id uuid.UUID, status db.TicketStatusType) (*db.Ticket, error) {
+	ticket, err := t.Queries.UpdateTicketStatus(ctx, db.UpdateTicketStatusParams{
+		ID:     id,
+		Status: status,
+	})
 
-func (t *Tickets) GetTicketByURL(url string) (*model.Ticket, error) {
-	return t.GetTicketByField("url", url)
-}
-
-func (t *Tickets) CreateTicket(ticket *model.Ticket) (*model.Ticket, error) {
-	_, err := t.DB.Model(ticket).Returning("*").Insert()
-	if len(ticket.ID) < 1 {
+	if err != nil {
 		return nil, err
 	}
-	return ticket, err
+
+	return ticket, nil
 }
 
-func (t *Tickets) UpdateTicketStatus(ticket *model.Ticket) (*model.Ticket, error) {
-	query := t.DB.Model(ticket).
-		Where("id = ?id")
-
-	_, err := query.Set("status = ?status").Returning("*").Update()
-
-	return ticket, err
-}
-
-func (t *Tickets) UpdateTicketUpdatedAt(ticketID string) (*model.Ticket, error) {
-	var ticket *model.Ticket
+func (t *Tickets) UpdateTicketUpdatedAt(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
 	UpdatedAt := time.Now()
-	ticket = &model.Ticket{
-		ID:        ticketID,
-		UpdatedAt: &UpdatedAt,
-	}
 
-	query := t.DB.Model(ticket).
-		Where("id = ?id")
-
-	_, err := query.Set("updated_at = ?updated_at").Returning("*").Update()
+	ticket, err := t.Queries.UpdateTicketUpdatedAt(ctx, db.UpdateTicketUpdatedAtParams{
+		ID:        id,
+		UpdatedAt: UpdatedAt,
+	})
 
 	return ticket, err
 }
