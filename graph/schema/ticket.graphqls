@@ -30,7 +30,7 @@ type Ticket {
 }
 
 type TicketMessage {
-  id: ID!
+  id: UUID!
   sender: User!
   message: String!
   ticket: Ticket!
@@ -57,7 +57,7 @@ type TicketMessagesEdge {
 }
 
 type TicketMessages {
-  totalCount: Int
+  totalCount: TotalCount!
   ticket: Ticket
   edges: [TicketMessagesEdge]!
   pageInfo: PageInfo!

@@ -189,6 +189,23 @@ models:
         resolver: true
       node:
         resolver: true
+  TicketMessage:
+    model: github.com/plogto/core/db.TicketMessage
+    fields:
+      sender:
+        resolver: true
+      attachment:
+        resolver: true
+  TicketMessagesEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  TicketMessages:
+    fields:
+      ticket:
+        resolver: true
   User:
     model: github.com/plogto/core/graph/model.User
     fields:
@@ -217,30 +234,12 @@ models:
         resolver: true
       permissions:
         resolver: true
-  TicketMessages:
-    fields:
-      ticket:
-        resolver: true
   TicketsEdge:
     fields:
       cursor:
         resolver: true
       node:
         resolver: true
-  TicketMessage:
-    model: github.com/plogto/core/graph/model.TicketMessage
-    fields:
-      sender:
-        resolver: true
-      attachment:
-        resolver: true
-  TicketMessagesEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  
   OnlineUser:
     model: github.com/plogto/core/graph/model.OnlineUser
     fields:
