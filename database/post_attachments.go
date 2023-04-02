@@ -12,14 +12,10 @@ type PostAttachments struct {
 }
 
 func (p *PostAttachments) CreatePostAttachment(ctx context.Context, postID, fileID uuid.UUID) (*db.PostAttachment, error) {
-	postAttachment, err := p.Queries.CreatePostAttachment(ctx, db.CreatePostAttachmentParams{
+	postAttachment, _ := p.Queries.CreatePostAttachment(ctx, db.CreatePostAttachmentParams{
 		PostID: postID,
 		FileID: fileID,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return postAttachment, nil
 }

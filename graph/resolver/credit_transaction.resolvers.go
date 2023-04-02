@@ -63,20 +63,20 @@ func (r *creditTransactionDescriptionVariableResolver) Key(ctx context.Context, 
 
 // Content is the resolver for the content field.
 func (r *creditTransactionDescriptionVariableResolver) Content(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (string, error) {
-	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
-	return descriptionVariable.Content, err
+	descriptionVariable, _ := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Content, nil
 }
 
 // URL is the resolver for the url field.
 func (r *creditTransactionDescriptionVariableResolver) URL(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error) {
-	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
-	return descriptionVariable.Url, err
+	descriptionVariable, _ := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Url, nil
 }
 
 // Image is the resolver for the image field.
 func (r *creditTransactionDescriptionVariableResolver) Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error) {
-	descriptionVariable, err := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
-	return descriptionVariable.Image, err
+	descriptionVariable, _ := r.Service.GetDescriptionVariableContentByTypeAndContentID(ctx, obj.Type, obj.ContentID)
+	return descriptionVariable.Image, nil
 }
 
 // Description is the resolver for the description field.

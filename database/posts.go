@@ -16,32 +16,20 @@ type Posts struct {
 }
 
 func (p *Posts) CreatePost(ctx context.Context, arg db.CreatePostParams) (*db.Post, error) {
-	post, err := p.Queries.CreatePost(ctx, arg)
-
-	if err != nil {
-		return nil, err
-	}
+	post, _ := p.Queries.CreatePost(ctx, arg)
 
 	return post, nil
 }
 
 func (p *Posts) GetPostByID(ctx context.Context, id string) (*db.Post, error) {
 	ID, _ := uuid.Parse(id)
-	post, err := p.Queries.GetPostByID(ctx, ID)
-
-	if err != nil {
-		return nil, err
-	}
+	post, _ := p.Queries.GetPostByID(ctx, ID)
 
 	return post, nil
 }
 
 func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
-	post, err := p.Queries.GetPostByURL(ctx, url)
-
-	if err != nil {
-		return nil, err
-	}
+	post, _ := p.Queries.GetPostByURL(ctx, url)
 
 	return post, nil
 }
@@ -52,7 +40,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetPostsByUserIDAndPageInfo(ctx, db.GetPostsByUserIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsByUserIDAndPageInfo(ctx, db.GetPostsByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		CreatedAt: createdAt,
@@ -88,7 +76,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
@@ -97,7 +85,7 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetPostsWithParentIDByUserIDAndPageInfo(ctx, db.GetPostsWithParentIDByUserIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsWithParentIDByUserIDAndPageInfo(ctx, db.GetPostsWithParentIDByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		CreatedAt: createdAt,
@@ -133,7 +121,7 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after string) (*model.Posts, error) {
@@ -141,7 +129,7 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.N
 	var endCursor string
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		ParentID:  uuid.NullUUID{parentID, true},
@@ -172,7 +160,7 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.N
 		PageInfo: &model.PageInfo{
 			EndCursor: endCursor,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after string) (*model.Posts, error) {
@@ -181,7 +169,7 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetPostsByTagIDAndPageInfo(ctx, db.GetPostsByTagIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsByTagIDAndPageInfo(ctx, db.GetPostsByTagIDAndPageInfoParams{
 		Limit:     limit,
 		TagID:     tagID,
 		CreatedAt: createdAt,
@@ -216,7 +204,7 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
@@ -225,7 +213,7 @@ func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetTimelinePostsByPageInfo(ctx, db.GetTimelinePostsByPageInfoParams{
+	posts, _ := p.Queries.GetTimelinePostsByPageInfo(ctx, db.GetTimelinePostsByPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		CreatedAt: createdAt,
@@ -260,7 +248,7 @@ func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, after string) (*model.Posts, error) {
@@ -269,7 +257,7 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	posts, err := p.Queries.GetExplorePostsByPageInfo(ctx, db.GetExplorePostsByPageInfoParams{
+	posts, _ := p.Queries.GetExplorePostsByPageInfo(ctx, db.GetExplorePostsByPageInfoParams{
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
@@ -302,44 +290,32 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
-	count, err := p.Queries.CountPostsByUserID(ctx, userID)
-
-	if err != nil {
-		return 0, err
-	}
+	count, _ := p.Queries.CountPostsByUserID(ctx, userID)
 
 	return count, nil
 }
 
 func (p *Posts) UpdatePost(ctx context.Context, post *db.Post) (*db.Post, error) {
-	post, err := p.Queries.UpdatePost(ctx, db.UpdatePostParams{
+	updatedPost, _ := p.Queries.UpdatePost(ctx, db.UpdatePostParams{
 		ID:      post.ID,
 		Content: post.Content,
 		Status:  post.Status,
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return post, nil
+	return updatedPost, nil
 }
 
 func (p *Posts) DeletePostByID(ctx context.Context, id uuid.UUID) (*db.Post, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
-	post, err := p.Queries.DeletePostByID(ctx, db.DeletePostByIDParams{
+	post, _ := p.Queries.DeletePostByID(ctx, db.DeletePostByIDParams{
 		ID:        id,
 		DeletedAt: DeletedAt,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return post, nil
 }

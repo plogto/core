@@ -12,31 +12,19 @@ type CreditTransactionDescriptionVariables struct {
 }
 
 func (c *CreditTransactionDescriptionVariables) CreateCreditTransactionDescriptionVariable(ctx context.Context, arg db.CreateCreditTransactionDescriptionVariableParams) (*db.CreditTransactionDescriptionVariable, error) {
-	creditTransactionDescriptionVariable, err := c.Queries.CreateCreditTransactionDescriptionVariable(ctx, arg)
-
-	if err != nil {
-		return nil, err
-	}
+	creditTransactionDescriptionVariable, _ := c.Queries.CreateCreditTransactionDescriptionVariable(ctx, arg)
 
 	return creditTransactionDescriptionVariable, nil
 }
 
 func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByContentID(ctx context.Context, contentID uuid.UUID) (*db.CreditTransactionDescriptionVariable, error) {
-	creditTransactionDescriptionVariable, err := c.Queries.GetCreditTransactionDescriptionVariableByContentID(ctx, contentID)
-
-	if err != nil {
-		return nil, err
-	}
+	creditTransactionDescriptionVariable, _ := c.Queries.GetCreditTransactionDescriptionVariableByContentID(ctx, contentID)
 
 	return creditTransactionDescriptionVariable, nil
 }
 
 func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID uuid.UUID) ([]*db.CreditTransactionDescriptionVariable, error) {
-	creditTransactionDescriptionVariable, err := c.Queries.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, creditTransactionInfoID)
-
-	if err != nil {
-		return nil, err
-	}
+	creditTransactionDescriptionVariable, _ := c.Queries.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, creditTransactionInfoID)
 
 	return creditTransactionDescriptionVariable, nil
 }

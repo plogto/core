@@ -21,61 +21,37 @@ func (u *Users) CreateUser(ctx context.Context, email, fullName string) (*db.Use
 		InvitationCode: util.RandomString(7),
 	}
 
-	user, err := u.Queries.CreateUser(ctx, newUser)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.CreateUser(ctx, newUser)
 
 	return user, nil
 }
 
 func (u *Users) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
-	user, err := u.Queries.GetUserByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.GetUserByID(ctx, id)
 
 	return user, nil
 }
 
 func (u *Users) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
-	user, err := u.Queries.GetUserByInvitationCode(ctx, invitationCode)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.GetUserByInvitationCode(ctx, invitationCode)
 
 	return user, nil
 }
 
 func (u *Users) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
-	user, err := u.Queries.GetUserByEmail(ctx, email)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.GetUserByEmail(ctx, email)
 
 	return user, nil
 }
 
 func (u *Users) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
-	user, err := u.Queries.GetUserByUsername(ctx, username)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.GetUserByUsername(ctx, username)
 
 	return user, nil
 }
 
 func (u *Users) GetUserByUsernameOrEmail(ctx context.Context, value string) (*db.User, error) {
-	user, err := u.Queries.GetUserByUsernameOrEmail(ctx, value)
-
-	if err != nil {
-		return nil, err
-	}
+	user, _ := u.Queries.GetUserByUsernameOrEmail(ctx, value)
 
 	return user, nil
 }
@@ -83,14 +59,10 @@ func (u *Users) GetUserByUsernameOrEmail(ctx context.Context, value string) (*db
 func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(ctx context.Context, value string, limit int32) (*model.Users, error) {
 	var edges []*model.UsersEdge
 
-	users, err := u.Queries.GetUsersByUsernameOrFullNameAndPageInfo(ctx, db.GetUsersByUsernameOrFullNameAndPageInfoParams{
+	users, _ := u.Queries.GetUsersByUsernameOrFullNameAndPageInfo(ctx, db.GetUsersByUsernameOrFullNameAndPageInfoParams{
 		Lower: value,
 		Limit: limit,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	for _, value := range users {
 		edges = append(edges, &model.UsersEdge{Node: &db.User{
@@ -101,11 +73,11 @@ func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(ctx context.Context, val
 
 	return &model.Users{
 		Edges: edges,
-	}, err
+	}, nil
 }
 
 func (u *Users) UpdateUser(ctx context.Context, user *db.User) (*db.User, error) {
-	user, err := u.Queries.UpdateUser(ctx, db.UpdateUserParams{
+	updatedUser, _ := u.Queries.UpdateUser(ctx, db.UpdateUserParams{
 		ID:              user.ID,
 		Username:        user.Username,
 		Email:           user.Email,
@@ -118,9 +90,5 @@ func (u *Users) UpdateUser(ctx context.Context, user *db.User) (*db.User, error)
 		IsPrivate:       user.IsPrivate,
 	})
 
-	if err != nil {
-		return nil, err
-	}
-
-	return user, err
+	return updatedUser, nil
 }

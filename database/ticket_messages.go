@@ -15,31 +15,19 @@ type TicketMessages struct {
 }
 
 func (t *TicketMessages) CreateTicketMessage(ctx context.Context, arg db.CreateTicketMessageParams) (*db.TicketMessage, error) {
-	ticketMessage, err := t.Queries.CreateTicketMessage(ctx, arg)
-
-	if err != nil {
-		return nil, err
-	}
+	ticketMessage, _ := t.Queries.CreateTicketMessage(ctx, arg)
 
 	return ticketMessage, nil
 }
 
 func (t *TicketMessages) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.TicketMessage, error) {
-	ticketMessage, err := t.Queries.GetTicketMessageByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	ticketMessage, _ := t.Queries.GetTicketMessageByID(ctx, id)
 
 	return ticketMessage, nil
 }
 
 func (t *TicketMessages) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
-	ticketMessage, err := t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID)
-
-	if err != nil {
-		return nil, err
-	}
+	ticketMessage, _ := t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID)
 
 	return ticketMessage, nil
 }
@@ -50,7 +38,7 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	ticketMessages, err := t.Queries.GetTicketMessagesByTicketIDAndPageInfo(ctx, db.GetTicketMessagesByTicketIDAndPageInfoParams{
+	ticketMessages, _ := t.Queries.GetTicketMessagesByTicketIDAndPageInfo(ctx, db.GetTicketMessagesByTicketIDAndPageInfoParams{
 		TicketID:  ticketID,
 		Limit:     limit,
 		CreatedAt: createdAt,
@@ -86,7 +74,7 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (bool, error) {

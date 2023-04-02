@@ -22,31 +22,19 @@ func (t *Tickets) CreateTicket(ctx context.Context, userID uuid.UUID, subject st
 		Url:     util.RandomHexString(9),
 	}
 
-	ticket, err := t.Queries.CreateTicket(ctx, newTicket)
-
-	if err != nil {
-		return nil, err
-	}
+	ticket, _ := t.Queries.CreateTicket(ctx, newTicket)
 
 	return ticket, nil
 }
 
 func (t *Tickets) GetTicketByID(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
-	ticket, err := t.Queries.GetTicketByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	ticket, _ := t.Queries.GetTicketByID(ctx, id)
 
 	return ticket, nil
 }
 
 func (t *Tickets) GetTicketByURL(ctx context.Context, url string) (*db.Ticket, error) {
-	ticket, err := t.Queries.GetTicketByURL(ctx, url)
-
-	if err != nil {
-		return nil, err
-	}
+	ticket, _ := t.Queries.GetTicketByURL(ctx, url)
 
 	return ticket, nil
 }
@@ -56,7 +44,7 @@ func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID uuid
 	var endCursor string
 
 	updatedAt, _ := time.Parse(time.RFC3339, after)
-	tickets, err := t.Queries.GetTicketsByUserIDAndPageInfo(ctx, db.GetTicketsByUserIDAndPageInfoParams{
+	tickets, _ := t.Queries.GetTicketsByUserIDAndPageInfo(ctx, db.GetTicketsByUserIDAndPageInfoParams{
 		UserID:    userID,
 		Limit:     limit,
 		UpdatedAt: updatedAt,
@@ -91,18 +79,14 @@ func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID uuid
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (t *Tickets) UpdateTicketStatus(ctx context.Context, id uuid.UUID, status db.TicketStatusType) (*db.Ticket, error) {
-	ticket, err := t.Queries.UpdateTicketStatus(ctx, db.UpdateTicketStatusParams{
+	ticket, _ := t.Queries.UpdateTicketStatus(ctx, db.UpdateTicketStatusParams{
 		ID:     id,
 		Status: status,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return ticket, nil
 }
@@ -110,10 +94,10 @@ func (t *Tickets) UpdateTicketStatus(ctx context.Context, id uuid.UUID, status d
 func (t *Tickets) UpdateTicketUpdatedAt(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
 	UpdatedAt := time.Now()
 
-	ticket, err := t.Queries.UpdateTicketUpdatedAt(ctx, db.UpdateTicketUpdatedAtParams{
+	ticket, _ := t.Queries.UpdateTicketUpdatedAt(ctx, db.UpdateTicketUpdatedAtParams{
 		ID:        id,
 		UpdatedAt: UpdatedAt,
 	})
 
-	return ticket, err
+	return ticket, nil
 }

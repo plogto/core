@@ -34,24 +34,16 @@ func (s *SavedPosts) CreateSavedPost(ctx context.Context, userID, postID uuid.UU
 }
 
 func (s *SavedPosts) GetSavedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.SavedPost, error) {
-	savedPost, err := s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
+	savedPost, _ := s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return savedPost, nil
 }
 
 func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
-	savedPost, err := s.Queries.GetSavedPostByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	savedPost, _ := s.Queries.GetSavedPostByID(ctx, id)
 
 	return savedPost, nil
 }
@@ -62,7 +54,7 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userI
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	savedPosts, err := s.Queries.GetSavedPostsByUserIDAndPageInfo(ctx, db.GetSavedPostsByUserIDAndPageInfoParams{
+	savedPosts, _ := s.Queries.GetSavedPostsByUserIDAndPageInfo(ctx, db.GetSavedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
@@ -99,19 +91,16 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userI
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (s *SavedPosts) DeleteSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
-	savedPost, err := s.Queries.DeleteSavedPostByID(ctx, db.DeleteSavedPostByIDParams{
+	savedPost, _ := s.Queries.DeleteSavedPostByID(ctx, db.DeleteSavedPostByIDParams{
 		ID:        id,
 		DeletedAt: DeletedAt,
 	})
 
-	if err != nil {
-		return nil, err
-	}
 	return savedPost, nil
 }

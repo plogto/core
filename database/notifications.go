@@ -35,11 +35,7 @@ func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNot
 }
 
 func (n *Notifications) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
-	notification, err := n.Queries.GetNotificationByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	notification, _ := n.Queries.GetNotificationByID(ctx, id)
 
 	return notification, nil
 }
@@ -50,7 +46,7 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Cont
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	notifications, err := n.Queries.GetNotificationsByReceiverIDAndPageInfo(ctx, db.GetNotificationsByReceiverIDAndPageInfoParams{
+	notifications, _ := n.Queries.GetNotificationsByReceiverIDAndPageInfo(ctx, db.GetNotificationsByReceiverIDAndPageInfoParams{
 		Limit:      limit,
 		ReceiverID: receiverID,
 		CreatedAt:  createdAt,
@@ -87,15 +83,11 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Cont
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID uuid.UUID) (int64, error) {
-	count, err := n.Queries.CountUnreadNotificationsByReceiverID(ctx, receiverID)
-
-	if err != nil {
-		return 0, err
-	}
+	count, _ := n.Queries.CountUnreadNotificationsByReceiverID(ctx, receiverID)
 
 	return count, nil
 }
@@ -104,30 +96,26 @@ func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID 
 	_, err := n.Queries.UpdateReadNotifications(ctx, receiverID)
 
 	if err != nil {
-		return false, err
+		return false, nil
 	}
 
 	return true, nil
 }
 
 func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNotificationParams) (*db.Notification, error) {
-	notification, err := n.Queries.RemoveNotification(ctx, arg)
+	notification, _ := n.Queries.RemoveNotification(ctx, arg)
 
-	return notification, err
+	return notification, nil
 }
 
 func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.Notification, error) {
 	PostID := uuid.NullUUID{postID, true}
 	DeletedAt := sql.NullTime{time.Now(), true}
 
-	notifications, err := n.Queries.RemovePostNotificationsByPostID(ctx, db.RemovePostNotificationsByPostIDParams{
+	notifications, _ := n.Queries.RemovePostNotificationsByPostID(ctx, db.RemovePostNotificationsByPostIDParams{
 		PostID:    PostID,
 		DeletedAt: DeletedAt,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return notifications, nil
 }

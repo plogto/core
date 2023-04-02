@@ -11,11 +11,7 @@ type InvitedUsers struct {
 }
 
 func (i *InvitedUsers) CreateInvitedUser(ctx context.Context, arg db.CreateInvitedUserParams) (*db.InvitedUser, error) {
-	invitedUser, err := i.Queries.CreateInvitedUser(ctx, arg)
-
-	if err != nil {
-		return nil, err
-	}
+	invitedUser, _ := i.Queries.CreateInvitedUser(ctx, arg)
 
 	return invitedUser, nil
 }
