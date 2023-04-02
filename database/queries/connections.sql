@@ -50,21 +50,27 @@ LIMIT
 	$4;
 
 -- name: CountFollowersByUserIDAndPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		count(*)
+	FROM
+		connections
+	WHERE
+		following_id = $1
+		AND status = $2
+		AND created_at < $3
+		AND deleted_at IS NULL
+	GROUP BY
+		id
+	ORDER BY
+		created_at DESC
+	LIMIT
+		$4
+)
 SELECT
 	count(*)
 FROM
-	connections
-WHERE
-	following_id = $1
-	AND status = $2
-	AND created_at < $3
-	AND deleted_at IS NULL
-GROUP BY
-	id
-ORDER BY
-	created_at DESC
-LIMIT
-	$4;
+	_count_wrapper;
 
 -- name: GetFollowingByUserIDAndPageInfo :many
 SELECT
