@@ -10,11 +10,11 @@ func IsTicketExist(ticket *db.Ticket) bool {
 	return ticket != nil && lo.IsNotEmpty(ticket.ID)
 }
 
-func IsTicketOwner(user *model.User, ticket *db.Ticket) bool {
-	return IsTicketExist(ticket) && IsUserExists(user) && user.ID == ticket.UserID.String()
+func IsTicketOwner(user *db.User, ticket *db.Ticket) bool {
+	return IsTicketExist(ticket) && IsUserExists(user) && user.ID == ticket.UserID
 }
 
-func IsUserAllowToUpdateTicket(user *model.User, ticket *db.Ticket) bool {
+func IsUserAllowToUpdateTicket(user *db.User, ticket *db.Ticket) bool {
 	return IsTicketOwner(user, ticket) || IsAdmin(user) || IsSuperAdmin(user)
 }
 

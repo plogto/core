@@ -56,22 +56,20 @@ func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.Sa
 	return savedPost, nil
 }
 
-func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.SavedPosts, error) {
+func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.SavedPosts, error) {
 	var edges []*model.SavedPostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	savedPosts, err := s.Queries.GetSavedPostsByUserIDAndPageInfo(ctx, db.GetSavedPostsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := s.Queries.CountSavedPostsByUserIDAndPageInfo(ctx, db.CountSavedPostsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
@@ -105,7 +103,6 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userI
 }
 
 func (s *SavedPosts) DeleteSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
-	// FIXME
 	DeletedAt := sql.NullTime{time.Now(), true}
 
 	savedPost, err := s.Queries.DeleteSavedPostByID(ctx, db.DeleteSavedPostByIDParams{

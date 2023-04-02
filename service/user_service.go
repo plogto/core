@@ -2,10 +2,12 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"log"
 	"os"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
@@ -14,38 +16,38 @@ import (
 	"github.com/plogto/core/util"
 )
 
-func (s *Service) GetUserInfo(ctx context.Context) (*model.User, error) {
+func (s *Service) GetUserInfo(ctx context.Context) (*db.User, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) GetUserByID(ctx context.Context, id string) (*model.User, error) {
-	user, _ := graph.GetUserLoader(ctx).Load(id)
+func (s *Service) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
+	user, _ := graph.GetUserLoader(ctx).Load(id.String())
 
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
-	user, _ := s.Users.GetUserByUsername(username)
+func (s *Service) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
+	user, _ := s.Users.GetUserByUsername(ctx, username)
 
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
-	user, _ := s.Users.GetUserByInvitationCode(invitationCode)
+func (s *Service) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
+	user, _ := s.Users.GetUserByInvitationCode(ctx, invitationCode)
 
 	return s.PrepareUser(user), nil
 }
 
 func (s *Service) SearchUser(ctx context.Context, expression string) (*model.Users, error) {
 	var limit = constants.USERS_PAGE_LIMIT
-	users, _ := s.Users.GetUsersByUsernameOrFullNameAndPageInfo(expression+"%", limit)
+	users, _ := s.Users.GetUsersByUsernameOrFullNameAndPageInfo(ctx, expression+"%", int32(limit))
 
 	return users, nil
 }
 
-func (s *Service) CheckUserAccess(ctx context.Context, user *model.User, followingUser *model.User) bool {
+func (s *Service) CheckUserAccess(ctx context.Context, user *db.User, followingUser *db.User) bool {
 	if followingUser.IsPrivate == bool(true) {
 		if user != nil {
 			connection, _ := s.Connections.GetConnection(ctx, followingUser.ID, user.ID)
@@ -63,7 +65,7 @@ func (s *Service) CheckUserAccess(ctx context.Context, user *model.User, followi
 	return true
 }
 
-func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error) {
+func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*db.User, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -78,27 +80,29 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 	}
 
 	if input.BackgroundColor != nil {
-		user.BackgroundColor = *input.BackgroundColor
+		user.BackgroundColor = db.BackgroundColor(*input.BackgroundColor)
 		didUpdate = true
 	}
 
 	if input.PrimaryColor != nil {
-		user.PrimaryColor = *input.PrimaryColor
+		user.PrimaryColor = db.PrimaryColor(*input.PrimaryColor)
 		didUpdate = true
 	}
 
 	if input.Avatar != nil {
-		user.Avatar = input.Avatar
 		if len(*input.Avatar) == 0 {
-			user.Avatar = nil
+			user.Avatar = uuid.NullUUID{}
+		} else {
+			user.Avatar = uuid.NullUUID{uuid.MustParse(*input.Avatar), true}
 		}
 		didUpdate = true
 	}
 
 	if input.Background != nil {
-		user.Background = input.Background
 		if len(*input.Background) == 0 {
-			user.Background = nil
+			user.Background = uuid.NullUUID{}
+		} else {
+			user.Background = uuid.NullUUID{uuid.MustParse(*input.Background), true}
 		}
 		didUpdate = true
 	}
@@ -109,7 +113,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 	}
 
 	if input.Bio != nil {
-		user.Bio = input.Bio
+		user.Bio = sql.NullString{*input.Bio, true}
 		didUpdate = true
 	}
 
@@ -127,7 +131,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*mod
 		return nil, nil
 	}
 
-	updatedUser, _ := s.Users.UpdateUser(user)
+	updatedUser, _ := s.Users.UpdateUser(ctx, user)
 
 	return s.PrepareUser(updatedUser), nil
 }
@@ -161,7 +165,7 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 		return nil, err
 	}
 
-	token, err := user.GenToken()
+	token, err := util.GenToken(user.ID)
 	if err != nil {
 		log.Printf("error while generating the token: %v", err)
 		return nil, errors.New("something went wrong")
@@ -173,31 +177,31 @@ func (s *Service) ChangePassword(ctx context.Context, input model.ChangePassword
 	}, nil
 }
 
-func (s *Service) CheckUsername(ctx context.Context, username string) (*model.User, error) {
+func (s *Service) CheckUsername(ctx context.Context, username string) (*db.User, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	user, _ := s.Users.GetUserByUsername(username)
+	user, _ := s.Users.GetUserByUsername(ctx, username)
 
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) CheckEmail(ctx context.Context, email string) (*model.User, error) {
+func (s *Service) CheckEmail(ctx context.Context, email string) (*db.User, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	user, _ := s.Users.GetUserByEmail(email)
+	user, _ := s.Users.GetUserByEmail(ctx, email)
 
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) PrepareUser(user *model.User) *model.User {
+func (s *Service) PrepareUser(user *db.User) *db.User {
 	if user == nil || len(user.ID) == 0 {
 		return nil
 	}
@@ -205,7 +209,7 @@ func (s *Service) PrepareUser(user *model.User) *model.User {
 	return user
 }
 
-func (s *Service) GetPlogAccount() (*model.User, error) {
+func (s *Service) GetPlogAccount(ctx context.Context) (*db.User, error) {
 	username := os.Getenv("PLOG_ACCOUNT")
-	return s.Users.GetUserByUsername(username)
+	return s.Users.GetUserByUsername(ctx, username)
 }

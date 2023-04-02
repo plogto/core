@@ -14,14 +14,12 @@ type DescriptionVariable struct {
 	Image   *string
 }
 
-func (s *Service) GetCreditTransactionInfoByID(ctx context.Context, id string) (*db.CreditTransactionInfo, error) {
+func (s *Service) GetCreditTransactionInfoByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionInfo, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, nil
 	}
-	// FIXME
-	ID, _ := uuid.Parse(id)
 
-	return s.CreditTransactionInfos.GetCreditTransactionInfoByID(ctx, ID)
+	return s.CreditTransactionInfos.GetCreditTransactionInfoByID(ctx, id)
 }

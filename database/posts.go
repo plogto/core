@@ -46,23 +46,21 @@ func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) 
 	return post, nil
 }
 
-func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	posts, err := p.Queries.GetPostsByUserIDAndPageInfo(ctx, db.GetPostsByUserIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByUserIDAndPageInfo(ctx, db.CountPostsByUserIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
@@ -93,23 +91,21 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID string, 
 	}, err
 }
 
-func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	posts, err := p.Queries.GetPostsWithParentIDByUserIDAndPageInfo(ctx, db.GetPostsWithParentIDByUserIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := p.Queries.CountPostsWithParentIDByUserIDAndPageInfo(ctx, db.CountPostsWithParentIDByUserIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
@@ -140,30 +136,22 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 	}, err
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID *string, parentID string, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-	var UserID uuid.NullUUID
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	if userID != nil {
-		id, _ := uuid.Parse(*userID)
-		UserID = uuid.NullUUID{id, true}
-	}
-
-	ParentID, _ := uuid.Parse(parentID)
 
 	posts, err := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
-		ParentID:  uuid.NullUUID{ParentID, true},
+		UserID:    userID,
+		ParentID:  uuid.NullUUID{parentID, true},
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
-		ParentID:  uuid.NullUUID{ParentID, true},
+		UserID:    userID,
+		ParentID:  uuid.NullUUID{parentID, true},
 		CreatedAt: createdAt,
 	})
 
@@ -187,23 +175,21 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID *strin
 	}, err
 }
 
-func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID string, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	TagID, _ := uuid.Parse(tagID)
 
 	posts, err := p.Queries.GetPostsByTagIDAndPageInfo(ctx, db.GetPostsByTagIDAndPageInfoParams{
 		Limit:     limit,
-		TagID:     TagID,
+		TagID:     tagID,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByTagIDAndPageInfo(ctx, db.CountPostsByTagIDAndPageInfoParams{
 		Limit:     limit,
-		TagID:     TagID,
+		TagID:     tagID,
 		CreatedAt: createdAt,
 	})
 
@@ -233,23 +219,21 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID string, li
 	}, err
 }
 
-func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	posts, err := p.Queries.GetTimelinePostsByPageInfo(ctx, db.GetTimelinePostsByPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := p.Queries.CountTimelinePostsByPageInfo(ctx, db.CountTimelinePostsByPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
@@ -321,9 +305,8 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 	}, err
 }
 
-func (p *Posts) CountPostsByUserID(ctx context.Context, userID string) (int64, error) {
-	ID, _ := uuid.Parse(userID)
-	count, err := p.Queries.CountPostsByUserID(ctx, ID)
+func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
+	count, err := p.Queries.CountPostsByUserID(ctx, userID)
 
 	if err != nil {
 		return 0, err

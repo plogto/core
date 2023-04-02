@@ -38,18 +38,13 @@ func init() {
 }
 
 func main() {
-	// FIXME
-	newDB, err := db.Open(os.Getenv("NEW_DATABASE_URL"))
+	DB, err := db.Open(os.Getenv("NEW_DATABASE_URL"))
 
-	queries := db.New(newDB)
+	queries := db.New(DB)
 
 	if err != nil {
 		fmt.Println(err)
 	}
-	// FIXME
-	DB := database.New()
-
-	defer DB.Close()
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -57,7 +52,7 @@ func main() {
 	}
 	router := chi.NewRouter()
 
-	users := database.Users{DB: DB}
+	users := database.Users{Queries: queries}
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "*"},
@@ -92,7 +87,6 @@ func main() {
 		TicketMessages:                        database.TicketMessages{Queries: queries},
 		Tickets:                               database.Tickets{Queries: queries},
 		Users:                                 users,
-		OnlineUsers:                           database.OnlineUsers{DB: DB},
 	})
 
 	c := generated.Config{Resolvers: &graphResolver.Resolver{Service: s}}
@@ -142,7 +136,7 @@ func main() {
 	queryHandler.Use(extension.Introspection{})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", graphDataloader.DataloaderMiddleware(DB, queries, queryHandler))
+	router.Handle("/query", graphDataloader.DataloaderMiddleware(queries, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))

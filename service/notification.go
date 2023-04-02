@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
@@ -28,9 +27,9 @@ type RemovePostNotificationsArgs struct {
 }
 
 type CreatePostMentionNotificationsArgs struct {
-	UserIDs  []string
+	UserIDs  []uuid.UUID
 	Post     db.Post
-	SenderID string
+	SenderID uuid.UUID
 }
 
 func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInput) (*model.Notifications, error) {
@@ -45,7 +44,7 @@ func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInp
 	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
 }
 
-func (s *Service) GetNotificationByID(ctx context.Context, id string) (*db.Notification, error) {
+func (s *Service) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -55,28 +54,10 @@ func (s *Service) GetNotificationByID(ctx context.Context, id string) (*db.Notif
 	return s.Notifications.GetNotificationByID(ctx, id)
 }
 
-func (s *Service) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
-	onlineUserContext, err := middleware.GetCurrentOnlineUserFromCTX(ctx)
+func (s *Service) GetNotification(ctx context.Context) (*model.NotificationsEdge, error) {
+	// TODO: rewrite this function
 
-	if err != nil {
-		return nil, errors.New(err.Error())
-	}
-
-	go func() {
-		<-ctx.Done()
-		s.mu.Lock()
-		s.OnlineUsers.DeleteOnlineUserBySocketID(onlineUserContext.SocketID)
-		delete(s.OnlineNotifications, onlineUserContext.SocketID)
-		s.mu.Unlock()
-	}()
-
-	notificationEdge := make(chan *model.NotificationsEdge, 1)
-	s.mu.Lock()
-	// Keep a reference of the channel so that we can push changes into it when new messages are posted.
-	s.OnlineNotifications[onlineUserContext.SocketID] = notificationEdge
-	s.mu.Unlock()
-
-	return notificationEdge, nil
+	return nil, nil
 }
 
 func (s *Service) CreateNotification(ctx context.Context, args CreateNotificationArgs) error {
@@ -84,7 +65,7 @@ func (s *Service) CreateNotification(ctx context.Context, args CreateNotificatio
 	if args.SenderID != args.ReceiverID {
 		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
 
-		notification, _ := s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
+		s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
 			NotificationTypeID: notificationType.ID,
 			SenderID:           args.SenderID,
 			ReceiverID:         args.ReceiverID,
@@ -93,18 +74,8 @@ func (s *Service) CreateNotification(ctx context.Context, args CreateNotificatio
 			ReplyID:            args.ReplyID,
 		})
 
-		notificationEdge := &model.NotificationsEdge{
-			Cursor: util.ConvertCreateAtToCursor(notification.CreatedAt),
-			Node:   notification,
-		}
+		// TODO: handle online users
 
-		onlineUser, _ := s.OnlineUsers.GetOnlineUserByUserID(args.ReceiverID.String())
-
-		if onlineUser != nil {
-			s.mu.Lock()
-			s.OnlineNotifications[onlineUser.SocketID] <- notificationEdge
-			s.mu.Unlock()
-		}
 	}
 
 	return nil
@@ -149,12 +120,9 @@ func (s *Service) ReadNotifications(ctx context.Context) (*bool, error) {
 func (s *Service) CreatePostMentionNotifications(ctx context.Context, args CreatePostMentionNotificationsArgs) {
 	for _, receiverID := range args.UserIDs {
 		if receiverID != args.SenderID {
-			// FIXME
-			senderID, _ := uuid.Parse(args.SenderID)
-			receiverID, _ := uuid.Parse(receiverID)
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameMentionInPost,
-				SenderID:   senderID,
+				SenderID:   args.SenderID,
 				ReceiverID: receiverID,
 				Url:        "/p/" + args.Post.Url,
 				PostID:     uuid.NullUUID{args.Post.ID, true},

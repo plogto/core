@@ -11,7 +11,6 @@ import (
 func (s *Service) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID uuid.UUID) ([]*db.CreditTransactionDescriptionVariable, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	// FIXME
 	if err != nil {
 		return nil, nil
 	}

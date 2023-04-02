@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-pg/pg/v10"
 	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/convertor"
@@ -13,10 +12,10 @@ import (
 	"github.com/plogto/core/graph/model"
 )
 
-func DataloaderMiddleware(db *pg.DB, queries *db.Queries, next http.Handler) http.Handler {
+func DataloaderMiddleware(queries *db.Queries, next http.Handler) http.Handler {
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userLoader := PrepareUserLoader(db)
+		userLoader := PrepareUserLoader(r.Context(), queries)
 		postLoader := PreparePostLoader(r.Context(), queries)
 		tagLoader := PrepareTagLoader(r.Context(), queries)
 
@@ -43,29 +42,28 @@ func GetTagLoader(ctx context.Context) *TagLoader {
 }
 
 // prepare functions
-func PrepareUserLoader(db *pg.DB) UserLoader {
+func PrepareUserLoader(ctx context.Context, queries *db.Queries) UserLoader {
 	return UserLoader{
 		maxBatch: 100,
 		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*model.User, []error) {
-			var users []*model.User
+		fetch: func(ids []string) ([]*db.User, []error) {
 
-			err := db.Model(&users).Where("id in (?)", pg.In(ids)).Select()
+			users, err := queries.GetUsersByIDs(ctx, convertor.StringsToUUIDs(ids))
 
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			u := make(map[string]*model.User, len(users))
+			u := make(map[uuid.UUID]*db.User, len(users))
 
 			for _, user := range users {
 				u[user.ID] = user
 			}
 
-			result := make([]*model.User, len(ids))
+			result := make([]*db.User, len(ids))
 
 			for i, id := range ids {
-				result[i] = u[id]
+				result[i] = u[uuid.MustParse(id)]
 			}
 
 			return result, nil
@@ -94,8 +92,7 @@ func PreparePostLoader(ctx context.Context, queries *db.Queries) PostLoader {
 			result := make([]*db.Post, len(ids))
 
 			for i, id := range ids {
-				ID, _ := uuid.Parse(id)
-				result[i] = p[ID]
+				result[i] = p[uuid.MustParse(id)]
 			}
 
 			return result, nil
@@ -124,8 +121,7 @@ func PrepareTagLoader(ctx context.Context, queries *db.Queries) TagLoader {
 			result := make([]*model.Tag, len(ids))
 
 			for i, id := range ids {
-				ID, _ := uuid.Parse(id)
-				result[i] = t[ID]
+				result[i] = t[uuid.MustParse(id)]
 			}
 
 			return result, nil

@@ -222,7 +222,7 @@ models:
       node:
         resolver: true
   User:
-    model: github.com/plogto/core/graph/model.User
+    model: github.com/plogto/core/db.User
     fields:
       avatar:
         resolver: true
@@ -239,11 +239,6 @@ models:
       postsCount:
         resolver: true
       credits:
-        resolver: true
-  OnlineUser:
-    model: github.com/plogto/core/graph/model.OnlineUser
-    fields:
-      user:
         resolver: true
   UsersEdge:
     fields:

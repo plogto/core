@@ -46,18 +46,13 @@ func (r *queryResolver) GetTicketMessagesByTicketURL(ctx context.Context, ticket
 }
 
 // User is the resolver for the user field.
-func (r *ticketResolver) User(ctx context.Context, obj *db.Ticket) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID.String())
+func (r *ticketResolver) User(ctx context.Context, obj *db.Ticket) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 // Status is the resolver for the status field.
 func (r *ticketResolver) Status(ctx context.Context, obj *db.Ticket) (model.TicketStatus, error) {
 	return model.TicketStatus(obj.Status), nil
-}
-
-// URL is the resolver for the url field.
-func (r *ticketResolver) URL(ctx context.Context, obj *db.Ticket) (*string, error) {
-	return &obj.Url, nil
 }
 
 // LastMessage is the resolver for the lastMessage field.
@@ -71,8 +66,8 @@ func (r *ticketResolver) Permissions(ctx context.Context, obj *db.Ticket) ([]*mo
 }
 
 // Sender is the resolver for the sender field.
-func (r *ticketMessageResolver) Sender(ctx context.Context, obj *db.TicketMessage) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.SenderID.String())
+func (r *ticketMessageResolver) Sender(ctx context.Context, obj *db.TicketMessage) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.SenderID)
 }
 
 // Ticket is the resolver for the ticket field.
@@ -141,6 +136,9 @@ type ticketsEdgeResolver struct{ *Resolver }
 //   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
 //     it when you're done.
 //   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *ticketResolver) URL(ctx context.Context, obj *db.Ticket) (*string, error) {
+	return &obj.Url, nil
+}
 func (r *ticketResolver) ID(ctx context.Context, obj *db.Ticket) (string, error) {
 	panic(fmt.Errorf("not implemented: ID - id"))
 }

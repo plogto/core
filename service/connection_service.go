@@ -15,7 +15,7 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection, error) {
+func (s *Service) FollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -25,7 +25,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection
 		return nil, errors.New("can not follow yourself")
 	}
 
-	followingUser, _ := graph.GetUserLoader(ctx).Load(userID)
+	followingUser, _ := graph.GetUserLoader(ctx).Load(userID.String())
 	connection, _ := s.Connections.GetConnection(ctx, userID, user.ID)
 	if validation.IsConnectionExists(connection) {
 		return connection, nil
@@ -36,23 +36,17 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection
 		status = 1
 	}
 
-	followerID, _ := uuid.Parse(user.ID)
-	followingID, _ := uuid.Parse(userID)
-
 	newConnection, _ := s.Connections.CreateConnection(ctx, db.CreateConnectionParams{
-		FollowerID:  followerID,
-		FollowingID: followingID,
+		FollowerID:  user.ID,
+		FollowingID: userID,
 		Status:      int32(status),
 	})
 
 	if validation.IsConnectionStatusAccepted(newConnection) {
-		// FIXME
-		senderID, _ := uuid.Parse(user.ID)
-		receiverID, _ := uuid.Parse(userID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameFollowUser,
-			SenderID:   senderID,
-			ReceiverID: receiverID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -60,7 +54,7 @@ func (s *Service) FollowUser(ctx context.Context, userID string) (*db.Connection
 	return newConnection, nil
 }
 
-func (s *Service) UnfollowUser(ctx context.Context, userID string) (*db.Connection, error) {
+func (s *Service) UnfollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -76,14 +70,12 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*db.Connecti
 	}
 
 	deletedConnection, _ := s.Connections.DeleteConnection(ctx, connection.ID)
-	// FIXME
-	senderID, _ := uuid.Parse(user.ID)
-	receiverID, _ := uuid.Parse(userID)
+
 	if validation.IsConnectionExists(deletedConnection) {
 		s.RemoveNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameFollowUser,
-			SenderID:   senderID,
-			ReceiverID: receiverID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -98,7 +90,7 @@ func (s *Service) UnfollowUser(ctx context.Context, userID string) (*db.Connecti
 	}, nil
 }
 
-func (s *Service) AcceptUser(ctx context.Context, userID string) (*db.Connection, error) {
+func (s *Service) AcceptUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -125,13 +117,10 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*db.Connection
 		Status:      connection.Status,
 	})
 	if validation.IsConnectionExists(connection) {
-		// FIXME
-		senderID, _ := uuid.Parse(user.ID)
-		receiverID, _ := uuid.Parse(userID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameAcceptUser,
-			SenderID:   senderID,
-			ReceiverID: receiverID,
+			SenderID:   user.ID,
+			ReceiverID: userID,
 			Url:        "/" + user.Username,
 		})
 	}
@@ -139,7 +128,7 @@ func (s *Service) AcceptUser(ctx context.Context, userID string) (*db.Connection
 	return updatedConnection, nil
 }
 
-func (s *Service) RejectUser(ctx context.Context, userID string) (*db.Connection, error) {
+func (s *Service) RejectUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -168,7 +157,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 		return nil, nil
 	}
 
-	followingUser, _ := s.Users.GetUserByUsername(username)
+	followingUser, _ := s.Users.GetUserByUsername(ctx, username)
 
 	pageInfo := util.ExtractPageInfo(input)
 
@@ -212,7 +201,7 @@ func (s *Service) GetFollowRequests(ctx context.Context, input *model.PageInfoIn
 	return s.GetConnectionsByUsername(ctx, user.Username, input, constants.Requests)
 }
 
-func (s *Service) GetConnectionStatus(ctx context.Context, userID string) (*int, error) {
+func (s *Service) GetConnectionStatus(ctx context.Context, userID uuid.UUID) (*int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	if user == nil {
 		return nil, nil
@@ -230,21 +219,19 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userID string) (*int,
 	return &status, err
 }
 
-func (s *Service) GetConnectionCount(ctx context.Context, userID string, resultType constants.ConnectionResult) (int64, error) {
+func (s *Service) GetConnectionCount(ctx context.Context, userID uuid.UUID, resultType constants.ConnectionResult) (int64, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-
-	UserID, _ := uuid.Parse(userID)
 
 	switch resultType {
 	case constants.Followers:
-		return s.Connections.CountFollowersConnectionByUserID(ctx, UserID, 2)
+		return s.Connections.CountFollowersConnectionByUserID(ctx, userID, 2)
 	case constants.Following:
-		return s.Connections.CountFollowingConnectionByUserID(ctx, UserID, 2)
+		return s.Connections.CountFollowingConnectionByUserID(ctx, userID, 2)
 	case constants.Requests:
 		if user == nil || user.ID != userID {
 			return 0, nil
 		}
-		return s.Connections.CountFollowersConnectionByUserID(ctx, UserID, 1)
+		return s.Connections.CountFollowersConnectionByUserID(ctx, userID, 1)
 	}
 
 	return 0, nil

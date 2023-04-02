@@ -13,40 +13,33 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, error) {
+func (s *Service) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
 
-	// FIXME
-	userID, _ := uuid.Parse(user.ID)
-	PostID, _ := uuid.Parse(postID)
-
-	likedPost, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, userID, PostID)
+	likedPost, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, user.ID, postID)
 
 	if !validation.IsLikedPostExists(likedPost) {
 
-		likedPost, err := s.LikedPosts.CreateLikedPost(ctx, userID, PostID)
+		likedPost, err := s.LikedPosts.CreateLikedPost(ctx, user.ID, postID)
 
 		if validation.IsLikedPostExists(likedPost) {
 			var name = db.NotificationTypeNameLikePost
 			if post.ParentID.Valid {
 				name = db.NotificationTypeNameLikeReply
 			}
-			// 	// FIXME
-			senderID, _ := uuid.Parse(user.ID)
-
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       name,
-				SenderID:   senderID,
+				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url,
 				PostID:     uuid.NullUUID{post.ID, true},
@@ -57,11 +50,9 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 
 	} else {
 		unlikedPost, err := s.LikedPosts.DeleteLikedPostByID(ctx, likedPost.ID)
-		// FIXME
-		senderID, _ := uuid.Parse(user.ID)
 		s.RemoveNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameLikePost,
-			SenderID:   senderID,
+			SenderID:   user.ID,
 			ReceiverID: post.UserID,
 			Url:        "/p/" + post.Url,
 			PostID:     uuid.NullUUID{post.ID, true},
@@ -71,10 +62,10 @@ func (s *Service) LikePost(ctx context.Context, postID string) (*db.LikedPost, e
 	}
 }
 
-func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*model.LikedPosts, error) {
+func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) || !validation.IsUserExists(user) {
@@ -87,7 +78,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID string) (*mo
 
 func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	followingUser, err := s.Users.GetUserByUsername(username)
+	followingUser, err := s.Users.GetUserByUsername(ctx, username)
 
 	if err != nil {
 		return nil, errors.New("user not found")
@@ -102,24 +93,20 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 	}
 }
 
-func (s *Service) IsPostLiked(ctx context.Context, postID string) (*db.LikedPost, error) {
+func (s *Service) IsPostLiked(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	if user == nil {
+	if !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
-
-	// FIXME
-	userID, _ := uuid.Parse(user.ID)
-	PostID, _ := uuid.Parse(postID)
 
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		isPostLiked, err := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, userID, PostID)
+		isPostLiked, err := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, user.ID, postID)
 		if len(isPostLiked.ID) < 1 {
 			return nil, nil
 		}

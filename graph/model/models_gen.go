@@ -19,7 +19,7 @@ type AddTicketMessageInput struct {
 
 type AuthResponse struct {
 	AuthToken *AuthToken `json:"authToken"`
-	User      *User      `json:"user"`
+	User      *db.User   `json:"user"`
 }
 
 type AuthToken struct {
@@ -73,15 +73,15 @@ type EditUserInput struct {
 }
 
 type InvitedUser struct {
-	ID        string     `json:"id"`
-	Inviter   *User      `json:"inviter"`
-	Invitee   *User      `json:"invitee"`
+	ID        uuid.UUID  `json:"id"`
+	Inviter   *db.User   `json:"inviter"`
+	Invitee   *db.User   `json:"invitee"`
 	CreatedAt *time.Time `json:"createdAt,omitempty"`
 	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
 }
 
 type InvitedUsers struct {
-	TotalCount *int                `json:"totalCount,omitempty"`
+	TotalCount int64               `json:"totalCount"`
 	Edges      []*InvitedUsersEdge `json:"edges"`
 	PageInfo   *PageInfo           `json:"pageInfo"`
 }
@@ -212,7 +212,7 @@ type Users struct {
 }
 
 type UsersEdge struct {
-	Node *User `json:"node,omitempty"`
+	Node *db.User `json:"node,omitempty"`
 }
 
 type AddPostInput struct {

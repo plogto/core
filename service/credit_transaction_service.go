@@ -15,8 +15,8 @@ import (
 )
 
 type CreateCreditTransactionParams struct {
-	SenderID                    string
-	ReceiverID                  string
+	SenderID                    uuid.UUID
+	ReceiverID                  uuid.UUID
 	Amount                      sql.NullFloat64
 	Description                 *string
 	Status                      model.CreditTransactionStatus
@@ -26,7 +26,7 @@ type CreateCreditTransactionParams struct {
 }
 
 type TransferCreditFromAdminParams struct {
-	ReceiverID   string
+	ReceiverID   uuid.UUID
 	Amount       *float64
 	Status       model.CreditTransactionStatus
 	Type         model.CreditTransactionType
@@ -36,7 +36,6 @@ type TransferCreditFromAdminParams struct {
 func (s *Service) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	// FIXME
 	if err != nil {
 		return 0, nil
 	}
@@ -44,16 +43,14 @@ func (s *Service) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (flo
 	return s.CreditTransactions.GetCreditsByUserID(ctx, userID)
 }
 
-func (s *Service) GetCreditTransactionByID(ctx context.Context, id string) (*db.CreditTransaction, error) {
+func (s *Service) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*db.CreditTransaction, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, nil
 	}
 
-	// FIXME
-	ID, _ := uuid.Parse(id)
-	return s.CreditTransactions.GetCreditTransactionByID(ctx, ID)
+	return s.CreditTransactions.GetCreditTransactionByID(ctx, id)
 }
 
 func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageInfoInput) (*model.CreditTransactions, error) {
@@ -86,12 +83,9 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 		Status:                      db.CreditTransactionStatus(creditTransactionParams.Status),
 	})
 
-	senderID, _ := uuid.Parse(creditTransactionParams.SenderID)
-	receiverID, _ := uuid.Parse(creditTransactionParams.ReceiverID)
-
 	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
-		UserID:                  senderID,
-		RecipientID:             receiverID,
+		UserID:                  creditTransactionParams.SenderID,
+		RecipientID:             creditTransactionParams.ReceiverID,
 		Amount:                  float32(-amount.Float64),
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    creditTransactionParams.Type,
@@ -99,8 +93,8 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 	})
 
 	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
-		UserID:                  receiverID,
-		RecipientID:             senderID,
+		UserID:                  creditTransactionParams.ReceiverID,
+		RecipientID:             creditTransactionParams.SenderID,
 		Amount:                  float32(amount.Float64),
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    creditTransactionParams.Type,
@@ -110,23 +104,21 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 	return creditTransactionInfo, err
 }
 
-func (s *Service) GetBankAccount() (*model.User, error) {
+func (s *Service) GetBankAccount(ctx context.Context) (*db.User, error) {
 	username := os.Getenv("BANK_ACCOUNT")
-	return s.Users.GetUserByUsername(username)
+	return s.Users.GetUserByUsername(ctx, username)
 }
 
 func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (*db.CreditTransaction, error) {
-	bankUser, _ := s.GetBankAccount()
+	bankUser, _ := s.GetBankAccount(ctx)
 
 	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
 		Status: db.CreditTransactionStatusApproved,
 	})
 
-	bankUserID, _ := uuid.Parse(bankUser.ID)
-
 	return s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
-		UserID:                  bankUserID,
-		RecipientID:             bankUserID,
+		UserID:                  bankUser.ID,
+		RecipientID:             bankUser.ID,
 		Amount:                  float32(amount.Float64),
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    db.CreditTransactionTypeFund,
@@ -135,11 +127,9 @@ func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (
 }
 
 func (s *Service) TransferCreditFromAdmin(ctx context.Context, transferCreditFromAdminParams TransferCreditFromAdminParams) (*db.CreditTransactionInfo, error) {
-	bankUser, _ := s.GetBankAccount()
+	bankUser, _ := s.GetBankAccount(ctx)
 
-	bankUserID, _ := uuid.Parse(bankUser.ID)
-
-	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(ctx, bankUserID)
+	bankUserCredits, _ := s.CreditTransactions.GetCreditsByUserID(ctx, bankUser.ID)
 
 	if bankUserCredits <= 0 {
 		s.GenerateCredits(ctx, constants.GENERATE_CREDITS_AMOUNT)
@@ -162,7 +152,7 @@ func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Co
 		descriptionVariable = DescriptionVariable{
 			Content: user.FullName,
 			Url:     &user.Username,
-			Image:   user.Avatar,
+			// Image: // implement GetFileLoader,
 		}
 	case db.CreditTransactionDescriptionVariableTypeTag:
 		tag, _ := graph.GetTagLoader(ctx).Load(contentID.String())

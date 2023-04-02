@@ -14,12 +14,11 @@ type Tickets struct {
 	Queries *db.Queries
 }
 
-func (t *Tickets) CreateTicket(ctx context.Context, userID, subject string) (*db.Ticket, error) {
-	UserID, _ := uuid.Parse(userID)
+func (t *Tickets) CreateTicket(ctx context.Context, userID uuid.UUID, subject string) (*db.Ticket, error) {
 
 	newTicket := db.CreateTicketParams{
 		Subject: subject,
-		UserID:  UserID,
+		UserID:  userID,
 		Url:     util.RandomHexString(9),
 	}
 
@@ -52,26 +51,19 @@ func (t *Tickets) GetTicketByURL(ctx context.Context, url string) (*db.Ticket, e
 	return ticket, nil
 }
 
-func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID *string, limit int32, after string) (*model.Tickets, error) {
+func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, limit int32, after string) (*model.Tickets, error) {
 	var edges []*model.TicketsEdge
 	var endCursor string
-	var UserID uuid.NullUUID
 
 	updatedAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	if userID != nil {
-		id, _ := uuid.Parse(*userID)
-		UserID = uuid.NullUUID{id, true}
-	}
-
 	tickets, err := t.Queries.GetTicketsByUserIDAndPageInfo(ctx, db.GetTicketsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		UpdatedAt: updatedAt,
 	})
 
 	totalCount, _ := t.Queries.CountTicketsByUserIDAndPageInfo(ctx, db.CountTicketsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		UpdatedAt: updatedAt,
 	})

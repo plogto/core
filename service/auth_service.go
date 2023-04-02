@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -16,7 +15,7 @@ import (
 )
 
 func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
-	user, err := s.Users.GetUserByUsernameOrEmail(input.Username)
+	user, err := s.Users.GetUserByUsernameOrEmail(ctx, input.Username)
 	if err != nil {
 		return nil, errors.New("username or password is not valid")
 	}
@@ -35,27 +34,19 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 }
 
 func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAuth bool) (*model.AuthResponse, error) {
-	if _, err := s.Users.GetUserByUsernameOrEmail(input.Email); err == nil {
+	if _, err := s.Users.GetUserByUsernameOrEmail(ctx, input.Email); err == nil {
 		return nil, errors.New("email has already been taken")
 	}
 
-	user := &model.User{
-		Email:          input.Email,
-		Username:       util.RandomString(15),
-		InvitationCode: util.RandomString(7),
-		FullName:       input.FullName,
-	}
-
-	newUser, err := s.Users.CreateUser(user)
+	user, err := s.Users.CreateUser(ctx, input.Email, input.FullName)
 	if err != nil {
 		log.Printf("error while creating a user: %v", err)
 		return nil, err
 	}
 
 	if !isOAuth {
-		userID, _ := uuid.Parse(newUser.ID)
 		password := db.CreatePasswordParams{
-			UserID: userID,
+			UserID: user.ID,
 		}
 
 		hashedPassword, err := util.HashPassword(input.Password)
@@ -72,13 +63,10 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 	}
 
 	if input.InvitationCode != nil {
-		if inviter, err := s.Users.GetUserByInvitationCode(*input.InvitationCode); err == nil {
-			// FIXME
-			InviterID, _ := uuid.Parse(inviter.ID)
-			InviteeID, _ := uuid.Parse(newUser.ID)
+		if inviter, err := s.Users.GetUserByInvitationCode(ctx, *input.InvitationCode); err == nil {
 			s.InvitedUsers.CreateInvitedUser(ctx, db.CreateInvitedUserParams{
-				InviterID: InviterID,
-				InviteeID: InviteeID,
+				InviterID: inviter.ID,
+				InviteeID: user.ID,
 			})
 
 			if err != nil {
@@ -96,19 +84,16 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 			if err != nil {
 				return nil, errors.New(err.Error())
 			}
-			var ContentID uuid.UUID
-			// FIXME
-			ContentID, _ = uuid.Parse(newUser.ID)
 
 			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(ctx, db.CreateCreditTransactionDescriptionVariableParams{
 				CreditTransactionInfoID: inviterTransactionCreditInfo.ID,
 				Type:                    db.CreditTransactionDescriptionVariableTypeUser,
 				Key:                     db.CreditTransactionDescriptionVariableKeyInvitedUser,
-				ContentID:               ContentID,
+				ContentID:               user.ID,
 			})
 
 			inviteeTransactionCreditInfo, err := s.TransferCreditFromAdmin(ctx, TransferCreditFromAdminParams{
-				ReceiverID:   newUser.ID,
+				ReceiverID:   user.ID,
 				Status:       model.CreditTransactionStatusApproved,
 				Type:         model.CreditTransactionTypeOrder,
 				TemplateName: db.CreditTransactionTemplateNameRegisterByInvitationCode,
@@ -118,26 +103,21 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 				return nil, errors.New(err.Error())
 			}
 
-			ContentID, _ = uuid.Parse(inviter.ID)
-
 			s.CreditTransactionDescriptionVariables.CreateCreditTransactionDescriptionVariable(ctx, db.CreateCreditTransactionDescriptionVariableParams{
 				CreditTransactionInfoID: inviteeTransactionCreditInfo.ID,
 				Type:                    db.CreditTransactionDescriptionVariableTypeUser,
 				Key:                     db.CreditTransactionDescriptionVariableKeyInviterUser,
-				ContentID:               ContentID,
+				ContentID:               inviter.ID,
 			})
 		}
 	}
 
-	plogAccount, _ := s.GetPlogAccount()
+	plogAccount, _ := s.GetPlogAccount(ctx)
 	if validation.IsUserExists(plogAccount) {
-		// FIXME
-		senderID, _ := uuid.Parse(plogAccount.ID)
-		receiverID, _ := uuid.Parse(newUser.ID)
 		s.CreateNotification(ctx, CreateNotificationArgs{
 			Name:       db.NotificationTypeNameWelcome,
-			SenderID:   senderID,
-			ReceiverID: receiverID,
+			SenderID:   plogAccount.ID,
+			ReceiverID: user.ID,
 			Url:        "/" + plogAccount.Username,
 		})
 	}
@@ -155,7 +135,7 @@ func (s *Service) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput)
 
 	email := fmt.Sprintf("%v", payload.Claims["email"])
 
-	user, _ := s.Users.GetUserByEmail(email)
+	user, _ := s.Users.GetUserByEmail(ctx, email)
 	if s.PrepareUser(user) != nil {
 		return s.PrepareAuthToken(user)
 	}
@@ -170,8 +150,8 @@ func (s *Service) OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput)
 	return s.Register(ctx, inputRegister, true)
 }
 
-func (s *Service) PrepareAuthToken(user *model.User) (*model.AuthResponse, error) {
-	token, err := user.GenToken()
+func (s *Service) PrepareAuthToken(user *db.User) (*model.AuthResponse, error) {
+	token, err := util.GenToken(user.ID)
 	if err != nil {
 		log.Printf("error while generating the token: %v", err)
 		return nil, errors.New("something went wrong")
