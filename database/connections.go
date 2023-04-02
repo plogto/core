@@ -31,24 +31,22 @@ func (c *Connections) CreateConnection(ctx context.Context, arg db.CreateConnect
 	return connection, nil
 }
 
-func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, followerID string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, followerID uuid.UUID, filter ConnectionFilter) (*model.Connections, error) {
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
-	// FIXME
-	FollowerID, _ := uuid.Parse(followerID)
 	after, _ := time.Parse(time.RFC3339, filter.After)
 
 	connections, err := c.Queries.GetFollowersByUserIDAndPageInfo(ctx, db.GetFollowersByUserIDAndPageInfoParams{
 		Limit:       filter.Limit,
-		FollowingID: FollowerID,
+		FollowingID: followerID,
 		Status:      2,
 		CreatedAt:   after,
 	})
 
 	totalCount, _ := c.Queries.CountFollowersByUserIDAndPageInfo(ctx, db.CountFollowersByUserIDAndPageInfoParams{
 		Limit:       filter.Limit,
-		FollowingID: FollowerID,
+		FollowingID: followerID,
 		Status:      2,
 		CreatedAt:   after,
 	})
@@ -82,23 +80,21 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 	}, err
 }
 
-func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID string, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID uuid.UUID, filter ConnectionFilter) (*model.Connections, error) {
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
-	// FIXME
-	FollowingID, _ := uuid.Parse(followingID)
 	after, _ := time.Parse(time.RFC3339, filter.After)
 
 	connections, err := c.Queries.GetFollowingByUserIDAndPageInfo(ctx, db.GetFollowingByUserIDAndPageInfoParams{
 		Limit:      filter.Limit,
-		FollowerID: FollowingID,
+		FollowerID: followingID,
 		Status:     2,
 		CreatedAt:  after,
 	})
 
 	totalCount, _ := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
-		FollowerID: FollowingID,
+		FollowerID: followingID,
 		Status:     2,
 		CreatedAt:  after,
 	})
@@ -133,7 +129,7 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 }
 
 func (c *Connections) GetConnectionByID(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
-	// FIXME: use dataloader
+	// TODO: use dataloader
 	connection, err := c.Queries.GetConnectionByID(ctx, id)
 
 	if err != nil {
@@ -143,13 +139,10 @@ func (c *Connections) GetConnectionByID(ctx context.Context, id uuid.UUID) (*db.
 	return connection, nil
 }
 
-func (c *Connections) GetConnection(ctx context.Context, followingID, followerID string) (*db.Connection, error) { // FIXME
-	FollowerID, _ := uuid.Parse(followerID)
-	FollowingID, _ := uuid.Parse(followingID)
-
+func (c *Connections) GetConnection(ctx context.Context, followingID, followerID uuid.UUID) (*db.Connection, error) {
 	connection, err := c.Queries.GetConnection(ctx, db.GetConnectionParams{
-		FollowerID:  FollowerID,
-		FollowingID: FollowingID,
+		FollowerID:  followerID,
+		FollowingID: followingID,
 	})
 
 	if err != nil {
@@ -197,7 +190,6 @@ func (c *Connections) UpdateConnection(ctx context.Context, arg db.UpdateConnect
 
 // TODO: fix this name or functionality
 func (c *Connections) DeleteConnection(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
-	// FIXME
 	DeletedAt := sql.NullTime{time.Now(), true}
 
 	connection, err := c.Queries.DeleteConnection(ctx, db.DeleteConnectionParams{

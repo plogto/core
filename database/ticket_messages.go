@@ -89,11 +89,10 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 	}, err
 }
 
-func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID string, ticketID uuid.UUID) (bool, error) {
-	UserID, _ := uuid.Parse(userID)
+func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (bool, error) {
 
 	_, err := t.Queries.UpdateReadTicketMessagesByUserIDAndTicketID(ctx, db.UpdateReadTicketMessagesByUserIDAndTicketIDParams{
-		SenderID: UserID,
+		SenderID: userID,
 		TicketID: ticketID,
 	})
 

@@ -47,8 +47,8 @@ func (r *postResolver) Child(ctx context.Context, obj *db.Post) (*db.Post, error
 }
 
 // User is the resolver for the user field.
-func (r *postResolver) User(ctx context.Context, obj *db.Post) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID.String())
+func (r *postResolver) User(ctx context.Context, obj *db.Post) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 // Content is the resolver for the content field.
@@ -64,7 +64,7 @@ func (r *postResolver) Attachment(ctx context.Context, obj *db.Post) ([]*db.File
 
 // Likes is the resolver for the likes field.
 func (r *postResolver) Likes(ctx context.Context, obj *db.Post) (*model.LikedPosts, error) {
-	return r.Service.GetLikedPostsByPostID(ctx, obj.ID.String())
+	return r.Service.GetLikedPostsByPostID(ctx, obj.ID)
 }
 
 // Replies is the resolver for the replies field.
@@ -74,7 +74,7 @@ func (r *postResolver) Replies(ctx context.Context, obj *db.Post) (*model.Posts,
 
 // IsLiked is the resolver for the isLiked field.
 func (r *postResolver) IsLiked(ctx context.Context, obj *db.Post) (*db.LikedPost, error) {
-	return r.Service.IsPostLiked(ctx, obj.ID.String())
+	return r.Service.IsPostLiked(ctx, obj.ID)
 }
 
 // IsSaved is the resolver for the isSaved field.

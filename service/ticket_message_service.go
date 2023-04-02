@@ -23,10 +23,8 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, inpu
 		}
 	}
 
-	UserID, _ := uuid.Parse(user.ID)
-
 	ticketMessage, _ := s.TicketMessages.CreateTicketMessage(ctx, db.CreateTicketMessageParams{
-		SenderID: UserID,
+		SenderID: user.ID,
 		TicketID: ticketID,
 		Message:  input.Message,
 	})
@@ -62,7 +60,7 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 
 	ticket, _ := s.Tickets.GetTicketByURL(ctx, ticketURL)
 
-	if validation.IsUser(user) && user.ID != ticket.UserID.String() {
+	if validation.IsUser(user) && user.ID != ticket.UserID {
 		return nil, nil
 	}
 

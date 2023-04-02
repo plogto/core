@@ -25,12 +25,10 @@ func (s *Service) SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost
 		return nil, errors.New("access denied")
 	}
 
-	UserID, _ := uuid.Parse(user.ID)
-
-	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, UserID, postID)
+	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, user.ID, postID)
 
 	if !validation.IsSavedPostExists(savedPost) {
-		return s.SavedPosts.CreateSavedPost(ctx, UserID, postID)
+		return s.SavedPosts.CreateSavedPost(ctx, user.ID, postID)
 	} else {
 		return s.SavedPosts.DeleteSavedPostByID(ctx, savedPost.ID)
 	}
@@ -75,8 +73,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID uuid.UUID) (*db.SavedP
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		UserID, _ := uuid.Parse(user.ID)
-		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, UserID, postID)
+		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, user.ID, postID)
 
 		if !validation.IsSavedPostExists(savedPost) {
 			return nil, nil

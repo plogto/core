@@ -54,22 +54,20 @@ func (c *CreditTransactions) GetCreditsByUserID(ctx context.Context, userID uuid
 	return float64(amount), err
 }
 
-func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.CreditTransactions, error) {
+func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.CreditTransactions, error) {
 	var edges []*model.CreditTransactionsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	creditTransactions, err := c.Queries.GetCreditTransactionsByUserIDAndPageInfo(ctx, db.GetCreditTransactionsByUserIDAndPageInfoParams{
 		Limit:     limit,
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := c.Queries.CountCreditTransactionsByUserIDAndPageInfo(ctx, db.CountCreditTransactionsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		CreatedAt: createdAt,
 	})
 

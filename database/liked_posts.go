@@ -43,22 +43,20 @@ func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id uuid.UUID) (*db.Li
 	return likedPost, nil
 }
 
-func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID string, limit int32, after string) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID uuid.UUID, limit int32, after string) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	PostID, _ := uuid.Parse(postID)
 
 	likedPosts, err := l.Queries.GetLikedPostsByPostIDAndPageInfo(ctx, db.GetLikedPostsByPostIDAndPageInfoParams{
-		PostID:    PostID,
+		PostID:    postID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := l.Queries.CountLikedPostsByPostIDAndPageInfo(ctx, db.CountLikedPostsByPostIDAndPageInfoParams{
-		PostID:    PostID,
+		PostID:    postID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
@@ -98,22 +96,20 @@ func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, 
 	return likedPost, nil
 }
 
-func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID string, limit int32, after string) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	UserID, _ := uuid.Parse(userID)
 
 	likedPosts, err := l.Queries.GetLikedPostsByUserIDAndPageInfo(ctx, db.GetLikedPostsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
 
 	totalCount, _ := l.Queries.CountLikedPostsByUserIDAndPageInfo(ctx, db.CountLikedPostsByUserIDAndPageInfoParams{
-		UserID:    UserID,
+		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
 	})
@@ -147,7 +143,6 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 }
 
 func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
-	// FIXME
 	DeletedAt := sql.NullTime{time.Now(), true}
 
 	likedPost, err := l.Queries.DeleteLikedPostByID(ctx, db.DeleteLikedPostByIDParams{

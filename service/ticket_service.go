@@ -39,10 +39,11 @@ func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoI
 	pagination := util.ExtractPageInfo(pageInfoInput)
 
 	if validation.IsUser(user) {
-		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, &user.ID, int32(pagination.First), pagination.After)
+		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, uuid.NullUUID{user.ID, true}, int32(pagination.First), pagination.After)
 	}
 
-	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nil, int32(pagination.First), pagination.After)
+	var nullUUID uuid.NullUUID
+	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nullUUID, int32(pagination.First), pagination.After)
 }
 
 func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*model.TicketPermission, error) {
@@ -72,11 +73,11 @@ func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID u
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket db.Ticket) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForOpenTicket(user db.User, ticket db.Ticket) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin:
+	case db.UserRoleSuperAdmin:
 		permissions = append(
 			permissions,
 			&constants.NEW_MESSAGE,
@@ -84,37 +85,37 @@ func (s *Service) GetPermissionsForOpenTicket(user model.User, ticket db.Ticket)
 			&constants.APPROVE,
 			&constants.CLOSE,
 		)
-	case model.UserRoleAdmin:
-		if ticket.UserID.String() != user.ID {
+	case db.UserRoleAdmin:
+		if ticket.UserID != user.ID {
 			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.ACCEPT, &constants.CLOSE)
 		} else {
 			permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
 		}
-	case model.UserRoleUser:
+	case db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.CLOSE)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForClosedTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForClosedTicket(user db.User) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin, model.UserRoleAdmin:
+	case db.UserRoleSuperAdmin, db.UserRoleAdmin:
 		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.OPEN)
-	case model.UserRoleUser:
+	case db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForAcceptedTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForAcceptedTicket(user db.User) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin:
+	case db.UserRoleSuperAdmin:
 		permissions = append(
 			permissions,
 			&constants.NEW_MESSAGE,
@@ -122,42 +123,42 @@ func (s *Service) GetPermissionsForAcceptedTicket(user model.User) ([]*model.Tic
 			&constants.REJECT,
 			&constants.CLOSE,
 		)
-	case model.UserRoleAdmin, model.UserRoleUser:
+	case db.UserRoleAdmin, db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForApprovedTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForApprovedTicket(user db.User) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin:
+	case db.UserRoleSuperAdmin:
 		permissions = append(permissions, &constants.NEW_MESSAGE, &constants.SOLVE)
-	case model.UserRoleAdmin, model.UserRoleUser:
+	case db.UserRoleAdmin, db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForRejectedTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForRejectedTicket(user db.User) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin, model.UserRoleAdmin, model.UserRoleUser:
+	case db.UserRoleSuperAdmin, db.UserRoleAdmin, db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE)
 	}
 
 	return permissions, nil
 }
 
-func (s *Service) GetPermissionsForSolvedTicket(user model.User) ([]*model.TicketPermission, error) {
+func (s *Service) GetPermissionsForSolvedTicket(user db.User) ([]*model.TicketPermission, error) {
 	var permissions []*model.TicketPermission
 
 	switch user.Role {
-	case model.UserRoleSuperAdmin, model.UserRoleAdmin, model.UserRoleUser:
+	case db.UserRoleSuperAdmin, db.UserRoleAdmin, db.UserRoleUser:
 		permissions = append(permissions, &constants.NEW_MESSAGE)
 	}
 
@@ -170,16 +171,16 @@ func (s *Service) CloseTicket(ctx context.Context, ticket db.Ticket) (*db.Ticket
 	return closedTicket, nil
 }
 
-func (s *Service) OpenTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+func (s *Service) OpenTicket(ctx context.Context, user db.User, ticket db.Ticket) (*db.Ticket, error) {
 	openTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeOpen)
 	return openTicket, nil
 }
 
-func (s *Service) AcceptTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+func (s *Service) AcceptTicket(ctx context.Context, user db.User, ticket db.Ticket) (*db.Ticket, error) {
 	acceptedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeAccepted)
 
 	transactionCreditInfo, _ := s.TransferCreditFromAdmin(ctx, TransferCreditFromAdminParams{
-		ReceiverID:   ticket.UserID.String(),
+		ReceiverID:   ticket.UserID,
 		Status:       model.CreditTransactionStatusPending,
 		Type:         model.CreditTransactionTypeOrder,
 		TemplateName: db.CreditTransactionTemplateNameApproveTicket,
@@ -195,7 +196,7 @@ func (s *Service) AcceptTicket(ctx context.Context, user model.User, ticket db.T
 	return acceptedTicket, nil
 }
 
-func (s *Service) ApproveTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+func (s *Service) ApproveTicket(ctx context.Context, user db.User, ticket db.Ticket) (*db.Ticket, error) {
 	oldStatus := ticket.Status
 
 	if oldStatus != db.TicketStatusTypeAccepted {
@@ -203,10 +204,8 @@ func (s *Service) ApproveTicket(ctx context.Context, user model.User, ticket db.
 	}
 
 	approvedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeApproved)
-	// FIXME
 	creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ctx, ticket.ID)
 	creditTransactionInfo := db.CreditTransactionInfo{
-		// FIXME
 		ID:     creditTransactionDescriptionVariables.CreditTransactionInfoID,
 		Status: db.CreditTransactionStatusApproved,
 	}
@@ -219,14 +218,13 @@ func (s *Service) ApproveTicket(ctx context.Context, user model.User, ticket db.
 	return approvedTicket, nil
 }
 
-func (s *Service) RejectTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+func (s *Service) RejectTicket(ctx context.Context, user db.User, ticket db.Ticket) (*db.Ticket, error) {
 	oldStatus := ticket.Status
 	rejectedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeRejected)
 
 	if oldStatus == db.TicketStatusTypeAccepted {
 		creditTransactionDescriptionVariables, _ := s.CreditTransactionDescriptionVariables.GetCreditTransactionDescriptionVariableByContentID(ctx, ticket.ID)
 		creditTransactionInfo := db.CreditTransactionInfo{
-			// FIXME
 			ID:     creditTransactionDescriptionVariables.CreditTransactionInfoID,
 			Status: db.CreditTransactionStatusCanceled,
 		}
@@ -240,7 +238,7 @@ func (s *Service) RejectTicket(ctx context.Context, user model.User, ticket db.T
 	return rejectedTicket, nil
 }
 
-func (s *Service) SolveTicket(ctx context.Context, user model.User, ticket db.Ticket) (*db.Ticket, error) {
+func (s *Service) SolveTicket(ctx context.Context, user db.User, ticket db.Ticket) (*db.Ticket, error) {
 	solvedTicket, _ := s.Tickets.UpdateTicketStatus(ctx, ticket.ID, db.TicketStatusTypeSolved)
 	return solvedTicket, nil
 }

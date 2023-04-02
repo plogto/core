@@ -25,8 +25,8 @@ func (r *queryResolver) GetSavedPosts(ctx context.Context, pageInfoInput *model.
 }
 
 // User is the resolver for the user field.
-func (r *savedPostResolver) User(ctx context.Context, obj *db.SavedPost) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID.String())
+func (r *savedPostResolver) User(ctx context.Context, obj *db.SavedPost) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 // Post is the resolver for the post field.

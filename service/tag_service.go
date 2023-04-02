@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -29,8 +30,8 @@ func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error
 	return s.PostTags.GetTagsOrderByCountTags(ctx, limit)
 }
 
-func (s *Service) GetTagByID(ctx context.Context, id string) (*model.Tag, error) {
-	return graph.GetTagLoader(ctx).Load(id)
+func (s *Service) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
+	return graph.GetTagLoader(ctx).Load(id.String())
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {

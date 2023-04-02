@@ -19,7 +19,10 @@ WITH _count_wrapper AS (
 	FROM
 		tickets
 	WHERE
-		user_id = $3
+		(
+			user_id = $3
+			OR $3 IS NULL
+		)
 		AND updated_at < $1
 		AND deleted_at IS NULL
 	ORDER BY

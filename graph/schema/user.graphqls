@@ -20,7 +20,7 @@ enum PrimaryColor {
 }
 
 type User {
-  id: ID!
+  id: UUID!
   username: String!
   backgroundColor: BackgroundColor!
   primaryColor: PrimaryColor!

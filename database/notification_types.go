@@ -11,10 +11,8 @@ type NotificationTypes struct {
 	Queries *db.Queries
 }
 
-func (n *NotificationTypes) GetNotificationTypeByID(ctx context.Context, id string) (*db.NotificationType, error) {
-	// FIXME
-	ID, _ := uuid.Parse(id)
-	notificationType, err := n.Queries.GetNotificationTypeByID(ctx, ID)
+func (n *NotificationTypes) GetNotificationTypeByID(ctx context.Context, id uuid.UUID) (*db.NotificationType, error) {
+	notificationType, err := n.Queries.GetNotificationTypeByID(ctx, id)
 
 	if err != nil {
 		return nil, err

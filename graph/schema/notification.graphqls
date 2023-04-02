@@ -46,7 +46,3 @@ extend type Query {
 extend type Mutation {
   readNotifications: Boolean
 }
-
-extend type Subscription {
-  getNotification: NotificationsEdge
-}

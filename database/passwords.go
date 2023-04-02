@@ -11,10 +11,8 @@ type Passwords struct {
 	Queries *db.Queries
 }
 
-func (p *Passwords) GetPasswordByUserID(ctx context.Context, id string) (*db.Password, error) {
-	// FIXME
-	ID, _ := uuid.Parse(id)
-	password, err := p.Queries.GetPasswordByUserID(ctx, ID)
+func (p *Passwords) GetPasswordByUserID(ctx context.Context, id uuid.UUID) (*db.Password, error) {
+	password, err := p.Queries.GetPasswordByUserID(ctx, id)
 
 	if err != nil {
 		return nil, err

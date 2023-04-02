@@ -34,10 +34,8 @@ func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNot
 	return newNotification, nil
 }
 
-func (n *Notifications) GetNotificationByID(ctx context.Context, id string) (*db.Notification, error) {
-	// FIXME
-	ID, _ := uuid.Parse(id)
-	notification, err := n.Queries.GetNotificationByID(ctx, ID)
+func (n *Notifications) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
+	notification, err := n.Queries.GetNotificationByID(ctx, id)
 
 	if err != nil {
 		return nil, err
@@ -46,22 +44,20 @@ func (n *Notifications) GetNotificationByID(ctx context.Context, id string) (*db
 	return notification, nil
 }
 
-func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID string, limit int32, after string) (*model.Notifications, error) {
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID uuid.UUID, limit int32, after string) (*model.Notifications, error) {
 	var edges []*model.NotificationsEdge
 	var endCursor string
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
-	// FIXME
-	ReceiverID, _ := uuid.Parse(receiverID)
 
 	notifications, err := n.Queries.GetNotificationsByReceiverIDAndPageInfo(ctx, db.GetNotificationsByReceiverIDAndPageInfoParams{
 		Limit:      limit,
-		ReceiverID: ReceiverID,
+		ReceiverID: receiverID,
 		CreatedAt:  createdAt,
 	})
 
 	totalCount, _ := n.Queries.CountNotificationsByReceiverIDAndPageInfo(ctx, db.CountNotificationsByReceiverIDAndPageInfoParams{
-		ReceiverID: ReceiverID,
+		ReceiverID: receiverID,
 		CreatedAt:  createdAt,
 	})
 
@@ -94,10 +90,8 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Cont
 	}, err
 }
 
-func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID string) (int64, error) {
-	// FIXME
-	ReceiverID, _ := uuid.Parse(receiverID)
-	count, err := n.Queries.CountUnreadNotificationsByReceiverID(ctx, ReceiverID)
+func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID uuid.UUID) (int64, error) {
+	count, err := n.Queries.CountUnreadNotificationsByReceiverID(ctx, receiverID)
 
 	if err != nil {
 		return 0, err
@@ -106,10 +100,8 @@ func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context
 	return count, nil
 }
 
-func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID string) (bool, error) {
-	// FIXME
-	ReceiverID, _ := uuid.Parse(receiverID)
-	_, err := n.Queries.UpdateReadNotifications(ctx, ReceiverID)
+func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID uuid.UUID) (bool, error) {
+	_, err := n.Queries.UpdateReadNotifications(ctx, receiverID)
 
 	if err != nil {
 		return false, err
@@ -124,10 +116,8 @@ func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNot
 	return notification, err
 }
 
-func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID string) ([]*db.Notification, error) {
-	// FIXME
-	tempPostID, _ := uuid.Parse(postID)
-	PostID := uuid.NullUUID{tempPostID, true}
+func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.Notification, error) {
+	PostID := uuid.NullUUID{postID, true}
 	DeletedAt := sql.NullTime{time.Now(), true}
 
 	notifications, err := n.Queries.RemovePostNotificationsByPostID(ctx, db.RemovePostNotificationsByPostIDParams{

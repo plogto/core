@@ -42,7 +42,7 @@ func (f *Files) GetFilesByTicketMessageID(ctx context.Context, ticketMessageID u
 }
 
 func (f *Files) GetFileByHash(ctx context.Context, hash string) (*db.File, error) {
-	// FIXME: use dataloader
+	// TODO: use dataloader
 	file, err := f.Queries.GetFileByHash(ctx, hash)
 
 	if err != nil {
@@ -53,7 +53,7 @@ func (f *Files) GetFileByHash(ctx context.Context, hash string) (*db.File, error
 }
 
 func (f *Files) GetFileByName(ctx context.Context, name string) (*db.File, error) {
-	// FIXME: use dataloader
+	// TODO: use dataloader
 	file, err := f.Queries.GetFileByName(ctx, name)
 
 	if err != nil {
@@ -64,7 +64,7 @@ func (f *Files) GetFileByName(ctx context.Context, name string) (*db.File, error
 }
 
 func (f *Files) GetFileByID(ctx context.Context, id uuid.UUID) (*db.File, error) {
-	// FIXME: use dataloader
+	// TODO: use dataloader
 	file, err := f.Queries.GetFileByID(ctx, id)
 
 	if err != nil {

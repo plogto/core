@@ -7,6 +7,7 @@ package graph
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -14,8 +15,8 @@ import (
 )
 
 // User is the resolver for the user field.
-func (r *likedPostResolver) User(ctx context.Context, obj *db.LikedPost) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.UserID.String())
+func (r *likedPostResolver) User(ctx context.Context, obj *db.LikedPost) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 // Post is the resolver for the post field.
@@ -40,12 +41,12 @@ func (r *likedPostsEdgeResolver) Node(ctx context.Context, obj *model.LikedPosts
 }
 
 // LikePost is the resolver for the likePost field.
-func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*db.LikedPost, error) {
+func (r *mutationResolver) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error) {
 	return r.Service.LikePost(ctx, postID)
 }
 
 // GetLikedPostsByPostID is the resolver for the getLikedPostsByPostId field.
-func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error) {
+func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID, pageInfo *model.PageInfoInput) (*model.LikedPosts, error) {
 	return r.Service.GetLikedPostsByPostID(ctx, postID)
 }
 

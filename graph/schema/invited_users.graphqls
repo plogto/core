@@ -1,5 +1,5 @@
 type InvitedUser {
-  id: ID!
+  id: UUID!
   inviter: User!
   invitee: User!
   createdAt: Time
@@ -12,7 +12,7 @@ type InvitedUsersEdge {
 }
 
 type InvitedUsers {
-  totalCount: Int
+  totalCount: TotalCount!
   edges: [InvitedUsersEdge]!
   pageInfo: PageInfo!
 }

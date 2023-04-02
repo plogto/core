@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
@@ -31,9 +30,6 @@ type Service struct {
 	TicketMessages                        database.TicketMessages
 	Tickets                               database.Tickets
 	Users                                 database.Users
-	OnlineUsers                           database.OnlineUsers
-	OnlineNotifications                   map[string]chan *model.NotificationsEdge
-	mu                                    sync.Mutex
 }
 
 func New(service Service) *Service {
@@ -59,8 +55,6 @@ func New(service Service) *Service {
 		TicketMessages:                        service.TicketMessages,
 		Tickets:                               service.Tickets,
 		Users:                                 service.Users,
-		OnlineUsers:                           service.OnlineUsers,
-		OnlineNotifications:                   map[string]chan *model.NotificationsEdge{},
 	}
 }
 

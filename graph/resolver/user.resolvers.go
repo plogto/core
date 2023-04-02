@@ -7,15 +7,15 @@ package graph
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/validation"
 )
 
 // EditUser is the resolver for the editUser field.
-func (r *mutationResolver) EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error) {
+func (r *mutationResolver) EditUser(ctx context.Context, input model.EditUserInput) (*db.User, error) {
 	return r.Service.EditUser(ctx, input)
 }
 
@@ -25,88 +25,104 @@ func (r *mutationResolver) ChangePassword(ctx context.Context, input model.Chang
 }
 
 // GetUserInfo is the resolver for the getUserInfo field.
-func (r *queryResolver) GetUserInfo(ctx context.Context) (*model.User, error) {
+func (r *queryResolver) GetUserInfo(ctx context.Context) (*db.User, error) {
 	return r.Service.GetUserInfo(ctx)
 }
 
 // GetUserByUsername is the resolver for the getUserByUsername field.
-func (r *queryResolver) GetUserByUsername(ctx context.Context, username string) (*model.User, error) {
+func (r *queryResolver) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
 	return r.Service.GetUserByUsername(ctx, username)
 }
 
 // GetUserByInvitationCode is the resolver for the getUserByInvitationCode field.
-func (r *queryResolver) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error) {
+func (r *queryResolver) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
 	return r.Service.GetUserByInvitationCode(ctx, invitationCode)
 }
 
 // CheckUsername is the resolver for the checkUsername field.
-func (r *queryResolver) CheckUsername(ctx context.Context, username string) (*model.User, error) {
+func (r *queryResolver) CheckUsername(ctx context.Context, username string) (*db.User, error) {
 	return r.Service.CheckUsername(ctx, username)
 }
 
 // CheckEmail is the resolver for the checkEmail field.
-func (r *queryResolver) CheckEmail(ctx context.Context, email string) (*model.User, error) {
+func (r *queryResolver) CheckEmail(ctx context.Context, email string) (*db.User, error) {
 	return r.Service.CheckEmail(ctx, email)
 }
 
+// BackgroundColor is the resolver for the backgroundColor field.
+func (r *userResolver) BackgroundColor(ctx context.Context, obj *db.User) (model.BackgroundColor, error) {
+	return model.BackgroundColor(obj.BackgroundColor), nil
+}
+
+// PrimaryColor is the resolver for the primaryColor field.
+func (r *userResolver) PrimaryColor(ctx context.Context, obj *db.User) (model.PrimaryColor, error) {
+	return model.PrimaryColor(obj.PrimaryColor), nil
+}
+
 // Avatar is the resolver for the avatar field.
-func (r *userResolver) Avatar(ctx context.Context, obj *model.User) (*db.File, error) {
-	if obj.Avatar != nil {
-		fileID, _ := uuid.Parse(*obj.Avatar)
-		return r.Service.GetFileByFileId(ctx, fileID)
+func (r *userResolver) Avatar(ctx context.Context, obj *db.User) (*db.File, error) {
+	if obj.Avatar.Valid {
+		return r.Service.GetFileByFileId(ctx, obj.Avatar.UUID)
 	} else {
 		return nil, nil
 	}
 }
 
 // Background is the resolver for the background field.
-func (r *userResolver) Background(ctx context.Context, obj *model.User) (*db.File, error) {
-	if obj.Background != nil {
-		fileID, _ := uuid.Parse(*obj.Background)
-		return r.Service.GetFileByFileId(ctx, fileID)
+func (r *userResolver) Background(ctx context.Context, obj *db.User) (*db.File, error) {
+	if obj.Background.Valid {
+		return r.Service.GetFileByFileId(ctx, obj.Background.UUID)
 	} else {
 		return nil, nil
 	}
 }
 
+// Bio is the resolver for the bio field.
+func (r *userResolver) Bio(ctx context.Context, obj *db.User) (*string, error) {
+	return &obj.Bio.String, nil
+}
+
+// Role is the resolver for the role field.
+func (r *userResolver) Role(ctx context.Context, obj *db.User) (model.UserRole, error) {
+	return model.UserRole(obj.Role), nil
+}
+
 // Credits is the resolver for the credits field.
-func (r *userResolver) Credits(ctx context.Context, obj *model.User) (float64, error) {
-	// FIXME
-	if obj == nil {
+func (r *userResolver) Credits(ctx context.Context, obj *db.User) (float64, error) {
+	if !validation.IsUserExists(obj) {
 		return 0, nil
 	} else {
-		userID, _ := uuid.Parse(obj.ID)
-		return r.Service.GetCreditsByUserID(ctx, userID)
+		return r.Service.GetCreditsByUserID(ctx, obj.ID)
 	}
 }
 
 // ConnectionStatus is the resolver for the connectionStatus field.
-func (r *userResolver) ConnectionStatus(ctx context.Context, obj *model.User) (*int, error) {
+func (r *userResolver) ConnectionStatus(ctx context.Context, obj *db.User) (*int, error) {
 	return r.Service.GetConnectionStatus(ctx, obj.ID)
 }
 
 // FollowingCount is the resolver for the followingCount field.
-func (r *userResolver) FollowingCount(ctx context.Context, obj *model.User) (int64, error) {
+func (r *userResolver) FollowingCount(ctx context.Context, obj *db.User) (int64, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, constants.Following)
 }
 
 // FollowersCount is the resolver for the followersCount field.
-func (r *userResolver) FollowersCount(ctx context.Context, obj *model.User) (int64, error) {
+func (r *userResolver) FollowersCount(ctx context.Context, obj *db.User) (int64, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, constants.Followers)
 }
 
 // FollowRequestsCount is the resolver for the followRequestsCount field.
-func (r *userResolver) FollowRequestsCount(ctx context.Context, obj *model.User) (int64, error) {
+func (r *userResolver) FollowRequestsCount(ctx context.Context, obj *db.User) (int64, error) {
 	return r.Service.GetConnectionCount(ctx, obj.ID, constants.Requests)
 }
 
 // PostsCount is the resolver for the postsCount field.
-func (r *userResolver) PostsCount(ctx context.Context, obj *model.User) (int64, error) {
+func (r *userResolver) PostsCount(ctx context.Context, obj *db.User) (int64, error) {
 	return r.Service.GetPostsCount(ctx, obj.ID)
 }
 
 // Node is the resolver for the node field.
-func (r *usersEdgeResolver) Node(ctx context.Context, obj *model.UsersEdge) (*model.User, error) {
+func (r *usersEdgeResolver) Node(ctx context.Context, obj *model.UsersEdge) (*db.User, error) {
 	return r.Service.GetUserByID(ctx, obj.Node.ID)
 }
 

@@ -20,17 +20,17 @@ func (r *mutationResolver) ReadNotifications(ctx context.Context) (*bool, error)
 
 // NotificationType is the resolver for the notificationType field.
 func (r *notificationResolver) NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error) {
-	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID.String())
+	return r.Service.GetNotificationType(ctx, obj.NotificationTypeID)
 }
 
 // Sender is the resolver for the sender field.
-func (r *notificationResolver) Sender(ctx context.Context, obj *db.Notification) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.SenderID.String())
+func (r *notificationResolver) Sender(ctx context.Context, obj *db.Notification) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.SenderID)
 }
 
 // Receiver is the resolver for the receiver field.
-func (r *notificationResolver) Receiver(ctx context.Context, obj *db.Notification) (*model.User, error) {
-	return r.Service.GetUserByID(ctx, obj.ReceiverID.String())
+func (r *notificationResolver) Receiver(ctx context.Context, obj *db.Notification) (*db.User, error) {
+	return r.Service.GetUserByID(ctx, obj.ReceiverID)
 }
 
 // Post is the resolver for the post field.
@@ -65,17 +65,12 @@ func (r *notificationsEdgeResolver) Cursor(ctx context.Context, obj *model.Notif
 
 // Node is the resolver for the node field.
 func (r *notificationsEdgeResolver) Node(ctx context.Context, obj *model.NotificationsEdge) (*db.Notification, error) {
-	return r.Service.GetNotificationByID(ctx, obj.Node.ID.String())
+	return r.Service.GetNotificationByID(ctx, obj.Node.ID)
 }
 
 // GetNotifications is the resolver for the getNotifications field.
 func (r *queryResolver) GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error) {
 	return r.Service.GetNotifications(ctx, pageInfoInput)
-}
-
-// GetNotification is the resolver for the getNotification field.
-func (r *subscriptionResolver) GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error) {
-	return r.Service.GetNotification(ctx)
 }
 
 // Notification returns generated.NotificationResolver implementation.

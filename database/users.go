@@ -1,67 +1,99 @@
 package database
 
 import (
-	"fmt"
-	"strings"
+	"context"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 type Users struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (u *Users) GetUserByField(field, value string) (*model.User, error) {
-	var user model.User
-	value = strings.ToLower(value)
-	err := u.DB.Model(&user).Where(fmt.Sprintf("lower(%v) = lower(?)", field), value).Where("deleted_at is ?", nil).First()
+func (u *Users) CreateUser(ctx context.Context, email, fullName string) (*db.User, error) {
+	newUser := db.CreateUserParams{
+		Email:          email,
+		FullName:       fullName,
+		Username:       util.RandomString(15),
+		InvitationCode: util.RandomString(7),
+	}
 
-	return &user, err
+	user, err := u.Queries.CreateUser(ctx, newUser)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUserByID(id string) (*model.User, error) {
-	var user model.User
-	err := u.DB.Model(&user).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+func (u *Users) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
+	user, err := u.Queries.GetUserByID(ctx, id)
 
-	return &user, err
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUserByInvitationCode(invitationCode string) (*model.User, error) {
-	return u.GetUserByField("invitation_code", invitationCode)
+func (u *Users) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
+	user, err := u.Queries.GetUserByInvitationCode(ctx, invitationCode)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUserByEmail(email string) (*model.User, error) {
-	return u.GetUserByField("email", email)
+func (u *Users) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+	user, err := u.Queries.GetUserByEmail(ctx, email)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUserByUsername(username string) (*model.User, error) {
-	return u.GetUserByField("username", username)
+func (u *Users) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
+	user, err := u.Queries.GetUserByUsername(ctx, username)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUserByUsernameOrEmail(value string) (*model.User, error) {
-	var user model.User
-	value = strings.ToLower(value)
-	err := u.DB.Model(&user).Where("lower(username) = lower(?)", value).WhereOr("lower(email) = lower(?)", value).Where("deleted_at is ?", nil).First()
+func (u *Users) GetUserByUsernameOrEmail(ctx context.Context, value string) (*db.User, error) {
+	user, err := u.Queries.GetUserByUsernameOrEmail(ctx, value)
 
-	return &user, err
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
-func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(value string, limit int) (*model.Users, error) {
-	var users []*model.User
+func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(ctx context.Context, value string, limit int32) (*model.Users, error) {
 	var edges []*model.UsersEdge
 
-	value = strings.ToLower(value)
+	users, err := u.Queries.GetUsersByUsernameOrFullNameAndPageInfo(ctx, db.GetUsersByUsernameOrFullNameAndPageInfoParams{
+		Lower: value,
+		Limit: limit,
+	})
 
-	err := u.DB.Model(&users).
-		Where("lower(username) LIKE lower(?)", value).
-		WhereOr("lower(full_name) LIKE lower(?)", value).
-		Where("deleted_at is ?", nil).
-		Limit(limit).
-		Select()
+	if err != nil {
+		return nil, err
+	}
 
 	for _, value := range users {
-		edges = append(edges, &model.UsersEdge{Node: &model.User{
+		edges = append(edges, &model.UsersEdge{Node: &db.User{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -72,14 +104,23 @@ func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(value string, limit int)
 	}, err
 }
 
-func (u *Users) CreateUser(user *model.User) (*model.User, error) {
-	_, err := u.DB.Model(user).Returning("*").Insert()
+func (u *Users) UpdateUser(ctx context.Context, user *db.User) (*db.User, error) {
+	user, err := u.Queries.UpdateUser(ctx, db.UpdateUserParams{
+		ID:              user.ID,
+		Username:        user.Username,
+		Email:           user.Email,
+		Bio:             user.Bio,
+		FullName:        user.FullName,
+		Background:      user.Background,
+		Avatar:          user.Avatar,
+		BackgroundColor: user.BackgroundColor,
+		PrimaryColor:    user.PrimaryColor,
+		IsPrivate:       user.IsPrivate,
+	})
 
-	return user, err
-}
-
-func (u *Users) UpdateUser(user *model.User) (*model.User, error) {
-	_, err := u.DB.Model(user).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+	if err != nil {
+		return nil, err
+	}
 
 	return user, err
 }
