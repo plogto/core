@@ -12,31 +12,19 @@ type CreditTransactionInfos struct {
 }
 
 func (c *CreditTransactionInfos) CreateCreditTransactionInfo(ctx context.Context, arg db.CreateCreditTransactionInfoParams) (*db.CreditTransactionInfo, error) {
-	creditTransactionInfo, err := c.Queries.CreateCreditTransactionInfo(ctx, arg)
+	creditTransactionInfo, _ := c.Queries.CreateCreditTransactionInfo(ctx, arg)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransactionInfo, err
+	return creditTransactionInfo, nil
 }
 
 func (c *CreditTransactionInfos) GetCreditTransactionInfoByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionInfo, error) {
-	creditTransactionInfo, err := c.Queries.GetCreditTransactionInfoByID(ctx, id)
+	creditTransactionInfo, _ := c.Queries.GetCreditTransactionInfoByID(ctx, id)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransactionInfo, err
+	return creditTransactionInfo, nil
 }
 
 func (c *CreditTransactionInfos) UpdateCreditTransactionInfoStatus(ctx context.Context, arg db.UpdateCreditTransactionInfoStatusParams) (*db.CreditTransactionInfo, error) {
-	creditTransactionInfo, err := c.Queries.UpdateCreditTransactionInfoStatus(ctx, arg)
+	creditTransactionInfo, _ := c.Queries.UpdateCreditTransactionInfoStatus(ctx, arg)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransactionInfo, err
+	return creditTransactionInfo, nil
 }

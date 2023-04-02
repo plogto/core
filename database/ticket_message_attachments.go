@@ -12,14 +12,10 @@ type TicketMessageAttachments struct {
 }
 
 func (t *TicketMessageAttachments) CreateTicketMessageAttachment(ctx context.Context, ticketMessageID, fileID uuid.UUID) (*db.TicketMessageAttachment, error) {
-	ticketMessageAttachment, err := t.Queries.CreateTicketMessageAttachment(ctx, db.CreateTicketMessageAttachmentParams{
+	ticketMessageAttachment, _ := t.Queries.CreateTicketMessageAttachment(ctx, db.CreateTicketMessageAttachmentParams{
 		TicketMessageID: ticketMessageID,
 		FileID:          fileID,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return ticketMessageAttachment, nil
 }

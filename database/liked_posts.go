@@ -34,11 +34,7 @@ func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID uuid.UU
 }
 
 func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
-	likedPost, err := l.Queries.GetLikedPostByID(ctx, id)
-
-	if err != nil {
-		return nil, err
-	}
+	likedPost, _ := l.Queries.GetLikedPostByID(ctx, id)
 
 	return likedPost, nil
 }
@@ -49,7 +45,7 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	likedPosts, err := l.Queries.GetLikedPostsByPostIDAndPageInfo(ctx, db.GetLikedPostsByPostIDAndPageInfoParams{
+	likedPosts, _ := l.Queries.GetLikedPostsByPostIDAndPageInfo(ctx, db.GetLikedPostsByPostIDAndPageInfoParams{
 		PostID:    postID,
 		Limit:     limit,
 		CreatedAt: createdAt,
@@ -80,18 +76,14 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 		PageInfo: &model.PageInfo{
 			EndCursor: endCursor,
 		},
-	}, err
+	}, nil
 }
 
 func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
-	likedPost, err := l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+	likedPost, _ := l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return likedPost, nil
 }
@@ -102,7 +94,7 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	likedPosts, err := l.Queries.GetLikedPostsByUserIDAndPageInfo(ctx, db.GetLikedPostsByUserIDAndPageInfoParams{
+	likedPosts, _ := l.Queries.GetLikedPostsByUserIDAndPageInfo(ctx, db.GetLikedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
 		Limit:     limit,
 		CreatedAt: createdAt,
@@ -139,19 +131,16 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
 func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
-	likedPost, err := l.Queries.DeleteLikedPostByID(ctx, db.DeleteLikedPostByIDParams{
+	likedPost, _ := l.Queries.DeleteLikedPostByID(ctx, db.DeleteLikedPostByIDParams{
 		ID:        id,
 		DeletedAt: DeletedAt,
 	})
 
-	if err != nil {
-		return nil, err
-	}
 	return likedPost, nil
 }

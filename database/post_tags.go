@@ -18,14 +18,10 @@ func (p *PostTags) CreatePostTag(ctx context.Context, tagID, postID string) (*db
 	TagID, _ := uuid.Parse(tagID)
 	PostID, _ := uuid.Parse(postID)
 
-	postTag, err := p.Queries.CreatePostTag(ctx, db.CreatePostTagParams{
+	postTag, _ := p.Queries.CreatePostTag(ctx, db.CreatePostTagParams{
 		TagID:  TagID,
 		PostID: PostID,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return postTag, nil
 }
@@ -34,7 +30,7 @@ func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int) (*mod
 	var edges []*model.TagsEdge
 
 	Limit := int32(limit)
-	tags, err := p.Queries.GetTagsOrderByCountTags(ctx, Limit)
+	tags, _ := p.Queries.GetTagsOrderByCountTags(ctx, Limit)
 
 	for _, value := range tags {
 		edges = append(edges, &model.TagsEdge{Node: &model.Tag{
@@ -46,32 +42,24 @@ func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int) (*mod
 
 	return &model.Tags{
 		Edges: edges,
-	}, err
+	}, nil
 }
 
 func (p *PostTags) CountPostTagsByTagID(ctx context.Context, tagID string) (int64, error) {
 	TagID, _ := uuid.Parse(tagID)
-	totalCount, err := p.Queries.CountPostTagsByTagID(ctx, TagID)
+	totalCount, _ := p.Queries.CountPostTagsByTagID(ctx, TagID)
 
-	if err != nil {
-		return 0, err
-	}
-
-	return totalCount, err
+	return totalCount, nil
 }
 
 func (p *PostTags) DeletePostTagsByPostID(ctx context.Context, postID string) ([]*db.PostTag, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
 	PostID, _ := uuid.Parse(postID)
-	postTags, err := p.Queries.DeletePostTagsByPostID(ctx, db.DeletePostTagsByPostIDParams{
+	postTags, _ := p.Queries.DeletePostTagsByPostID(ctx, db.DeletePostTagsByPostIDParams{
 		PostID:    PostID,
 		DeletedAt: DeletedAt,
 	})
-
-	if err != nil {
-		return nil, err
-	}
 
 	return postTags, nil
 }

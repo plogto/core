@@ -33,20 +33,12 @@ func (t *Tags) CreateTag(ctx context.Context, name string) (*model.Tag, error) {
 }
 
 func (t *Tags) GetTagByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.Tag, error) {
-	tags, err := t.Queries.GetTagByIDs(ctx, ids)
-
-	if err != nil {
-		return nil, err
-	}
+	tags, _ := t.Queries.GetTagByIDs(ctx, ids)
 
 	return convertor.DBTagsToModel(tags), nil
 }
 func (t *Tags) GetTagByName(ctx context.Context, name string) (*model.Tag, error) {
-	tag, err := t.Queries.GetTagByName(ctx, name)
-
-	if err != nil {
-		return nil, err
-	}
+	tag, _ := t.Queries.GetTagByName(ctx, name)
 
 	return &model.Tag{
 		ID:   tag.ID,
@@ -60,7 +52,7 @@ func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, lim
 	name = strings.ToLower(name)
 
 	Limit := int32(limit)
-	tags, err := t.Queries.GetTagsByTagNameAndPageInfo(ctx, db.GetTagsByTagNameAndPageInfoParams{
+	tags, _ := t.Queries.GetTagsByTagNameAndPageInfo(ctx, db.GetTagsByTagNameAndPageInfoParams{
 		Name:  name,
 		Limit: Limit,
 	})
@@ -75,5 +67,5 @@ func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, lim
 
 	return &model.Tags{
 		Edges: edges,
-	}, err
+	}, nil
 }

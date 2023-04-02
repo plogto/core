@@ -15,43 +15,27 @@ type CreditTransactions struct {
 }
 
 func (c *CreditTransactions) CreateCreditTransaction(ctx context.Context, arg db.CreateCreditTransactionParams) (*db.CreditTransaction, error) {
-	creditTransaction, err := c.Queries.CreateCreditTransaction(ctx, arg)
+	creditTransaction, _ := c.Queries.CreateCreditTransaction(ctx, arg)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransaction, err
+	return creditTransaction, nil
 }
 
 func (c *CreditTransactions) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*db.CreditTransaction, error) {
-	creditTransaction, err := c.Queries.GetCreditTransactionByID(ctx, id)
+	creditTransaction, _ := c.Queries.GetCreditTransactionByID(ctx, id)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransaction, err
+	return creditTransaction, nil
 }
 
 func (c *CreditTransactions) GetCreditTransactionByUrl(ctx context.Context, url string) (*db.CreditTransaction, error) {
-	creditTransaction, err := c.Queries.GetCreditTransactionByUrl(ctx, url)
+	creditTransaction, _ := c.Queries.GetCreditTransactionByUrl(ctx, url)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransaction, err
+	return creditTransaction, nil
 }
 
 func (c *CreditTransactions) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
-	amount, err := c.Queries.GetCreditsByUserID(ctx, userID)
+	amount, _ := c.Queries.GetCreditsByUserID(ctx, userID)
 
-	if err != nil {
-		return 0, err
-	}
-
-	return float64(amount), err
+	return float64(amount), nil
 }
 
 func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.CreditTransactions, error) {
@@ -60,7 +44,7 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx contex
 
 	createdAt, _ := time.Parse(time.RFC3339, after)
 
-	creditTransactions, err := c.Queries.GetCreditTransactionsByUserIDAndPageInfo(ctx, db.GetCreditTransactionsByUserIDAndPageInfoParams{
+	creditTransactions, _ := c.Queries.GetCreditTransactionsByUserIDAndPageInfo(ctx, db.GetCreditTransactionsByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		CreatedAt: createdAt,
@@ -94,5 +78,5 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx contex
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }

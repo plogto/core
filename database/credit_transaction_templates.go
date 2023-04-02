@@ -12,22 +12,14 @@ type CreditTransactionTemplates struct {
 }
 
 func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionTemplate, error) {
-	creditTransactionTemplate, err := c.Queries.GetCreditTransactionTemplateByID(ctx, id)
+	creditTransactionTemplate, _ := c.Queries.GetCreditTransactionTemplateByID(ctx, id)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransactionTemplate, err
+	return creditTransactionTemplate, nil
 }
 
 func (c *CreditTransactionTemplates) GetCreditTransactionTemplateByName(ctx context.Context, name db.CreditTransactionTemplateName) (*db.CreditTransactionTemplate, error) {
-	creditTransactionTemplate, err := c.Queries.GetCreditTransactionTemplateByName(ctx, name)
+	creditTransactionTemplate, _ := c.Queries.GetCreditTransactionTemplateByName(ctx, name)
 
-	if err != nil {
-		return nil, err
-	}
-
-	return creditTransactionTemplate, err
+	return creditTransactionTemplate, nil
 
 }
