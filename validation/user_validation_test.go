@@ -7,13 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type UserTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 func TestIsUserExists(t *testing.T) {
-	var testData = []UserTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsUserExists(nil),
@@ -37,7 +32,7 @@ func TestIsUserExists(t *testing.T) {
 }
 
 func TestIsSuperAdmin(t *testing.T) {
-	var testData = []UserTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsSuperAdmin(nil),
@@ -66,7 +61,7 @@ func TestIsSuperAdmin(t *testing.T) {
 }
 
 func TestIsAdmin(t *testing.T) {
-	var testData = []UserTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsAdmin(nil),
@@ -95,7 +90,7 @@ func TestIsAdmin(t *testing.T) {
 }
 
 func TestIsUser(t *testing.T) {
-	var testData = []UserTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsUser(nil),

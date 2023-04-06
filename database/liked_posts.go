@@ -1,43 +1,57 @@
 package database
 
 import (
+	"context"
+	"database/sql"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type LikedPosts struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (l *LikedPosts) CreateLikedPost(likedPost *model.LikedPost) (*model.LikedPost, error) {
-	_, err := l.DB.Model(likedPost).
-		Where("user_id = ?user_id").
-		Where("post_id = ?post_id").
-		Where("deleted_at is ?", nil).
-		SelectOrInsert()
+func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
+	likedPost, _ := util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+		UserID: userID,
+		PostID: postID,
+	}))
 
-	return likedPost, err
+	if likedPost != nil {
+		return likedPost, nil
+	}
+
+	return util.HandleDBResponse(l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
+		UserID: userID,
+		PostID: postID,
+	}))
 }
 
-func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(postID string, limit int, after string) (*model.LikedPosts, error) {
-	var posts []*model.LikedPost
+func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
+	return util.HandleDBResponse(l.Queries.GetLikedPostByID(ctx, id))
+}
+
+func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
-	query := l.DB.Model(&posts).Where("post_id = ?", postID).Where("deleted_at is ?", nil).Order("created_at DESC").Returning("*")
-	query.Limit(limit)
+	likedPosts, _ := l.Queries.GetLikedPostsByPostIDAndPageInfo(ctx, db.GetLikedPostsByPostIDAndPageInfoParams{
+		PostID:    postID,
+		Limit:     limit,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("created_at < ?", after)
-	}
+	totalCount, _ := l.Queries.CountLikedPostsByPostIDAndPageInfo(ctx, db.CountLikedPostsByPostIDAndPageInfoParams{
+		PostID:    postID,
+		CreatedAt: after,
+	})
 
-	totalCount, err := query.SelectAndCount()
-
-	for _, value := range posts {
-		edges = append(edges, &model.LikedPostsEdge{Node: &model.LikedPost{
+	for _, value := range likedPosts {
+		edges = append(edges, &model.LikedPostsEdge{Node: &db.LikedPost{
 			ID:        value.ID,
 			UserID:    value.UserID,
 			PostID:    value.PostID,
@@ -46,56 +60,43 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(postID string, limit int, 
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	return &model.LikedPosts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor: endCursor,
 		},
-	}, err
+	}, nil
+}
+
+func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
+	return util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+		UserID: userID,
+		PostID: postID,
+	}))
 
 }
 
-func (l *LikedPosts) GetLikedPostByUserIDAndPostID(userID, postID string) (*model.LikedPost, error) {
-	var likedPost model.LikedPost
-	err := l.DB.Model(&likedPost).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
-
-	return &likedPost, err
-}
-
-func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(userID string, limit int, after string) (*model.LikedPosts, error) {
-	var likedPosts []*model.LikedPost
+func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
-	query := l.DB.Model(&likedPosts).
-		Join("INNER JOIN posts ON posts.id = liked_post.post_id").
-		Join("INNER JOIN users ON users.id = posts.user_id").
-		Join("INNER JOIN connections ON connections.following_id = posts.user_id").
-		Where("liked_post.user_id = ?", userID).
-		Where("liked_post.deleted_at is ?", nil).
-		Where("posts.deleted_at is ?", nil).
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("users.id = ?", userID).
-				WhereOr("connections.status = ?", 2).
-				WhereOr("users.is_private = ?", false)
-			return q, nil
-		}).
-		Where("connections.deleted_at is ?", nil).
-		GroupExpr("liked_post.id, posts.id")
+	likedPosts, _ := l.Queries.GetLikedPostsByUserIDAndPageInfo(ctx, db.GetLikedPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		Limit:     limit,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("liked_post.created_at < ?", after)
-	}
-
-	totalCount, err :=
-		query.Limit(limit).Order("liked_post.created_at DESC").SelectAndCount()
+	totalCount, _ := l.Queries.CountLikedPostsByUserIDAndPageInfo(ctx, db.CountLikedPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range likedPosts {
-		edges = append(edges, &model.LikedPostsEdge{Node: &model.LikedPost{
+		edges = append(edges, &model.LikedPostsEdge{Node: &db.LikedPost{
 			ID:        value.ID,
 			UserID:    value.UserID,
 			PostID:    value.PostID,
@@ -104,37 +105,31 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(userID string, limit int, 
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.LikedPosts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (l *LikedPosts) GetLikedPostByID(id string) (*model.LikedPost, error) {
-	var likedPost model.LikedPost
-	err := l.DB.Model(&likedPost).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-	return &likedPost, err
-}
-
-func (l *LikedPosts) DeleteLikedPostByID(id string) (*model.LikedPost, error) {
-	DeletedAt := time.Now()
-	var likedPost = &model.LikedPost{
+	likedPost, _ := l.Queries.DeleteLikedPostByID(ctx, db.DeleteLikedPostByIDParams{
 		ID:        id,
-		DeletedAt: &DeletedAt,
-	}
-	_, err := l.DB.Model(likedPost).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
-	return likedPost, err
+		DeletedAt: DeletedAt,
+	})
+
+	return likedPost, nil
 }

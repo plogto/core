@@ -1,5 +1,7 @@
 package util
 
-func PrepareKeyPattern(value string) string {
-	return "$$$___" + value + "___$$$"
+import "github.com/google/uuid"
+
+func PrepareKeyPattern(value uuid.UUID) string {
+	return "$$$___" + value.String() + "___$$$"
 }

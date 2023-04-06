@@ -1,52 +1,45 @@
 package database
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type Posts struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (p *Posts) GetPostByField(field string, value string) (*model.Post, error) {
-	var post model.Post
-	err := p.DB.Model(&post).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		First()
-
-	return &post, err
+func (p *Posts) CreatePost(ctx context.Context, arg db.CreatePostParams) (*db.Post, error) {
+	return util.HandleDBResponse(p.Queries.CreatePost(ctx, arg))
 }
 
-func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, limit int, after string) (*model.Posts, error) {
-	var posts []*model.Post
+func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
+	return util.HandleDBResponse(p.Queries.GetPostByURL(ctx, url))
+}
+
+func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	query := p.DB.Model(&posts).
-		Where("user_id = ?", userID).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC")
+	posts, _ := p.Queries.GetPostsByUserIDAndPageInfo(ctx, db.GetPostsByUserIDAndPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
-	if parentID != nil {
-		query.Where("parent_id = ?", parentID)
-	} else {
-		query.Where("parent_id is ?", parentID)
-	}
-
-	if len(after) > 0 {
-		query.Where("created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := p.Queries.CountPostsByUserIDAndPageInfo(ctx, db.CountPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
@@ -54,43 +47,41 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(userID string, parentID *string, lim
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(userID string, limit int, after string) (*model.Posts, error) {
-	var posts []*model.Post
+func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	query := p.DB.Model(&posts).
-		Where("user_id = ?", userID).
-		Where("deleted_at is ?", nil).
-		Where("parent_id is not ?", nil).
-		Order("created_at DESC")
+	posts, _ := p.Queries.GetPostsWithParentIDByUserIDAndPageInfo(ctx, db.GetPostsWithParentIDByUserIDAndPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := p.Queries.CountPostsWithParentIDByUserIDAndPageInfo(ctx, db.CountPostsWithParentIDByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
@@ -98,276 +89,203 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(userID string, limit int
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(userID *string, parentID string, limit int, after string) (*model.Posts, error) {
-	var followingPosts []*model.Post
-	var publicAndUserPosts []*model.Post
-	var posts []*model.Post
+func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	followingPostsQuery := p.DB.Model(&followingPosts).
-		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
-		Join("INNER JOIN users ON users.id = connections.following_id").
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("connections.status = ?", 2).
-				WhereOr("users.is_private = ?", false)
-			return q, nil
-		}).
-		Where("post.user_id = users.id").
-		Where("post.parent_id = ?", parentID).
-		Where("connections.deleted_at is ?", nil).
-		Where("post.deleted_at is ?", nil).
-		Order("post.created_at DESC")
+	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		ParentID:  uuid.NullUUID{parentID, true},
+		CreatedAt: after,
+	})
 
-	publicAndUserPostsQuery := p.DB.Model(&publicAndUserPosts).
-		Join("INNER JOIN users ON users.id = post.user_id").
-		Where("post.parent_id = ?", parentID).
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("post.user_id = ?", userID).
-				WhereOr("users.is_private = ?", false)
-			return q, nil
-		}).
-		Where("post.deleted_at is ?", nil)
-
-	publicAndUserPostsQuery.Union(followingPostsQuery)
-
-	query := p.DB.Model(&posts).With("posts", publicAndUserPostsQuery)
-
-	if len(after) > 0 {
-		query.Where("post.created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).Order("post.created_at DESC").SelectAndCount()
+	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
+		UserID:    userID,
+		ParentID:  uuid.NullUUID{parentID, true},
+		CreatedAt: after,
+	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor: endCursor,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetPostsByTagIDAndPageInfo(tagID string, limit int, after string) (*model.Posts, error) {
-	var posts []*model.Post
+func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	// TODO: extend this query for following users
-	query := p.DB.Model(&posts).
-		Join("INNER JOIN post_tags ON post_tags.tag_id = ?", tagID).
-		Join("INNER JOIN users ON users.id = post.user_id").
-		Where("post_tags.post_id = post.id").
-		Where("post.deleted_at is ?", nil).
-		Where("users.is_private is false").
-		Order("post.created_at DESC")
+	posts, _ := p.Queries.GetPostsByTagIDAndPageInfo(ctx, db.GetPostsByTagIDAndPageInfoParams{
+		Limit:     limit,
+		TagID:     tagID,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("post.created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := p.Queries.CountPostsByTagIDAndPageInfo(ctx, db.CountPostsByTagIDAndPageInfoParams{
+		TagID:     tagID,
+		CreatedAt: after,
+	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetTimelinePostsByPageInfo(userID string, limit int, after string) (*model.Posts, error) {
-	var followingPosts []*model.Post
-	var userPosts []*model.Post
-	var posts []*model.Post
+func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	followingPostsQuery := p.DB.Model(&followingPosts).
-		Join("INNER JOIN connections ON connections.follower_id = ?", userID).
-		Join("INNER JOIN users ON users.id = connections.following_id").
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("connections.status = ?", 2).
-				WhereOr("users.is_private = ?", false)
-			return q, nil
-		}).
-		Where("post.user_id = users.id").
-		Where("post.parent_id is ?", nil).
-		Where("connections.deleted_at is ?", nil).
-		Where("post.deleted_at is ?", nil).
-		Order("post.created_at DESC")
+	posts, _ := p.Queries.GetTimelinePostsByPageInfo(ctx, db.GetTimelinePostsByPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
-	userPostsQuery := p.DB.Model(&userPosts).
-		Where("post.user_id = ?", userID).
-		Where("post.parent_id is ?", nil).
-		Where("post.deleted_at is ?", nil)
-
-	userPostsQuery.Union(followingPostsQuery)
-
-	query := p.DB.Model(&posts).With("posts", userPostsQuery)
-
-	if len(after) > 0 {
-		query.Where("post.created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).Order("post.created_at DESC").SelectAndCount()
+	totalCount, _ := p.Queries.CountTimelinePostsByPageInfo(ctx, db.CountTimelinePostsByPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetExplorePostsByPageInfo(limit int, after string) (*model.Posts, error) {
-	var posts []*model.Post
+func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	query := p.DB.Model(&posts).
-		Join("INNER JOIN users ON users.id = post.user_id").
-		Join("INNER JOIN post_tags ON post_tags.post_id = post.id").
-		Where("post.parent_id is ?", nil).
-		Where("users.is_private = ?", false).
-		Where("post.deleted_at is ?", nil).
-		Where("post_tags.id is not ?", nil)
+	posts, _ := p.Queries.GetExplorePostsByPageInfo(ctx, db.GetExplorePostsByPageInfoParams{
+		Limit:     limit,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("post.created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).
-		Order("post.created_at DESC").
-		Group("post.id").
-		SelectAndCount()
+	totalCount, _ := p.Queries.CountExplorePostsByPageInfo(ctx, after)
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &model.Post{
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.Posts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (p *Posts) GetPostByID(id string) (*model.Post, error) {
-	return p.GetPostByField("id", id)
+func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
+	count, _ := p.Queries.CountPostsByUserID(ctx, userID)
+
+	return count, nil
 }
 
-func (p *Posts) GetPostByURL(url string) (*model.Post, error) {
-	return p.GetPostByField("url", url)
+func (p *Posts) UpdatePost(ctx context.Context, post *db.Post) (*db.Post, error) {
+	updatedPost, _ := p.Queries.UpdatePost(ctx, db.UpdatePostParams{
+		ID:      post.ID,
+		Content: post.Content,
+		Status:  post.Status,
+	})
+
+	return updatedPost, nil
 }
 
-func (p *Posts) CountPostsByUserID(userID string) (int, error) {
-	return p.DB.Model((*model.Post)(nil)).
-		Where("user_id = ?", userID).
-		Where("parent_id is ?", nil).
-		Where("deleted_at is ?", nil).
-		Count()
-}
+func (p *Posts) DeletePostByID(ctx context.Context, id uuid.UUID) (*db.Post, error) {
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-func (p *Posts) CreatePost(post *model.Post) (*model.Post, error) {
-	_, err := p.DB.Model(post).Returning("*").Insert()
-
-	return post, err
-}
-
-func (p *Posts) UpdatePost(post *model.Post) (*model.Post, error) {
-	_, err := p.DB.Model(post).WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
-
-	return post, err
-}
-
-func (p *Posts) DeletePostByID(id string) (*model.Post, error) {
-	DeletedAt := time.Now()
-	var post = &model.Post{
+	post, _ := p.Queries.DeletePostByID(ctx, db.DeletePostByIDParams{
 		ID:        id,
-		DeletedAt: &DeletedAt,
-	}
-	_, err := p.DB.Model(post).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+		DeletedAt: DeletedAt,
+	})
 
-	return post, err
+	return post, nil
 }

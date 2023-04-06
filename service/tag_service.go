@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -14,7 +15,7 @@ import (
 func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags, error) {
 	var limit = constants.TAGS_PAGE_LIMIT
 
-	return s.Tags.GetTagsByTagNameAndPageInfo(expression+"%", limit)
+	return s.Tags.GetTagsByTagNameAndPageInfo(ctx, expression+"%", limit)
 }
 
 func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
@@ -26,33 +27,26 @@ func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error
 		limit = *first
 	}
 
-	return s.PostTags.GetTagsOrderByCountTags(limit)
+	return s.PostTags.GetTagsOrderByCountTags(ctx, limit)
 }
 
-func (s *Service) GetTagByID(ctx context.Context, id string) (*model.Tag, error) {
-	return graph.GetTagLoader(ctx).Load(id)
+func (s *Service) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
+	return graph.GetTagLoader(ctx).Load(id.String())
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
-	return s.Tags.GetTagByName(tagName)
+	return s.Tags.GetTagByName(ctx, tagName)
 }
 
-func (s *Service) SaveTagsPost(postID, content string) {
+func (s *Service) SaveTagsPost(ctx context.Context, postID uuid.UUID, content string) {
 	r := regexp.MustCompile("#(\\w|_)+")
 	tags := r.FindAllString(content, -1)
 	for i, tag := range tags {
 		tags[i] = strings.TrimLeft(tag, "#")
 	}
 	for _, tagName := range util.UniqueSliceElement(tags) {
-		tag := &model.Tag{
-			Name: strings.ToLower(tagName),
-		}
-		s.Tags.CreateTag(tag)
+		tag, _ := s.Tags.CreateTag(ctx, strings.ToLower(tagName))
 
-		postTag := &model.PostTag{
-			TagID:  tag.ID,
-			PostID: postID,
-		}
-		s.PostTags.CreatePostTag(postTag)
+		s.PostTags.CreatePostTag(ctx, tag.ID, postID)
 	}
 }

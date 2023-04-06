@@ -1,5 +1,5 @@
 type SavedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -12,8 +12,8 @@ type SavedPostsEdge {
 }
 
 type SavedPosts {
-  totalCount: Int
-  edges: [SavedPostsEdge]
+  totalCount: TotalCount!
+  edges: [SavedPostsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -22,5 +22,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: ID!): SavedPost
+  savePost(postId: UUID!): SavedPost
 }

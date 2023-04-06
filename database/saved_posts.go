@@ -1,71 +1,68 @@
 package database
 
 import (
+	"context"
+	"database/sql"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type SavedPosts struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (s *SavedPosts) CreateSavedPost(savedPost *model.SavedPost) (*model.SavedPost, error) {
-	_, err := s.DB.Model(savedPost).
-		Where("user_id = ?user_id").
-		Where("post_id = ?post_id").
-		Where("deleted_at is ?", nil).
-		SelectOrInsert()
+func (s *SavedPosts) CreateSavedPost(ctx context.Context, userID, postID uuid.UUID) (*db.SavedPost, error) {
+	savedPost, _ := s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
+		UserID: userID,
+		PostID: postID,
+	})
 
-	return savedPost, err
+	if savedPost != nil {
+		return savedPost, nil
+	}
+
+	newSavedPost, _ := s.Queries.CreateSavedPost(ctx, db.CreateSavedPostParams{
+		UserID: userID,
+		PostID: postID,
+	})
+
+	return newSavedPost, nil
 }
 
-func (s *SavedPosts) GetSavedPostByUserIDAndPostID(userID, postID string) (*model.SavedPost, error) {
-	var savedPost model.SavedPost
-	err := s.DB.Model(&savedPost).Where("user_id = ?", userID).Where("post_id = ?", postID).Where("deleted_at is ?", nil).First()
+func (s *SavedPosts) GetSavedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.SavedPost, error) {
+	return util.HandleDBResponse(s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
+		UserID: userID,
+		PostID: postID,
+	}))
 
-	return &savedPost, err
 }
 
-func (s *SavedPosts) GetSavedPostByID(id string) (*model.SavedPost, error) {
-	var savedPost model.SavedPost
-	err := s.DB.Model(&savedPost).Where("id = ?", id).Where("deleted_at is ?", nil).First()
+func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
+	return util.HandleDBResponse(s.Queries.GetSavedPostByID(ctx, id))
 
-	return &savedPost, err
 }
 
-func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, after string) (*model.SavedPosts, error) {
-	var savedPosts []*model.SavedPost
+func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.SavedPosts, error) {
 	var edges []*model.SavedPostsEdge
 	var endCursor string
 
-	query := s.DB.Model(&savedPosts).
-		Join("INNER JOIN posts ON posts.id = saved_post.post_id").
-		Join("INNER JOIN users ON users.id = posts.user_id").
-		Join("INNER JOIN connections ON connections.following_id = posts.user_id").
-		Where("saved_post.user_id = ?", userID).
-		Where("saved_post.deleted_at is ?", nil).
-		Where("posts.deleted_at is ?", nil).
-		WhereGroup(func(q *pg.Query) (*pg.Query, error) {
-			q = q.Where("users.id = ?", userID).
-				WhereOr("connections.status = ?", 2).
-				WhereOr("users.is_private = ?", false)
-			return q, nil
-		}).
-		Where("connections.deleted_at is ?", nil).
-		GroupExpr("saved_post.id, posts.id")
+	savedPosts, _ := s.Queries.GetSavedPostsByUserIDAndPageInfo(ctx, db.GetSavedPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		Limit:     limit,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("saved_post.created_at < ?", after)
-	}
-
-	totalCount, err :=
-		query.Limit(limit).Order("saved_post.created_at DESC").SelectAndCount()
+	totalCount, _ := s.Queries.CountSavedPostsByUserIDAndPageInfo(ctx, db.CountSavedPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range savedPosts {
-		edges = append(edges, &model.SavedPostsEdge{Node: &model.SavedPost{
+		edges = append(edges, &model.SavedPostsEdge{Node: &db.SavedPost{
 			ID:        value.ID,
 			UserID:    value.UserID,
 			PostID:    value.PostID,
@@ -74,31 +71,31 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(userID string, limit int, 
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.SavedPosts{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (s *SavedPosts) DeleteSavedPostByID(id string) (*model.SavedPost, error) {
-	DeletedAt := time.Now()
-	var savedPost = &model.SavedPost{
-		ID:        id,
-		DeletedAt: &DeletedAt,
-	}
-	_, err := s.DB.Model(savedPost).Set("deleted_at = ?deleted_at").WherePK().Where("deleted_at is ?", nil).Returning("*").Update()
+func (s *SavedPosts) DeleteSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-	return savedPost, err
+	savedPost, _ := s.Queries.DeleteSavedPostByID(ctx, db.DeleteSavedPostByIDParams{
+		ID:        id,
+		DeletedAt: DeletedAt,
+	})
+
+	return savedPost, nil
 }

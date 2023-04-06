@@ -7,7 +7,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -15,6 +14,8 @@ import (
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
@@ -39,23 +40,23 @@ type Config struct {
 
 type ResolverRoot interface {
 	Connection() ConnectionResolver
+	ConnectionsEdge() ConnectionsEdgeResolver
 	CreditTransaction() CreditTransactionResolver
 	CreditTransactionDescriptionVariable() CreditTransactionDescriptionVariableResolver
 	CreditTransactionInfo() CreditTransactionInfoResolver
+	CreditTransactionTemplate() CreditTransactionTemplateResolver
 	CreditTransactionsEdge() CreditTransactionsEdgeResolver
-	InvitedUser() InvitedUserResolver
-	InvitedUsersEdge() InvitedUsersEdgeResolver
 	LikedPost() LikedPostResolver
 	LikedPostsEdge() LikedPostsEdgeResolver
 	Mutation() MutationResolver
 	Notification() NotificationResolver
+	NotificationType() NotificationTypeResolver
 	NotificationsEdge() NotificationsEdgeResolver
 	Post() PostResolver
 	PostsEdge() PostsEdgeResolver
 	Query() QueryResolver
 	SavedPost() SavedPostResolver
 	SavedPostsEdge() SavedPostsEdgeResolver
-	Subscription() SubscriptionResolver
 	Tag() TagResolver
 	TagsEdge() TagsEdgeResolver
 	Ticket() TicketResolver
@@ -194,25 +195,25 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser         func(childComplexity int, userID string) int
+		AcceptUser         func(childComplexity int, userID uuid.UUID) int
 		AddPost            func(childComplexity int, input model.AddPostInput) int
-		AddTicketMessage   func(childComplexity int, ticketID string, input model.AddTicketMessageInput) int
+		AddTicketMessage   func(childComplexity int, ticketID uuid.UUID, input model.AddTicketMessageInput) int
 		ChangePassword     func(childComplexity int, input model.ChangePasswordInput) int
 		CreateTicket       func(childComplexity int, input model.CreateTicketInput) int
-		DeletePost         func(childComplexity int, postID string) int
-		EditPost           func(childComplexity int, postID string, input model.EditPostInput) int
+		DeletePost         func(childComplexity int, postID uuid.UUID) int
+		EditPost           func(childComplexity int, postID uuid.UUID, input model.EditPostInput) int
 		EditUser           func(childComplexity int, input model.EditUserInput) int
-		FollowUser         func(childComplexity int, userID string) int
-		LikePost           func(childComplexity int, postID string) int
+		FollowUser         func(childComplexity int, userID uuid.UUID) int
+		LikePost           func(childComplexity int, postID uuid.UUID) int
 		OAuthGoogle        func(childComplexity int, input model.OAuthGoogleInput) int
 		ReadNotifications  func(childComplexity int) int
-		ReadTicketMessages func(childComplexity int, ticketID string) int
+		ReadTicketMessages func(childComplexity int, ticketID uuid.UUID) int
 		Register           func(childComplexity int, input model.RegisterInput) int
-		RejectUser         func(childComplexity int, userID string) int
-		SavePost           func(childComplexity int, postID string) int
+		RejectUser         func(childComplexity int, userID uuid.UUID) int
+		SavePost           func(childComplexity int, postID uuid.UUID) int
 		Test               func(childComplexity int, input model.TestInput) int
-		UnfollowUser       func(childComplexity int, userID string) int
-		UpdateTicketStatus func(childComplexity int, ticketID string, status model.TicketStatus) int
+		UnfollowUser       func(childComplexity int, userID uuid.UUID) int
+		UpdateTicketStatus func(childComplexity int, ticketID uuid.UUID, status model.TicketStatus) int
 		UploadFiles        func(childComplexity int, files []*graphql.Upload) int
 	}
 
@@ -225,8 +226,8 @@ type ComplexityRoot struct {
 		Receiver         func(childComplexity int) int
 		Reply            func(childComplexity int) int
 		Sender           func(childComplexity int) int
-		URL              func(childComplexity int) int
 		UpdatedAt        func(childComplexity int) int
+		Url              func(childComplexity int) int
 	}
 
 	NotificationType struct {
@@ -245,16 +246,6 @@ type ComplexityRoot struct {
 	NotificationsEdge struct {
 		Cursor func(childComplexity int) int
 		Node   func(childComplexity int) int
-	}
-
-	OnlineUser struct {
-		CreatedAt func(childComplexity int) int
-		ID        func(childComplexity int) int
-		SocketID  func(childComplexity int) int
-		Token     func(childComplexity int) int
-		UpdatedAt func(childComplexity int) int
-		UserAgent func(childComplexity int) int
-		UserID    func(childComplexity int) int
 	}
 
 	PageInfo struct {
@@ -299,7 +290,7 @@ type ComplexityRoot struct {
 		GetFollowersByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetFollowingByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
 		GetInvitedUsers              func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetLikedPostsByPostID        func(childComplexity int, postID string, pageInfo *model.PageInfoInput) int
+		GetLikedPostsByPostID        func(childComplexity int, postID uuid.UUID, pageInfo *model.PageInfoInput) int
 		GetLikedPostsByUsername      func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetNotifications             func(childComplexity int, pageInfoInput *model.PageInfoInput) int
 		GetPostByURL                 func(childComplexity int, url string) int
@@ -342,11 +333,6 @@ type ComplexityRoot struct {
 	Search struct {
 		Tag  func(childComplexity int) int
 		User func(childComplexity int) int
-	}
-
-	Subscription struct {
-		GetNotification func(childComplexity int) int
-		Test            func(childComplexity int, input model.TestInput) int
 	}
 
 	Tag struct {
@@ -449,94 +435,102 @@ type ComplexityRoot struct {
 }
 
 type ConnectionResolver interface {
-	Following(ctx context.Context, obj *model.Connection) (*model.User, error)
-	Follower(ctx context.Context, obj *model.Connection) (*model.User, error)
+	Following(ctx context.Context, obj *db.Connection) (*db.User, error)
+	Follower(ctx context.Context, obj *db.Connection) (*db.User, error)
+}
+type ConnectionsEdgeResolver interface {
+	Cursor(ctx context.Context, obj *model.ConnectionsEdge) (string, error)
+	Node(ctx context.Context, obj *model.ConnectionsEdge) (*db.Connection, error)
 }
 type CreditTransactionResolver interface {
-	User(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
-	Recipient(ctx context.Context, obj *model.CreditTransaction) (*model.User, error)
+	User(ctx context.Context, obj *db.CreditTransaction) (*db.User, error)
+	Recipient(ctx context.Context, obj *db.CreditTransaction) (*db.User, error)
+	Amount(ctx context.Context, obj *db.CreditTransaction) (float64, error)
+	Type(ctx context.Context, obj *db.CreditTransaction) (*model.CreditTransactionType, error)
 
-	Info(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransactionInfo, error)
-	RelevantTransaction(ctx context.Context, obj *model.CreditTransaction) (*model.CreditTransaction, error)
+	Info(ctx context.Context, obj *db.CreditTransaction) (*db.CreditTransactionInfo, error)
+	RelevantTransaction(ctx context.Context, obj *db.CreditTransaction) (*db.CreditTransaction, error)
 }
 type CreditTransactionDescriptionVariableResolver interface {
-	Content(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (string, error)
-	URL(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error)
-	Image(ctx context.Context, obj *model.CreditTransactionDescriptionVariable) (*string, error)
+	Type(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableType, error)
+	Key(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (model.CreditTransactionDescriptionVariableKey, error)
+	Content(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (string, error)
+	URL(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
+	Image(ctx context.Context, obj *db.CreditTransactionDescriptionVariable) (*string, error)
 }
 type CreditTransactionInfoResolver interface {
-	DescriptionVariables(ctx context.Context, obj *model.CreditTransactionInfo) ([]*model.CreditTransactionDescriptionVariable, error)
-
-	Template(ctx context.Context, obj *model.CreditTransactionInfo) (*model.CreditTransactionTemplate, error)
+	Description(ctx context.Context, obj *db.CreditTransactionInfo) (*string, error)
+	DescriptionVariables(ctx context.Context, obj *db.CreditTransactionInfo) ([]*db.CreditTransactionDescriptionVariable, error)
+	Status(ctx context.Context, obj *db.CreditTransactionInfo) (model.CreditTransactionStatus, error)
+	Template(ctx context.Context, obj *db.CreditTransactionInfo) (*db.CreditTransactionTemplate, error)
+}
+type CreditTransactionTemplateResolver interface {
+	Name(ctx context.Context, obj *db.CreditTransactionTemplate) (model.CreditTransactionTemplateName, error)
 }
 type CreditTransactionsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.CreditTransactionsEdge) (string, error)
-	Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*model.CreditTransaction, error)
-}
-type InvitedUserResolver interface {
-	Inviter(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
-	Invitee(ctx context.Context, obj *model.InvitedUser) (*model.User, error)
-}
-type InvitedUsersEdgeResolver interface {
-	Cursor(ctx context.Context, obj *model.InvitedUsersEdge) (string, error)
-	Node(ctx context.Context, obj *model.InvitedUsersEdge) (*model.InvitedUser, error)
+	Node(ctx context.Context, obj *model.CreditTransactionsEdge) (*db.CreditTransaction, error)
 }
 type LikedPostResolver interface {
-	User(ctx context.Context, obj *model.LikedPost) (*model.User, error)
-	Post(ctx context.Context, obj *model.LikedPost) (*model.Post, error)
+	User(ctx context.Context, obj *db.LikedPost) (*db.User, error)
+	Post(ctx context.Context, obj *db.LikedPost) (*db.Post, error)
 }
 type LikedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.LikedPostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.LikedPostsEdge) (*model.LikedPost, error)
+	Node(ctx context.Context, obj *model.LikedPostsEdge) (*db.LikedPost, error)
 }
 type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error)
 	OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error)
-	FollowUser(ctx context.Context, userID string) (*model.Connection, error)
-	UnfollowUser(ctx context.Context, userID string) (*model.Connection, error)
-	AcceptUser(ctx context.Context, userID string) (*model.Connection, error)
-	RejectUser(ctx context.Context, userID string) (*model.Connection, error)
-	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*model.File, error)
-	LikePost(ctx context.Context, postID string) (*model.LikedPost, error)
+	FollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error)
+	UnfollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error)
+	AcceptUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error)
+	RejectUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error)
+	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error)
+	LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error)
 	ReadNotifications(ctx context.Context) (*bool, error)
-	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
-	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
-	DeletePost(ctx context.Context, postID string) (*model.Post, error)
-	SavePost(ctx context.Context, postID string) (*model.SavedPost, error)
-	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*model.Ticket, error)
-	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*model.TicketMessage, error)
-	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
-	UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*model.Ticket, error)
-	EditUser(ctx context.Context, input model.EditUserInput) (*model.User, error)
+	AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error)
+	EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error)
+	DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error)
+	SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error)
+	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*db.Ticket, error)
+	AddTicketMessage(ctx context.Context, ticketID uuid.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error)
+	ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error)
+	UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status model.TicketStatus) (*db.Ticket, error)
+	EditUser(ctx context.Context, input model.EditUserInput) (*db.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 }
 type NotificationResolver interface {
-	NotificationType(ctx context.Context, obj *model.Notification) (*model.NotificationType, error)
-	Sender(ctx context.Context, obj *model.Notification) (*model.User, error)
-	Receiver(ctx context.Context, obj *model.Notification) (*model.User, error)
-	Post(ctx context.Context, obj *model.Notification) (*model.Post, error)
-	Reply(ctx context.Context, obj *model.Notification) (*model.Post, error)
+	NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error)
+	Sender(ctx context.Context, obj *db.Notification) (*db.User, error)
+	Receiver(ctx context.Context, obj *db.Notification) (*db.User, error)
+	Post(ctx context.Context, obj *db.Notification) (*db.Post, error)
+	Reply(ctx context.Context, obj *db.Notification) (*db.Post, error)
+}
+type NotificationTypeResolver interface {
+	Name(ctx context.Context, obj *db.NotificationType) (model.NotificationTypeName, error)
 }
 type NotificationsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.NotificationsEdge) (string, error)
-	Node(ctx context.Context, obj *model.NotificationsEdge) (*model.Notification, error)
+	Node(ctx context.Context, obj *model.NotificationsEdge) (*db.Notification, error)
 }
 type PostResolver interface {
-	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
-	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
-	User(ctx context.Context, obj *model.Post) (*model.User, error)
-	Content(ctx context.Context, obj *model.Post) (*string, error)
-	Attachment(ctx context.Context, obj *model.Post) ([]*model.File, error)
+	Status(ctx context.Context, obj *db.Post) (model.PostStatus, error)
+	Parent(ctx context.Context, obj *db.Post) (*db.Post, error)
+	Child(ctx context.Context, obj *db.Post) (*db.Post, error)
+	User(ctx context.Context, obj *db.Post) (*db.User, error)
+	Content(ctx context.Context, obj *db.Post) (*string, error)
+	Attachment(ctx context.Context, obj *db.Post) ([]*db.File, error)
 
-	Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error)
-	Replies(ctx context.Context, obj *model.Post) (*model.Posts, error)
-	IsLiked(ctx context.Context, obj *model.Post) (*model.LikedPost, error)
-	IsSaved(ctx context.Context, obj *model.Post) (*model.SavedPost, error)
+	Likes(ctx context.Context, obj *db.Post) (*model.LikedPosts, error)
+	Replies(ctx context.Context, obj *db.Post) (*model.Posts, error)
+	IsLiked(ctx context.Context, obj *db.Post) (*db.LikedPost, error)
+	IsSaved(ctx context.Context, obj *db.Post) (*db.SavedPost, error)
 }
 type PostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.PostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error)
+	Node(ctx context.Context, obj *model.PostsEdge) (*db.Post, error)
 }
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
@@ -546,13 +540,13 @@ type QueryResolver interface {
 	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
 	GetCreditTransactions(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.CreditTransactions, error)
 	GetInvitedUsers(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.InvitedUsers, error)
-	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
+	GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
-	GetPostByURL(ctx context.Context, url string) (*model.Post, error)
+	GetPostByURL(ctx context.Context, url string) (*db.Post, error)
 	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
 	GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error)
@@ -561,68 +555,70 @@ type QueryResolver interface {
 	GetTrends(ctx context.Context, first *int) (*model.Tags, error)
 	GetTickets(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Tickets, error)
 	GetTicketMessagesByTicketURL(ctx context.Context, ticketURL string, pageInfo *model.PageInfoInput) (*model.TicketMessages, error)
-	GetUserInfo(ctx context.Context) (*model.User, error)
-	GetUserByUsername(ctx context.Context, username string) (*model.User, error)
-	GetUserByInvitationCode(ctx context.Context, invitationCode string) (*model.User, error)
-	CheckUsername(ctx context.Context, username string) (*model.User, error)
-	CheckEmail(ctx context.Context, email string) (*model.User, error)
+	GetUserInfo(ctx context.Context) (*db.User, error)
+	GetUserByUsername(ctx context.Context, username string) (*db.User, error)
+	GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error)
+	CheckUsername(ctx context.Context, username string) (*db.User, error)
+	CheckEmail(ctx context.Context, email string) (*db.User, error)
 }
 type SavedPostResolver interface {
-	User(ctx context.Context, obj *model.SavedPost) (*model.User, error)
-	Post(ctx context.Context, obj *model.SavedPost) (*model.Post, error)
+	User(ctx context.Context, obj *db.SavedPost) (*db.User, error)
+	Post(ctx context.Context, obj *db.SavedPost) (*db.Post, error)
 }
 type SavedPostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.SavedPostsEdge) (string, error)
-	Node(ctx context.Context, obj *model.SavedPostsEdge) (*model.SavedPost, error)
-}
-type SubscriptionResolver interface {
-	Test(ctx context.Context, input model.TestInput) (<-chan *model.Test, error)
-	GetNotification(ctx context.Context) (<-chan *model.NotificationsEdge, error)
+	Node(ctx context.Context, obj *model.SavedPostsEdge) (*db.SavedPost, error)
 }
 type TagResolver interface {
-	Count(ctx context.Context, obj *model.Tag) (*int, error)
+	Count(ctx context.Context, obj *model.Tag) (int64, error)
 }
 type TagsEdgeResolver interface {
 	Node(ctx context.Context, obj *model.TagsEdge) (*model.Tag, error)
 }
 type TicketResolver interface {
-	User(ctx context.Context, obj *model.Ticket) (*model.User, error)
+	User(ctx context.Context, obj *db.Ticket) (*db.User, error)
 
-	LastMessage(ctx context.Context, obj *model.Ticket) (*model.TicketMessage, error)
-	Permissions(ctx context.Context, obj *model.Ticket) ([]*model.TicketPermission, error)
+	Status(ctx context.Context, obj *db.Ticket) (model.TicketStatus, error)
+
+	LastMessage(ctx context.Context, obj *db.Ticket) (*db.TicketMessage, error)
+	Permissions(ctx context.Context, obj *db.Ticket) ([]*model.TicketPermission, error)
 }
 type TicketMessageResolver interface {
-	Sender(ctx context.Context, obj *model.TicketMessage) (*model.User, error)
+	Sender(ctx context.Context, obj *db.TicketMessage) (*db.User, error)
 
-	Ticket(ctx context.Context, obj *model.TicketMessage) (*model.Ticket, error)
+	Ticket(ctx context.Context, obj *db.TicketMessage) (*db.Ticket, error)
 
-	Attachment(ctx context.Context, obj *model.TicketMessage) ([]*model.File, error)
+	Attachment(ctx context.Context, obj *db.TicketMessage) ([]*db.File, error)
 }
 type TicketMessagesResolver interface {
-	Ticket(ctx context.Context, obj *model.TicketMessages) (*model.Ticket, error)
+	Ticket(ctx context.Context, obj *model.TicketMessages) (*db.Ticket, error)
 }
 type TicketMessagesEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketMessagesEdge) (string, error)
-	Node(ctx context.Context, obj *model.TicketMessagesEdge) (*model.TicketMessage, error)
+	Node(ctx context.Context, obj *model.TicketMessagesEdge) (*db.TicketMessage, error)
 }
 type TicketsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.TicketsEdge) (string, error)
-	Node(ctx context.Context, obj *model.TicketsEdge) (*model.Ticket, error)
+	Node(ctx context.Context, obj *model.TicketsEdge) (*db.Ticket, error)
 }
 type UserResolver interface {
-	Avatar(ctx context.Context, obj *model.User) (*model.File, error)
-	Background(ctx context.Context, obj *model.User) (*model.File, error)
+	BackgroundColor(ctx context.Context, obj *db.User) (model.BackgroundColor, error)
+	PrimaryColor(ctx context.Context, obj *db.User) (model.PrimaryColor, error)
+	Avatar(ctx context.Context, obj *db.User) (*db.File, error)
+	Background(ctx context.Context, obj *db.User) (*db.File, error)
 
-	Credits(ctx context.Context, obj *model.User) (float64, error)
+	Bio(ctx context.Context, obj *db.User) (*string, error)
+	Role(ctx context.Context, obj *db.User) (model.UserRole, error)
+	Credits(ctx context.Context, obj *db.User) (float64, error)
 
-	ConnectionStatus(ctx context.Context, obj *model.User) (*int, error)
-	FollowingCount(ctx context.Context, obj *model.User) (int, error)
-	FollowersCount(ctx context.Context, obj *model.User) (int, error)
-	FollowRequestsCount(ctx context.Context, obj *model.User) (int, error)
-	PostsCount(ctx context.Context, obj *model.User) (int, error)
+	ConnectionStatus(ctx context.Context, obj *db.User) (*int, error)
+	FollowingCount(ctx context.Context, obj *db.User) (int64, error)
+	FollowersCount(ctx context.Context, obj *db.User) (int64, error)
+	FollowRequestsCount(ctx context.Context, obj *db.User) (int64, error)
+	PostsCount(ctx context.Context, obj *db.User) (int64, error)
 }
 type UsersEdgeResolver interface {
-	Node(ctx context.Context, obj *model.UsersEdge) (*model.User, error)
+	Node(ctx context.Context, obj *model.UsersEdge) (*db.User, error)
 }
 
 type executableSchema struct {
@@ -1126,7 +1122,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AcceptUser(childComplexity, args["userId"].(string)), true
+		return e.complexity.Mutation.AcceptUser(childComplexity, args["userId"].(uuid.UUID)), true
 
 	case "Mutation.addPost":
 		if e.complexity.Mutation.AddPost == nil {
@@ -1150,7 +1146,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(string), args["input"].(model.AddTicketMessageInput)), true
+		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(uuid.UUID), args["input"].(model.AddTicketMessageInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -1186,7 +1182,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(string)), true
+		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(uuid.UUID)), true
 
 	case "Mutation.editPost":
 		if e.complexity.Mutation.EditPost == nil {
@@ -1198,7 +1194,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(string), args["input"].(model.EditPostInput)), true
+		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(uuid.UUID), args["input"].(model.EditPostInput)), true
 
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
@@ -1222,7 +1218,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FollowUser(childComplexity, args["userId"].(string)), true
+		return e.complexity.Mutation.FollowUser(childComplexity, args["userId"].(uuid.UUID)), true
 
 	case "Mutation.likePost":
 		if e.complexity.Mutation.LikePost == nil {
@@ -1234,7 +1230,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.LikePost(childComplexity, args["postId"].(string)), true
+		return e.complexity.Mutation.LikePost(childComplexity, args["postId"].(uuid.UUID)), true
 
 	case "Mutation.oAuthGoogle":
 		if e.complexity.Mutation.OAuthGoogle == nil {
@@ -1265,7 +1261,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(string)), true
+		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(uuid.UUID)), true
 
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
@@ -1289,7 +1285,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(string)), true
+		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(uuid.UUID)), true
 
 	case "Mutation.savePost":
 		if e.complexity.Mutation.SavePost == nil {
@@ -1301,7 +1297,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(string)), true
+		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(uuid.UUID)), true
 
 	case "Mutation.test":
 		if e.complexity.Mutation.Test == nil {
@@ -1325,7 +1321,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(string)), true
+		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(uuid.UUID)), true
 
 	case "Mutation.updateTicketStatus":
 		if e.complexity.Mutation.UpdateTicketStatus == nil {
@@ -1337,7 +1333,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(string), args["status"].(model.TicketStatus)), true
+		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(uuid.UUID), args["status"].(model.TicketStatus)), true
 
 	case "Mutation.uploadFiles":
 		if e.complexity.Mutation.UploadFiles == nil {
@@ -1407,19 +1403,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Notification.Sender(childComplexity), true
 
-	case "Notification.url":
-		if e.complexity.Notification.URL == nil {
-			break
-		}
-
-		return e.complexity.Notification.URL(childComplexity), true
-
 	case "Notification.updatedAt":
 		if e.complexity.Notification.UpdatedAt == nil {
 			break
 		}
 
 		return e.complexity.Notification.UpdatedAt(childComplexity), true
+
+	case "Notification.url":
+		if e.complexity.Notification.Url == nil {
+			break
+		}
+
+		return e.complexity.Notification.Url(childComplexity), true
 
 	case "NotificationType.id":
 		if e.complexity.NotificationType.ID == nil {
@@ -1483,55 +1479,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.NotificationsEdge.Node(childComplexity), true
-
-	case "OnlineUser.createdAt":
-		if e.complexity.OnlineUser.CreatedAt == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.CreatedAt(childComplexity), true
-
-	case "OnlineUser.id":
-		if e.complexity.OnlineUser.ID == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.ID(childComplexity), true
-
-	case "OnlineUser.socketId":
-		if e.complexity.OnlineUser.SocketID == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.SocketID(childComplexity), true
-
-	case "OnlineUser.token":
-		if e.complexity.OnlineUser.Token == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.Token(childComplexity), true
-
-	case "OnlineUser.updatedAt":
-		if e.complexity.OnlineUser.UpdatedAt == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.UpdatedAt(childComplexity), true
-
-	case "OnlineUser.userAgent":
-		if e.complexity.OnlineUser.UserAgent == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.UserAgent(childComplexity), true
-
-	case "OnlineUser.userId":
-		if e.complexity.OnlineUser.UserID == nil {
-			break
-		}
-
-		return e.complexity.OnlineUser.UserID(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -1786,7 +1733,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(string), args["pageInfo"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(uuid.UUID), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getLikedPostsByUsername":
 		if e.complexity.Query.GetLikedPostsByUsername == nil {
@@ -2082,25 +2029,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Search.User(childComplexity), true
-
-	case "Subscription.getNotification":
-		if e.complexity.Subscription.GetNotification == nil {
-			break
-		}
-
-		return e.complexity.Subscription.GetNotification(childComplexity), true
-
-	case "Subscription.test":
-		if e.complexity.Subscription.Test == nil {
-			break
-		}
-
-		args, err := ec.field_Subscription_test_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Subscription.Test(childComplexity, args["input"].(model.TestInput)), true
 
 	case "Tag.count":
 		if e.complexity.Tag.Count == nil {
@@ -2568,23 +2496,6 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 				Data: buf.Bytes(),
 			}
 		}
-	case ast.Subscription:
-		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
-
-		var buf bytes.Buffer
-		return func(ctx context.Context) *graphql.Response {
-			buf.Reset()
-			data := next(ctx)
-
-			if data == nil {
-				return nil
-			}
-			data.MarshalGQL(&buf)
-
-			return &graphql.Response{
-				Data: buf.Bytes(),
-			}
-		}
 
 	default:
 		return graphql.OneShot(graphql.ErrorResponse(ctx, "unsupported GraphQL operation"))
@@ -2648,10 +2559,10 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../schema/connection.graphqls", Input: `type Connection {
-  id: ID!
+  id: UUID!
   following: User!
   follower: User!
-  status: Int
+  status: Int!
   createdAt: Time
   updatedAt: Time
 }
@@ -2662,8 +2573,8 @@ type ConnectionsEdge {
 }
 
 type Connections {
-  totalCount: Int
-  edges: [ConnectionsEdge]
+  totalCount: TotalCount!
+  edges: [ConnectionsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -2680,10 +2591,10 @@ extend type Query {
 }
 
 extend type Mutation {
-  followUser(userId: ID!): Connection
-  unfollowUser(userId: ID!): Connection
-  acceptUser(userId: ID!): Connection
-  rejectUser(userId: ID!): Connection
+  followUser(userId: UUID!): Connection
+  unfollowUser(userId: UUID!): Connection
+  acceptUser(userId: UUID!): Connection
+  rejectUser(userId: UUID!): Connection
 }
 `, BuiltIn: false},
 	{Name: "../schema/credit_transaction.graphqls", Input: `enum CreditTransactionStatus {
@@ -2694,9 +2605,15 @@ extend type Mutation {
 }
 
 enum CreditTransactionDescriptionVariableType {
-  TICKET
-  USER
-  TAG
+  ticket
+  user
+  tag
+}
+
+enum CreditTransactionDescriptionVariableKey {
+  ticket
+  invited_user
+  inviter_user
 }
 
 enum CreditTransactionTemplateName {
@@ -2713,22 +2630,22 @@ enum CreditTransactionType {
 }
 
 type CreditTransactionDescriptionVariable {
-  id: ID!
+  id: UUID!
   type: CreditTransactionDescriptionVariableType!
-  key: String!
+  key: CreditTransactionDescriptionVariableKey!
   content: String!
   url: String
   image: String
 }
 
 type CreditTransactionTemplate {
-  id: ID!
+  id: UUID!
   name: CreditTransactionTemplateName!
   content: String!
 }
 
 type CreditTransactionInfo {
-  id: ID!
+  id: UUID!
   description: String
   descriptionVariables: [CreditTransactionDescriptionVariable]
   status: CreditTransactionStatus!
@@ -2738,7 +2655,7 @@ type CreditTransactionInfo {
 }
 
 type CreditTransaction {
-  id: ID!
+  id: UUID!
   user: User!
   recipient: User!
   amount: Float!
@@ -2754,8 +2671,8 @@ type CreditTransactionsEdge {
 }
 
 type CreditTransactions {
-  totalCount: Int
-  edges: [CreditTransactionsEdge]
+  totalCount: TotalCount!
+  edges: [CreditTransactionsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -2766,7 +2683,7 @@ extend type Query {
 	{Name: "../schema/file.graphqls", Input: `scalar Upload
 
 type File {
-  id: ID
+  id: UUID!
   name: String
   width: Int
   height: Int
@@ -2777,7 +2694,7 @@ extend type Mutation {
 }
 `, BuiltIn: false},
 	{Name: "../schema/invited_users.graphqls", Input: `type InvitedUser {
-  id: ID!
+  id: UUID!
   inviter: User!
   invitee: User!
   createdAt: Time
@@ -2790,8 +2707,8 @@ type InvitedUsersEdge {
 }
 
 type InvitedUsers {
-  totalCount: Int
-  edges: [InvitedUsersEdge]
+  totalCount: TotalCount!
+  edges: [InvitedUsersEdge]!
   pageInfo: PageInfo!
 }
 
@@ -2800,7 +2717,7 @@ extend type Query {
 }
 `, BuiltIn: false},
 	{Name: "../schema/liked_post.graphqls", Input: `type LikedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -2813,13 +2730,13 @@ type LikedPostsEdge {
 }
 
 type LikedPosts {
-  totalCount: Int
-  edges: [LikedPostsEdge]
+  totalCount: TotalCount!
+  edges: [LikedPostsEdge]!
   pageInfo: PageInfo!
 }
 
 extend type Query {
-  getLikedPostsByPostId(postId: ID!, pageInfo: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(postId: UUID!, pageInfo: PageInfoInput): LikedPosts
   getLikedPostsByUsername(
     username: String!
     pageInfo: PageInfoInput
@@ -2827,10 +2744,12 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): LikedPost
+  likePost(postId: UUID!): LikedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/main.graphqls", Input: `scalar Time
+scalar TotalCount
+scalar UUID
 
 type PageInfo {
   endCursor: String!
@@ -2857,10 +2776,6 @@ type Query {
 type Mutation {
   test(input: TestInput!): Test
 }
-
-type Subscription {
-  test(input: TestInput!): Test
-}
 `, BuiltIn: false},
 	{Name: "../schema/notification.graphqls", Input: `enum NotificationTypeName {
   WELCOME
@@ -2873,13 +2788,13 @@ type Subscription {
 }
 
 type NotificationType {
-  id: ID!
+  id: UUID!
   name: NotificationTypeName!
   template: String!
 }
 
 type Notification {
-  id: ID!
+  id: UUID!
   notificationType: NotificationType!
   sender: User!
   receiver: User!
@@ -2897,9 +2812,9 @@ type NotificationsEdge {
 }
 
 type Notifications {
-  totalCount: Int
-  edges: [NotificationsEdge]
-  unreadNotificationsCount: Int
+  totalCount: TotalCount!
+  edges: [NotificationsEdge]!
+  unreadNotificationsCount: TotalCount!
   pageInfo: PageInfo!
 }
 
@@ -2910,20 +2825,6 @@ extend type Query {
 extend type Mutation {
   readNotifications: Boolean
 }
-
-extend type Subscription {
-  getNotification: NotificationsEdge
-}
-`, BuiltIn: false},
-	{Name: "../schema/online_user.graphqls", Input: `type OnlineUser {
-  id: ID!
-  userId: ID!
-  token: String!
-  socketId: String!
-  userAgent: String!
-  createdAt: Time
-  updatedAt: Time
-}
 `, BuiltIn: false},
 	{Name: "../schema/post.graphqls", Input: `enum PostStatus {
   PUBLIC
@@ -2931,7 +2832,7 @@ extend type Subscription {
 }
 
 type Post {
-  id: ID!
+  id: UUID!
   status: PostStatus!
   parent: Post
   child: Post
@@ -2953,13 +2854,13 @@ type PostsEdge {
 }
 
 type Posts {
-  totalCount: Int
-  edges: [PostsEdge]
+  totalCount: TotalCount!
+  edges: [PostsEdge]!
   pageInfo: PageInfo!
 }
 
 input addPostInput {
-  parentId: ID
+  parentId: UUID
   content: String
   status: PostStatus
   attachment: [String!]
@@ -2981,12 +2882,12 @@ extend type Query {
 
 extend type Mutation {
   addPost(input: addPostInput!): Post
-  editPost(postId: ID!, input: editPostInput!): Post
-  deletePost(postId: ID!): Post
+  editPost(postId: UUID!, input: editPostInput!): Post
+  deletePost(postId: UUID!): Post
 }
 `, BuiltIn: false},
 	{Name: "../schema/saved_post.graphqls", Input: `type SavedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -2999,8 +2900,8 @@ type SavedPostsEdge {
 }
 
 type SavedPosts {
-  totalCount: Int
-  edges: [SavedPostsEdge]
+  totalCount: TotalCount!
+  edges: [SavedPostsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -3009,7 +2910,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: ID!): SavedPost
+  savePost(postId: UUID!): SavedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/search.graphqls", Input: `type Search {
@@ -3022,9 +2923,9 @@ extend type Query {
 }
 `, BuiltIn: false},
 	{Name: "../schema/tag.graphqls", Input: `type Tag {
-  id: ID!
+  id: UUID!
   name: String!
-  count: Int
+  count: TotalCount!
   createdAt: Time
   updatedAt: Time
 }
@@ -3034,7 +2935,7 @@ type TagsEdge {
 }
 
 type Tags {
-  edges: [TagsEdge]
+  edges: [TagsEdge]!
 }
 
 extend type Query {
@@ -3062,7 +2963,7 @@ enum TicketPermission {
 }
 
 type Ticket {
-  id: ID!
+  id: UUID!
   user: User!
   subject: String!
   status: TicketStatus!
@@ -3074,7 +2975,7 @@ type Ticket {
 }
 
 type TicketMessage {
-  id: ID!
+  id: UUID!
   sender: User!
   message: String!
   ticket: Ticket!
@@ -3090,8 +2991,8 @@ type TicketsEdge {
 }
 
 type Tickets {
-  totalCount: Int
-  edges: [TicketsEdge]
+  totalCount: TotalCount!
+  edges: [TicketsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -3101,9 +3002,9 @@ type TicketMessagesEdge {
 }
 
 type TicketMessages {
-  totalCount: Int
+  totalCount: TotalCount!
   ticket: Ticket
-  edges: [TicketMessagesEdge]
+  edges: [TicketMessagesEdge]!
   pageInfo: PageInfo!
 }
 
@@ -3128,9 +3029,12 @@ extend type Query {
 
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
-  addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
-  readTicketMessages(ticketId: ID!): Boolean
-  updateTicketStatus(ticketId: ID!, status: TicketStatus!): Ticket
+  addTicketMessage(
+    ticketId: UUID!
+    input: AddTicketMessageInput!
+  ): TicketMessage
+  readTicketMessages(ticketId: UUID!): Boolean
+  updateTicketStatus(ticketId: UUID!, status: TicketStatus!): Ticket
 }
 `, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `enum UserRole {
@@ -3155,7 +3059,7 @@ enum PrimaryColor {
 }
 
 type User {
-  id: ID!
+  id: UUID!
   username: String!
   backgroundColor: BackgroundColor!
   primaryColor: PrimaryColor!
@@ -3170,10 +3074,10 @@ type User {
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int
-  followingCount: Int!
-  followersCount: Int!
-  followRequestsCount: Int!
-  postsCount: Int!
+  followingCount: TotalCount!
+  followersCount: TotalCount!
+  followRequestsCount: TotalCount!
+  postsCount: TotalCount!
   createdAt: Time
   updatedAt: Time
 }
@@ -3183,7 +3087,7 @@ type UsersEdge {
 }
 
 type Users {
-  edges: [UsersEdge]
+  edges: [UsersEdge]!
 }
 
 input EditUserInput {
@@ -3226,10 +3130,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3256,10 +3160,10 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 func (ec *executionContext) field_Mutation_addTicketMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3310,10 +3214,10 @@ func (ec *executionContext) field_Mutation_createTicket_args(ctx context.Context
 func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3325,10 +3229,10 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_editPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3364,10 +3268,10 @@ func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, ra
 func (ec *executionContext) field_Mutation_followUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3379,10 +3283,10 @@ func (ec *executionContext) field_Mutation_followUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_likePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3409,10 +3313,10 @@ func (ec *executionContext) field_Mutation_oAuthGoogle_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_readTicketMessages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3439,10 +3343,10 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3454,10 +3358,10 @@ func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_savePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3484,10 +3388,10 @@ func (ec *executionContext) field_Mutation_test_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3499,10 +3403,10 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 func (ec *executionContext) field_Mutation_updateTicketStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3691,10 +3595,10 @@ func (ec *executionContext) field_Query_getInvitedUsers_args(ctx context.Context
 func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 string
+	var arg0 uuid.UUID
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4012,21 +3916,6 @@ func (ec *executionContext) field_Query_test_args(ctx context.Context, rawArgs m
 	return args, nil
 }
 
-func (ec *executionContext) field_Subscription_test_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 model.TestInput
-	if tmp, ok := rawArgs["input"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTestInput(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["input"] = arg0
-	return args, nil
-}
-
 func (ec *executionContext) field___Type_enumValues_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -4141,9 +4030,9 @@ func (ec *executionContext) _AuthResponse_user(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_AuthResponse_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4291,7 +4180,7 @@ func (ec *executionContext) fieldContext_AuthToken_expiredAt(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_id(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_id(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4317,9 +4206,9 @@ func (ec *executionContext) _Connection_id(ctx context.Context, field graphql.Co
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4329,13 +4218,13 @@ func (ec *executionContext) fieldContext_Connection_id(ctx context.Context, fiel
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_following(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_following(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_following(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4361,9 +4250,9 @@ func (ec *executionContext) _Connection_following(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_following(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4423,7 +4312,7 @@ func (ec *executionContext) fieldContext_Connection_following(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_follower(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_follower(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_follower(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4449,9 +4338,9 @@ func (ec *executionContext) _Connection_follower(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_follower(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4511,7 +4400,7 @@ func (ec *executionContext) fieldContext_Connection_follower(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_status(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_status(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4532,11 +4421,14 @@ func (ec *executionContext) _Connection_status(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int32)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int32(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4552,7 +4444,7 @@ func (ec *executionContext) fieldContext_Connection_status(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4575,9 +4467,9 @@ func (ec *executionContext) _Connection_createdAt(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4593,7 +4485,7 @@ func (ec *executionContext) fieldContext_Connection_createdAt(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Connection_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Connection) (ret graphql.Marshaler) {
+func (ec *executionContext) _Connection_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Connection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Connection_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4616,9 +4508,9 @@ func (ec *executionContext) _Connection_updatedAt(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connection_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4655,11 +4547,14 @@ func (ec *executionContext) _Connections_totalCount(ctx context.Context, field g
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connections_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4669,7 +4564,7 @@ func (ec *executionContext) fieldContext_Connections_totalCount(ctx context.Cont
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -4696,11 +4591,14 @@ func (ec *executionContext) _Connections_edges(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.ConnectionsEdge)
 	fc.Result = res
-	return ec.marshalOConnectionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx, field.Selections, res)
+	return ec.marshalNConnectionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Connections_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4786,7 +4684,7 @@ func (ec *executionContext) _ConnectionsEdge_cursor(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Cursor, nil
+		return ec.resolvers.ConnectionsEdge().Cursor(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4807,8 +4705,8 @@ func (ec *executionContext) fieldContext_ConnectionsEdge_cursor(ctx context.Cont
 	fc = &graphql.FieldContext{
 		Object:     "ConnectionsEdge",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -4830,7 +4728,7 @@ func (ec *executionContext) _ConnectionsEdge_node(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Node, nil
+		return ec.resolvers.ConnectionsEdge().Node(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4839,17 +4737,17 @@ func (ec *executionContext) _ConnectionsEdge_node(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Connection)
+	res := resTmp.(*db.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_ConnectionsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "ConnectionsEdge",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -4871,7 +4769,7 @@ func (ec *executionContext) fieldContext_ConnectionsEdge_node(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4897,9 +4795,9 @@ func (ec *executionContext) _CreditTransaction_id(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -4909,13 +4807,13 @@ func (ec *executionContext) fieldContext_CreditTransaction_id(ctx context.Contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_user(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_user(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -4941,9 +4839,9 @@ func (ec *executionContext) _CreditTransaction_user(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5003,7 +4901,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_user(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_recipient(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_recipient(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_recipient(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5029,9 +4927,9 @@ func (ec *executionContext) _CreditTransaction_recipient(ctx context.Context, fi
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_recipient(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5091,7 +4989,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_recipient(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_amount(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_amount(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_amount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5105,7 +5003,7 @@ func (ec *executionContext) _CreditTransaction_amount(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Amount, nil
+		return ec.resolvers.CreditTransaction().Amount(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5126,8 +5024,8 @@ func (ec *executionContext) fieldContext_CreditTransaction_amount(ctx context.Co
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransaction",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -5135,7 +5033,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_amount(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_type(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_type(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_type(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5149,7 +5047,7 @@ func (ec *executionContext) _CreditTransaction_type(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return ec.resolvers.CreditTransaction().Type(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5158,17 +5056,17 @@ func (ec *executionContext) _CreditTransaction_type(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(model.CreditTransactionType)
+	res := resTmp.(*model.CreditTransactionType)
 	fc.Result = res
-	return ec.marshalOCreditTransactionType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx, field.Selections, res)
+	return ec.marshalOCreditTransactionType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransaction",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionType does not have child fields")
 		},
@@ -5176,7 +5074,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_type(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_url(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_url(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5220,7 +5118,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_url(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_info(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_info(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_info(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5246,9 +5144,9 @@ func (ec *executionContext) _CreditTransaction_info(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransactionInfo)
+	res := resTmp.(*db.CreditTransactionInfo)
 	fc.Result = res
-	return ec.marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx, field.Selections, res)
+	return ec.marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_info(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5280,7 +5178,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_info(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransaction_relevantTransaction(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransaction) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransaction_relevantTransaction(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransaction) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransaction_relevantTransaction(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5303,9 +5201,9 @@ func (ec *executionContext) _CreditTransaction_relevantTransaction(ctx context.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransaction)
+	res := resTmp.(*db.CreditTransaction)
 	fc.Result = res
-	return ec.marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransaction(ctx, field.Selections, res)
+	return ec.marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransaction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransaction_relevantTransaction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5339,7 +5237,7 @@ func (ec *executionContext) fieldContext_CreditTransaction_relevantTransaction(c
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5365,9 +5263,9 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_id(ctx context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5377,13 +5275,13 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_id
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_type(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5397,7 +5295,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_type(ctx conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Type, nil
+		return ec.resolvers.CreditTransactionDescriptionVariable().Type(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5418,8 +5316,8 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ty
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionDescriptionVariable",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionDescriptionVariableType does not have child fields")
 		},
@@ -5427,7 +5325,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ty
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_key(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5441,7 +5339,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx contex
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Key, nil
+		return ec.resolvers.CreditTransactionDescriptionVariable().Key(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5453,25 +5351,25 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable_key(ctx contex
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(model.CreditTransactionDescriptionVariableKey)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_key(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionDescriptionVariable",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			return nil, errors.New("field of type CreditTransactionDescriptionVariableKey does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_content(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_content(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5515,7 +5413,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_co
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_url(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_url(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5556,7 +5454,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_ur
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable_image(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionDescriptionVariable_image(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionDescriptionVariable) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionDescriptionVariable_image(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5597,7 +5495,7 @@ func (ec *executionContext) fieldContext_CreditTransactionDescriptionVariable_im
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5623,9 +5521,9 @@ func (ec *executionContext) _CreditTransactionInfo_id(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5635,13 +5533,13 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_id(ctx context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_description(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5655,7 +5553,7 @@ func (ec *executionContext) _CreditTransactionInfo_description(ctx context.Conte
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Description, nil
+		return ec.resolvers.CreditTransactionInfo().Description(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5673,8 +5571,8 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_description(ctx c
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -5682,7 +5580,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_description(ctx c
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_descriptionVariables(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5705,9 +5603,9 @@ func (ec *executionContext) _CreditTransactionInfo_descriptionVariables(ctx cont
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.CreditTransactionDescriptionVariable)
+	res := resTmp.([]*db.CreditTransactionDescriptionVariable)
 	fc.Result = res
-	return ec.marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx, field.Selections, res)
+	return ec.marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_descriptionVariables(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5737,7 +5635,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_descriptionVariab
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5751,7 +5649,7 @@ func (ec *executionContext) _CreditTransactionInfo_status(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.CreditTransactionInfo().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5772,8 +5670,8 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_status(ctx contex
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionInfo",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionStatus does not have child fields")
 		},
@@ -5781,7 +5679,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_status(ctx contex
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_template(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5804,9 +5702,9 @@ func (ec *executionContext) _CreditTransactionInfo_template(ctx context.Context,
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransactionTemplate)
+	res := resTmp.(*db.CreditTransactionTemplate)
 	fc.Result = res
-	return ec.marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionTemplate(ctx, field.Selections, res)
+	return ec.marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionTemplate(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_template(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5830,7 +5728,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_template(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5853,9 +5751,9 @@ func (ec *executionContext) _CreditTransactionInfo_createdAt(ctx context.Context
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5871,7 +5769,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_createdAt(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionInfo) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionInfo) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionInfo_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5894,9 +5792,9 @@ func (ec *executionContext) _CreditTransactionInfo_updatedAt(ctx context.Context
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionInfo_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5912,7 +5810,7 @@ func (ec *executionContext) fieldContext_CreditTransactionInfo_updatedAt(ctx con
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5938,9 +5836,9 @@ func (ec *executionContext) _CreditTransactionTemplate_id(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionTemplate_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5950,13 +5848,13 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_id(ctx contex
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -5970,7 +5868,7 @@ func (ec *executionContext) _CreditTransactionTemplate_name(ctx context.Context,
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return ec.resolvers.CreditTransactionTemplate().Name(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5991,8 +5889,8 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_name(ctx cont
 	fc = &graphql.FieldContext{
 		Object:     "CreditTransactionTemplate",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type CreditTransactionTemplateName does not have child fields")
 		},
@@ -6000,7 +5898,7 @@ func (ec *executionContext) fieldContext_CreditTransactionTemplate_name(ctx cont
 	return fc, nil
 }
 
-func (ec *executionContext) _CreditTransactionTemplate_content(ctx context.Context, field graphql.CollectedField, obj *model.CreditTransactionTemplate) (ret graphql.Marshaler) {
+func (ec *executionContext) _CreditTransactionTemplate_content(ctx context.Context, field graphql.CollectedField, obj *db.CreditTransactionTemplate) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_CreditTransactionTemplate_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6065,11 +5963,14 @@ func (ec *executionContext) _CreditTransactions_totalCount(ctx context.Context, 
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactions_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6079,7 +5980,7 @@ func (ec *executionContext) fieldContext_CreditTransactions_totalCount(ctx conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6106,11 +6007,14 @@ func (ec *executionContext) _CreditTransactions_edges(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.CreditTransactionsEdge)
 	fc.Result = res
-	return ec.marshalOCreditTransactionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx, field.Selections, res)
+	return ec.marshalNCreditTransactionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactions_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6249,9 +6153,9 @@ func (ec *executionContext) _CreditTransactionsEdge_node(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.CreditTransaction)
+	res := resTmp.(*db.CreditTransaction)
 	fc.Result = res
-	return ec.marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransaction(ctx, field.Selections, res)
+	return ec.marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransaction(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_CreditTransactionsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6285,7 +6189,7 @@ func (ec *executionContext) fieldContext_CreditTransactionsEdge_node(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6306,11 +6210,14 @@ func (ec *executionContext) _File_id(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalOID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_File_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6320,13 +6227,13 @@ func (ec *executionContext) fieldContext_File_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6367,7 +6274,7 @@ func (ec *executionContext) fieldContext_File_name(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _File_width(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_width(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_width(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6408,7 +6315,7 @@ func (ec *executionContext) fieldContext_File_width(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _File_height(ctx context.Context, field graphql.CollectedField, obj *model.File) (ret graphql.Marshaler) {
+func (ec *executionContext) _File_height(ctx context.Context, field graphql.CollectedField, obj *db.File) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_File_height(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -6475,9 +6382,9 @@ func (ec *executionContext) _InvitedUser_id(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvitedUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6487,7 +6394,7 @@ func (ec *executionContext) fieldContext_InvitedUser_id(ctx context.Context, fie
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6507,7 +6414,7 @@ func (ec *executionContext) _InvitedUser_inviter(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUser().Inviter(rctx, obj)
+		return obj.Inviter, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6519,17 +6426,17 @@ func (ec *executionContext) _InvitedUser_inviter(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvitedUser_inviter(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -6595,7 +6502,7 @@ func (ec *executionContext) _InvitedUser_invitee(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUser().Invitee(rctx, obj)
+		return obj.Invitee, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6607,17 +6514,17 @@ func (ec *executionContext) _InvitedUser_invitee(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvitedUser_invitee(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUser",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -6772,11 +6679,14 @@ func (ec *executionContext) _InvitedUsers_totalCount(ctx context.Context, field 
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvitedUsers_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6786,7 +6696,7 @@ func (ec *executionContext) fieldContext_InvitedUsers_totalCount(ctx context.Con
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6813,11 +6723,14 @@ func (ec *executionContext) _InvitedUsers_edges(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.InvitedUsersEdge)
 	fc.Result = res
-	return ec.marshalOInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, field.Selections, res)
+	return ec.marshalNInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_InvitedUsers_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -6903,7 +6816,7 @@ func (ec *executionContext) _InvitedUsersEdge_cursor(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUsersEdge().Cursor(rctx, obj)
+		return obj.Cursor, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6924,8 +6837,8 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_cursor(ctx context.Con
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUsersEdge",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -6947,7 +6860,7 @@ func (ec *executionContext) _InvitedUsersEdge_node(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.InvitedUsersEdge().Node(rctx, obj)
+		return obj.Node, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6965,8 +6878,8 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_node(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "InvitedUsersEdge",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -6986,7 +6899,7 @@ func (ec *executionContext) fieldContext_InvitedUsersEdge_node(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7012,9 +6925,9 @@ func (ec *executionContext) _LikedPost_id(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7024,13 +6937,13 @@ func (ec *executionContext) fieldContext_LikedPost_id(ctx context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_user(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_user(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7056,9 +6969,9 @@ func (ec *executionContext) _LikedPost_user(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7118,7 +7031,7 @@ func (ec *executionContext) fieldContext_LikedPost_user(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7144,9 +7057,9 @@ func (ec *executionContext) _LikedPost_post(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7192,7 +7105,7 @@ func (ec *executionContext) fieldContext_LikedPost_post(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7215,9 +7128,9 @@ func (ec *executionContext) _LikedPost_createdAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7233,7 +7146,7 @@ func (ec *executionContext) fieldContext_LikedPost_createdAt(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.LikedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.LikedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_LikedPost_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -7256,9 +7169,9 @@ func (ec *executionContext) _LikedPost_updatedAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPost_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7295,11 +7208,14 @@ func (ec *executionContext) _LikedPosts_totalCount(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPosts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7309,7 +7225,7 @@ func (ec *executionContext) fieldContext_LikedPosts_totalCount(ctx context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7336,11 +7252,14 @@ func (ec *executionContext) _LikedPosts_edges(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.LikedPostsEdge)
 	fc.Result = res
-	return ec.marshalOLikedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx, field.Selections, res)
+	return ec.marshalNLikedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPosts_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7479,9 +7398,9 @@ func (ec *executionContext) _LikedPostsEdge_node(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_LikedPostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7695,7 +7614,7 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FollowUser(rctx, fc.Args["userId"].(string))
+		return ec.resolvers.Mutation().FollowUser(rctx, fc.Args["userId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7704,9 +7623,9 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Connection)
+	res := resTmp.(*db.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_followUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7761,7 +7680,7 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UnfollowUser(rctx, fc.Args["userId"].(string))
+		return ec.resolvers.Mutation().UnfollowUser(rctx, fc.Args["userId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7770,9 +7689,9 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Connection)
+	res := resTmp.(*db.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_unfollowUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7827,7 +7746,7 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AcceptUser(rctx, fc.Args["userId"].(string))
+		return ec.resolvers.Mutation().AcceptUser(rctx, fc.Args["userId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7836,9 +7755,9 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Connection)
+	res := resTmp.(*db.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_acceptUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7893,7 +7812,7 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RejectUser(rctx, fc.Args["userId"].(string))
+		return ec.resolvers.Mutation().RejectUser(rctx, fc.Args["userId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7902,9 +7821,9 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Connection)
+	res := resTmp.(*db.Connection)
 	fc.Result = res
-	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx, field.Selections, res)
+	return ec.marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_rejectUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -7968,9 +7887,9 @@ func (ec *executionContext) _Mutation_uploadFiles(ctx context.Context, field gra
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_uploadFiles(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8021,7 +7940,7 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().LikePost(rctx, fc.Args["postId"].(string))
+		return ec.resolvers.Mutation().LikePost(rctx, fc.Args["postId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8030,9 +7949,9 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_likePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8135,9 +8054,9 @@ func (ec *executionContext) _Mutation_addPost(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8208,7 +8127,7 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(string), fc.Args["input"].(model.EditPostInput))
+		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(uuid.UUID), fc.Args["input"].(model.EditPostInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8217,9 +8136,9 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editPost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8290,7 +8209,7 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(string))
+		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8299,9 +8218,9 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_deletePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8372,7 +8291,7 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(string))
+		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8381,9 +8300,9 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_savePost(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8445,9 +8364,9 @@ func (ec *executionContext) _Mutation_createTicket(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_createTicket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8508,7 +8427,7 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(string), fc.Args["input"].(model.AddTicketMessageInput))
+		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(uuid.UUID), fc.Args["input"].(model.AddTicketMessageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8517,9 +8436,9 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_addTicketMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8578,7 +8497,7 @@ func (ec *executionContext) _Mutation_readTicketMessages(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(string))
+		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(uuid.UUID))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8630,7 +8549,7 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(string), fc.Args["status"].(model.TicketStatus))
+		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(uuid.UUID), fc.Args["status"].(model.TicketStatus))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8639,9 +8558,9 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_updateTicketStatus(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8711,9 +8630,9 @@ func (ec *executionContext) _Mutation_editUser(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8842,7 +8761,7 @@ func (ec *executionContext) fieldContext_Mutation_changePassword(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8868,9 +8787,9 @@ func (ec *executionContext) _Notification_id(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8880,13 +8799,13 @@ func (ec *executionContext) fieldContext_Notification_id(ctx context.Context, fi
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_notificationType(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_notificationType(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_notificationType(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8912,9 +8831,9 @@ func (ec *executionContext) _Notification_notificationType(ctx context.Context, 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.NotificationType)
+	res := resTmp.(*db.NotificationType)
 	fc.Result = res
-	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx, field.Selections, res)
+	return ec.marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_notificationType(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8938,7 +8857,7 @@ func (ec *executionContext) fieldContext_Notification_notificationType(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_sender(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_sender(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_sender(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -8964,9 +8883,9 @@ func (ec *executionContext) _Notification_sender(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9026,7 +8945,7 @@ func (ec *executionContext) fieldContext_Notification_sender(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_receiver(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_receiver(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_receiver(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9052,9 +8971,9 @@ func (ec *executionContext) _Notification_receiver(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9114,7 +9033,7 @@ func (ec *executionContext) fieldContext_Notification_receiver(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_post(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_post(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9137,9 +9056,9 @@ func (ec *executionContext) _Notification_post(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9185,7 +9104,7 @@ func (ec *executionContext) fieldContext_Notification_post(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_reply(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_reply(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_reply(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9208,9 +9127,9 @@ func (ec *executionContext) _Notification_reply(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_reply(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9256,7 +9175,7 @@ func (ec *executionContext) fieldContext_Notification_reply(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_url(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_url(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9270,7 +9189,7 @@ func (ec *executionContext) _Notification_url(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.URL, nil
+		return obj.Url, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9300,7 +9219,7 @@ func (ec *executionContext) fieldContext_Notification_url(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_read(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_read(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_read(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9323,9 +9242,9 @@ func (ec *executionContext) _Notification_read(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_read(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9341,7 +9260,7 @@ func (ec *executionContext) fieldContext_Notification_read(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9364,9 +9283,9 @@ func (ec *executionContext) _Notification_createdAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9382,7 +9301,7 @@ func (ec *executionContext) fieldContext_Notification_createdAt(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Notification) (ret graphql.Marshaler) {
+func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Notification) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Notification_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9405,9 +9324,9 @@ func (ec *executionContext) _Notification_updatedAt(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notification_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9423,7 +9342,7 @@ func (ec *executionContext) fieldContext_Notification_updatedAt(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_id(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_id(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9449,9 +9368,9 @@ func (ec *executionContext) _NotificationType_id(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationType_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9461,13 +9380,13 @@ func (ec *executionContext) fieldContext_NotificationType_id(ctx context.Context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_name(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_name(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_name(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9481,7 +9400,7 @@ func (ec *executionContext) _NotificationType_name(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return ec.resolvers.NotificationType().Name(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9502,8 +9421,8 @@ func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "NotificationType",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type NotificationTypeName does not have child fields")
 		},
@@ -9511,7 +9430,7 @@ func (ec *executionContext) fieldContext_NotificationType_name(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _NotificationType_template(ctx context.Context, field graphql.CollectedField, obj *model.NotificationType) (ret graphql.Marshaler) {
+func (ec *executionContext) _NotificationType_template(ctx context.Context, field graphql.CollectedField, obj *db.NotificationType) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_NotificationType_template(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -9576,11 +9495,14 @@ func (ec *executionContext) _Notifications_totalCount(ctx context.Context, field
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notifications_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9590,7 +9512,7 @@ func (ec *executionContext) fieldContext_Notifications_totalCount(ctx context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9617,11 +9539,14 @@ func (ec *executionContext) _Notifications_edges(ctx context.Context, field grap
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.NotificationsEdge)
 	fc.Result = res
-	return ec.marshalONotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, field.Selections, res)
+	return ec.marshalNNotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notifications_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9664,11 +9589,14 @@ func (ec *executionContext) _Notifications_unreadNotificationsCount(ctx context.
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Notifications_unreadNotificationsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9678,7 +9606,7 @@ func (ec *executionContext) fieldContext_Notifications_unreadNotificationsCount(
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -9801,9 +9729,9 @@ func (ec *executionContext) _NotificationsEdge_node(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Notification)
+	res := resTmp.(*db.Notification)
 	fc.Result = res
-	return ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx, field.Selections, res)
+	return ec.marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotification(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_NotificationsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -9836,308 +9764,6 @@ func (ec *executionContext) fieldContext_NotificationsEdge_node(ctx context.Cont
 				return ec.fieldContext_Notification_updatedAt(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Notification", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_id(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_id(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.ID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_userId(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_userId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UserID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_userId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_token(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_token(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Token, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_token(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_socketId(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_socketId(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.SocketID, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_socketId(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_userAgent(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_userAgent(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UserAgent, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		if !graphql.HasFieldError(ctx, fc) {
-			ec.Errorf(ctx, "must not be null")
-		}
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_userAgent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_createdAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.CreatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _OnlineUser_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.OnlineUser) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_OnlineUser_updatedAt(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.UpdatedAt, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*time.Time)
-	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_OnlineUser_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "OnlineUser",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Time does not have child fields")
 		},
 	}
 	return fc, nil
@@ -10228,7 +9854,7 @@ func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_id(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10254,9 +9880,9 @@ func (ec *executionContext) _Post_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10266,13 +9892,13 @@ func (ec *executionContext) fieldContext_Post_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_status(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10286,7 +9912,7 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.Post().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10298,17 +9924,17 @@ func (ec *executionContext) _Post_status(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.PostStatus)
+	res := resTmp.(model.PostStatus)
 	fc.Result = res
-	return ec.marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
+	return ec.marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type PostStatus does not have child fields")
 		},
@@ -10316,7 +9942,7 @@ func (ec *executionContext) fieldContext_Post_status(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_parent(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10339,9 +9965,9 @@ func (ec *executionContext) _Post_parent(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_parent(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10387,7 +10013,7 @@ func (ec *executionContext) fieldContext_Post_parent(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_child(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_child(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_child(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10410,9 +10036,9 @@ func (ec *executionContext) _Post_child(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10458,7 +10084,7 @@ func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_user(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_user(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10484,9 +10110,9 @@ func (ec *executionContext) _Post_user(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10546,7 +10172,7 @@ func (ec *executionContext) fieldContext_Post_user(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_content(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_content(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_content(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10587,7 +10213,7 @@ func (ec *executionContext) fieldContext_Post_content(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_attachment(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10610,9 +10236,9 @@ func (ec *executionContext) _Post_attachment(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_attachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10638,7 +10264,7 @@ func (ec *executionContext) fieldContext_Post_attachment(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_url(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10682,7 +10308,7 @@ func (ec *executionContext) fieldContext_Post_url(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_likes(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_likes(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10731,7 +10357,7 @@ func (ec *executionContext) fieldContext_Post_likes(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_replies(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_replies(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_replies(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10780,7 +10406,7 @@ func (ec *executionContext) fieldContext_Post_replies(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_isLiked(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10803,9 +10429,9 @@ func (ec *executionContext) _Post_isLiked(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.LikedPost)
+	res := resTmp.(*db.LikedPost)
 	fc.Result = res
-	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx, field.Selections, res)
+	return ec.marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_isLiked(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10833,7 +10459,7 @@ func (ec *executionContext) fieldContext_Post_isLiked(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_isSaved(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10856,9 +10482,9 @@ func (ec *executionContext) _Post_isSaved(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_isSaved(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10886,7 +10512,7 @@ func (ec *executionContext) fieldContext_Post_isSaved(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10909,9 +10535,9 @@ func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10927,7 +10553,7 @@ func (ec *executionContext) fieldContext_Post_createdAt(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -10950,9 +10576,9 @@ func (ec *executionContext) _Post_updatedAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Post_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10989,11 +10615,14 @@ func (ec *executionContext) _Posts_totalCount(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Posts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11003,7 +10632,7 @@ func (ec *executionContext) fieldContext_Posts_totalCount(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -11030,11 +10659,14 @@ func (ec *executionContext) _Posts_edges(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.PostsEdge)
 	fc.Result = res
-	return ec.marshalOPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, field.Selections, res)
+	return ec.marshalNPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Posts_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11173,9 +10805,9 @@ func (ec *executionContext) _PostsEdge_node(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -11649,7 +11281,7 @@ func (ec *executionContext) _Query_getLikedPostsByPostId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(uuid.UUID), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -12020,9 +11652,9 @@ func (ec *executionContext) _Query_getPostByUrl(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getPostByUrl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12582,9 +12214,9 @@ func (ec *executionContext) _Query_getUserInfo(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12667,9 +12299,9 @@ func (ec *executionContext) _Query_getUserByUsername(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12763,9 +12395,9 @@ func (ec *executionContext) _Query_getUserByInvitationCode(ctx context.Context, 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_getUserByInvitationCode(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12859,9 +12491,9 @@ func (ec *executionContext) _Query_checkUsername(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_checkUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -12955,9 +12587,9 @@ func (ec *executionContext) _Query_checkEmail(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_checkEmail(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13157,7 +12789,7 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13183,9 +12815,9 @@ func (ec *executionContext) _SavedPost_id(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13195,13 +12827,13 @@ func (ec *executionContext) fieldContext_SavedPost_id(ctx context.Context, field
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_user(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_user(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13227,9 +12859,9 @@ func (ec *executionContext) _SavedPost_user(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13289,7 +12921,7 @@ func (ec *executionContext) fieldContext_SavedPost_user(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_post(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13315,9 +12947,9 @@ func (ec *executionContext) _SavedPost_post(ctx context.Context, field graphql.C
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Post)
+	res := resTmp.(*db.Post)
 	fc.Result = res
-	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+	return ec.marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_post(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13363,7 +12995,7 @@ func (ec *executionContext) fieldContext_SavedPost_post(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13386,9 +13018,9 @@ func (ec *executionContext) _SavedPost_createdAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13404,7 +13036,7 @@ func (ec *executionContext) fieldContext_SavedPost_createdAt(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.SavedPost) (ret graphql.Marshaler) {
+func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.SavedPost) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SavedPost_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -13427,9 +13059,9 @@ func (ec *executionContext) _SavedPost_updatedAt(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPost_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13466,11 +13098,14 @@ func (ec *executionContext) _SavedPosts_totalCount(ctx context.Context, field gr
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPosts_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13480,7 +13115,7 @@ func (ec *executionContext) fieldContext_SavedPosts_totalCount(ctx context.Conte
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -13507,11 +13142,14 @@ func (ec *executionContext) _SavedPosts_edges(ctx context.Context, field graphql
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.SavedPostsEdge)
 	fc.Result = res
-	return ec.marshalOSavedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx, field.Selections, res)
+	return ec.marshalNSavedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPosts_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13650,9 +13288,9 @@ func (ec *executionContext) _SavedPostsEdge_node(ctx context.Context, field grap
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.SavedPost)
+	res := resTmp.(*db.SavedPost)
 	fc.Result = res
-	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx, field.Selections, res)
+	return ec.marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SavedPostsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13770,137 +13408,6 @@ func (ec *executionContext) fieldContext_Search_tag(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Subscription_test(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_test(ctx, field)
-	if err != nil {
-		return nil
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().Test(rctx, fc.Args["input"].(model.TestInput))
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		return nil
-	}
-	return func(ctx context.Context) graphql.Marshaler {
-		select {
-		case res, ok := <-resTmp.(<-chan *model.Test):
-			if !ok {
-				return nil
-			}
-			return graphql.WriterFunc(func(w io.Writer) {
-				w.Write([]byte{'{'})
-				graphql.MarshalString(field.Alias).MarshalGQL(w)
-				w.Write([]byte{':'})
-				ec.marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTest(ctx, field.Selections, res).MarshalGQL(w)
-				w.Write([]byte{'}'})
-			})
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (ec *executionContext) fieldContext_Subscription_test(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "content":
-				return ec.fieldContext_Test_content(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type Test", field.Name)
-		},
-	}
-	defer func() {
-		if r := recover(); r != nil {
-			err = ec.Recover(ctx, r)
-			ec.Error(ctx, err)
-		}
-	}()
-	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Subscription_test_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
-		ec.Error(ctx, err)
-		return
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _Subscription_getNotification(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
-	fc, err := ec.fieldContext_Subscription_getNotification(ctx, field)
-	if err != nil {
-		return nil
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = nil
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Subscription().GetNotification(rctx)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return nil
-	}
-	if resTmp == nil {
-		return nil
-	}
-	return func(ctx context.Context) graphql.Marshaler {
-		select {
-		case res, ok := <-resTmp.(<-chan *model.NotificationsEdge):
-			if !ok {
-				return nil
-			}
-			return graphql.WriterFunc(func(w io.Writer) {
-				w.Write([]byte{'{'})
-				graphql.MarshalString(field.Alias).MarshalGQL(w)
-				w.Write([]byte{':'})
-				ec.marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, field.Selections, res).MarshalGQL(w)
-				w.Write([]byte{'}'})
-			})
-		case <-ctx.Done():
-			return nil
-		}
-	}
-}
-
-func (ec *executionContext) fieldContext_Subscription_getNotification(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "Subscription",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "cursor":
-				return ec.fieldContext_NotificationsEdge_cursor(ctx, field)
-			case "node":
-				return ec.fieldContext_NotificationsEdge_node(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type NotificationsEdge", field.Name)
-		},
-	}
-	return fc, nil
-}
-
 func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.CollectedField, obj *model.Tag) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Tag_id(ctx, field)
 	if err != nil {
@@ -13927,9 +13434,9 @@ func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.Collected
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -13939,7 +13446,7 @@ func (ec *executionContext) fieldContext_Tag_id(ctx context.Context, field graph
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14010,11 +13517,14 @@ func (ec *executionContext) _Tag_count(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_count(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14024,7 +13534,7 @@ func (ec *executionContext) fieldContext_Tag_count(ctx context.Context, field gr
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -14053,9 +13563,9 @@ func (ec *executionContext) _Tag_createdAt(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14094,9 +13604,9 @@ func (ec *executionContext) _Tag_updatedAt(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tag_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14133,11 +13643,14 @@ func (ec *executionContext) _Tags_edges(ctx context.Context, field graphql.Colle
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.TagsEdge)
 	fc.Result = res
-	return ec.marshalOTagsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx, field.Selections, res)
+	return ec.marshalNTagsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tags_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14251,7 +13764,7 @@ func (ec *executionContext) fieldContext_Test_content(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14277,9 +13790,9 @@ func (ec *executionContext) _Ticket_id(ctx context.Context, field graphql.Collec
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14289,13 +13802,13 @@ func (ec *executionContext) fieldContext_Ticket_id(ctx context.Context, field gr
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_user(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_user(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_user(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14321,9 +13834,9 @@ func (ec *executionContext) _Ticket_user(ctx context.Context, field graphql.Coll
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_user(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14383,7 +13896,7 @@ func (ec *executionContext) fieldContext_Ticket_user(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_subject(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_subject(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_subject(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14427,7 +13940,7 @@ func (ec *executionContext) fieldContext_Ticket_subject(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_status(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14441,7 +13954,7 @@ func (ec *executionContext) _Ticket_status(ctx context.Context, field graphql.Co
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Status, nil
+		return ec.resolvers.Ticket().Status(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -14462,8 +13975,8 @@ func (ec *executionContext) fieldContext_Ticket_status(ctx context.Context, fiel
 	fc = &graphql.FieldContext{
 		Object:     "Ticket",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type TicketStatus does not have child fields")
 		},
@@ -14471,7 +13984,7 @@ func (ec *executionContext) fieldContext_Ticket_status(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_url(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_url(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14512,7 +14025,7 @@ func (ec *executionContext) fieldContext_Ticket_url(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_lastMessage(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14538,9 +14051,9 @@ func (ec *executionContext) _Ticket_lastMessage(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14574,7 +14087,7 @@ func (ec *executionContext) fieldContext_Ticket_lastMessage(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_permissions(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_permissions(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_permissions(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14618,7 +14131,7 @@ func (ec *executionContext) fieldContext_Ticket_permissions(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14641,9 +14154,9 @@ func (ec *executionContext) _Ticket_createdAt(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14659,7 +14172,7 @@ func (ec *executionContext) fieldContext_Ticket_createdAt(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.Ticket) (ret graphql.Marshaler) {
+func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.Ticket) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Ticket_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14682,9 +14195,9 @@ func (ec *executionContext) _Ticket_updatedAt(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Ticket_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14700,7 +14213,7 @@ func (ec *executionContext) fieldContext_Ticket_updatedAt(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14726,9 +14239,9 @@ func (ec *executionContext) _TicketMessage_id(ctx context.Context, field graphql
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14738,13 +14251,13 @@ func (ec *executionContext) fieldContext_TicketMessage_id(ctx context.Context, f
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_sender(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_sender(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_sender(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14770,9 +14283,9 @@ func (ec *executionContext) _TicketMessage_sender(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_sender(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14832,7 +14345,7 @@ func (ec *executionContext) fieldContext_TicketMessage_sender(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_message(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_message(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_message(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14876,7 +14389,7 @@ func (ec *executionContext) fieldContext_TicketMessage_message(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_ticket(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14902,9 +14415,9 @@ func (ec *executionContext) _TicketMessage_ticket(ctx context.Context, field gra
 		}
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14940,7 +14453,7 @@ func (ec *executionContext) fieldContext_TicketMessage_ticket(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_read(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -14963,9 +14476,9 @@ func (ec *executionContext) _TicketMessage_read(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_read(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -14981,7 +14494,7 @@ func (ec *executionContext) fieldContext_TicketMessage_read(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_attachment(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15004,9 +14517,9 @@ func (ec *executionContext) _TicketMessage_attachment(ctx context.Context, field
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.File)
+	res := resTmp.([]*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_attachment(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15032,7 +14545,7 @@ func (ec *executionContext) fieldContext_TicketMessage_attachment(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15055,9 +14568,9 @@ func (ec *executionContext) _TicketMessage_createdAt(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15073,7 +14586,7 @@ func (ec *executionContext) fieldContext_TicketMessage_createdAt(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.TicketMessage) (ret graphql.Marshaler) {
+func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.TicketMessage) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_TicketMessage_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15096,9 +14609,9 @@ func (ec *executionContext) _TicketMessage_updatedAt(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessage_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15135,11 +14648,14 @@ func (ec *executionContext) _TicketMessages_totalCount(ctx context.Context, fiel
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessages_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15149,7 +14665,7 @@ func (ec *executionContext) fieldContext_TicketMessages_totalCount(ctx context.C
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15178,9 +14694,9 @@ func (ec *executionContext) _TicketMessages_ticket(ctx context.Context, field gr
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessages_ticket(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15237,11 +14753,14 @@ func (ec *executionContext) _TicketMessages_edges(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.TicketMessagesEdge)
 	fc.Result = res
-	return ec.marshalOTicketMessagesEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx, field.Selections, res)
+	return ec.marshalNTicketMessagesEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessages_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15380,9 +14899,9 @@ func (ec *executionContext) _TicketMessagesEdge_node(ctx context.Context, field 
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.TicketMessage)
+	res := resTmp.(*db.TicketMessage)
 	fc.Result = res
-	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx, field.Selections, res)
+	return ec.marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketMessagesEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15437,11 +14956,14 @@ func (ec *executionContext) _Tickets_totalCount(ctx context.Context, field graph
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tickets_totalCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15451,7 +14973,7 @@ func (ec *executionContext) fieldContext_Tickets_totalCount(ctx context.Context,
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
@@ -15478,11 +15000,14 @@ func (ec *executionContext) _Tickets_edges(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.TicketsEdge)
 	fc.Result = res
-	return ec.marshalOTicketsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx, field.Selections, res)
+	return ec.marshalNTicketsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Tickets_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15621,9 +15146,9 @@ func (ec *executionContext) _TicketsEdge_node(ctx context.Context, field graphql
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.Ticket)
+	res := resTmp.(*db.Ticket)
 	fc.Result = res
-	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx, field.Selections, res)
+	return ec.marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_TicketsEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15659,7 +15184,7 @@ func (ec *executionContext) fieldContext_TicketsEdge_node(ctx context.Context, f
 	return fc, nil
 }
 
-func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_id(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_id(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15685,9 +15210,9 @@ func (ec *executionContext) _User_id(ctx context.Context, field graphql.Collecte
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(uuid.UUID)
 	fc.Result = res
-	return ec.marshalNID2string(ctx, field.Selections, res)
+	return ec.marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15697,13 +15222,13 @@ func (ec *executionContext) fieldContext_User_id(ctx context.Context, field grap
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type ID does not have child fields")
+			return nil, errors.New("field of type UUID does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_username(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_username(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15747,7 +15272,7 @@ func (ec *executionContext) fieldContext_User_username(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _User_backgroundColor(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_backgroundColor(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_backgroundColor(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15761,7 +15286,7 @@ func (ec *executionContext) _User_backgroundColor(ctx context.Context, field gra
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.BackgroundColor, nil
+		return ec.resolvers.User().BackgroundColor(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15782,8 +15307,8 @@ func (ec *executionContext) fieldContext_User_backgroundColor(ctx context.Contex
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type BackgroundColor does not have child fields")
 		},
@@ -15791,7 +15316,7 @@ func (ec *executionContext) fieldContext_User_backgroundColor(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _User_primaryColor(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_primaryColor(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_primaryColor(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15805,7 +15330,7 @@ func (ec *executionContext) _User_primaryColor(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.PrimaryColor, nil
+		return ec.resolvers.User().PrimaryColor(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -15826,8 +15351,8 @@ func (ec *executionContext) fieldContext_User_primaryColor(ctx context.Context, 
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type PrimaryColor does not have child fields")
 		},
@@ -15835,7 +15360,7 @@ func (ec *executionContext) fieldContext_User_primaryColor(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _User_avatar(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_avatar(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_avatar(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15858,9 +15383,9 @@ func (ec *executionContext) _User_avatar(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.File)
+	res := resTmp.(*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_avatar(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15886,7 +15411,7 @@ func (ec *executionContext) fieldContext_User_avatar(ctx context.Context, field 
 	return fc, nil
 }
 
-func (ec *executionContext) _User_background(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_background(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_background(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15909,9 +15434,9 @@ func (ec *executionContext) _User_background(ctx context.Context, field graphql.
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.File)
+	res := resTmp.(*db.File)
 	fc.Result = res
-	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, field.Selections, res)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_background(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -15937,7 +15462,7 @@ func (ec *executionContext) fieldContext_User_background(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_email(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -15981,7 +15506,7 @@ func (ec *executionContext) fieldContext_User_email(ctx context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _User_fullName(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_fullName(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_fullName(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16025,7 +15550,7 @@ func (ec *executionContext) fieldContext_User_fullName(ctx context.Context, fiel
 	return fc, nil
 }
 
-func (ec *executionContext) _User_invitationCode(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_invitationCode(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_invitationCode(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16069,7 +15594,7 @@ func (ec *executionContext) fieldContext_User_invitationCode(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_bio(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_bio(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16083,7 +15608,7 @@ func (ec *executionContext) _User_bio(ctx context.Context, field graphql.Collect
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Bio, nil
+		return ec.resolvers.User().Bio(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16101,8 +15626,8 @@ func (ec *executionContext) fieldContext_User_bio(ctx context.Context, field gra
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type String does not have child fields")
 		},
@@ -16110,7 +15635,7 @@ func (ec *executionContext) fieldContext_User_bio(ctx context.Context, field gra
 	return fc, nil
 }
 
-func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_role(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_role(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16124,7 +15649,7 @@ func (ec *executionContext) _User_role(ctx context.Context, field graphql.Collec
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Role, nil
+		return ec.resolvers.User().Role(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16145,8 +15670,8 @@ func (ec *executionContext) fieldContext_User_role(ctx context.Context, field gr
 	fc = &graphql.FieldContext{
 		Object:     "User",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type UserRole does not have child fields")
 		},
@@ -16154,7 +15679,7 @@ func (ec *executionContext) fieldContext_User_role(ctx context.Context, field gr
 	return fc, nil
 }
 
-func (ec *executionContext) _User_credits(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_credits(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_credits(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16198,7 +15723,7 @@ func (ec *executionContext) fieldContext_User_credits(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _User_isPrivate(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_isPrivate(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_isPrivate(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16242,7 +15767,7 @@ func (ec *executionContext) fieldContext_User_isPrivate(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _User_isVerified(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_isVerified(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_isVerified(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16286,7 +15811,7 @@ func (ec *executionContext) fieldContext_User_isVerified(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _User_connectionStatus(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_connectionStatus(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_connectionStatus(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16327,7 +15852,7 @@ func (ec *executionContext) fieldContext_User_connectionStatus(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _User_followingCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_followingCount(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_followingCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16353,9 +15878,9 @@ func (ec *executionContext) _User_followingCount(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followingCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16365,13 +15890,13 @@ func (ec *executionContext) fieldContext_User_followingCount(ctx context.Context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _User_followersCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_followersCount(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_followersCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16397,9 +15922,9 @@ func (ec *executionContext) _User_followersCount(ctx context.Context, field grap
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followersCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16409,13 +15934,13 @@ func (ec *executionContext) fieldContext_User_followersCount(ctx context.Context
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _User_followRequestsCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_followRequestsCount(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_followRequestsCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16441,9 +15966,9 @@ func (ec *executionContext) _User_followRequestsCount(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_followRequestsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16453,13 +15978,13 @@ func (ec *executionContext) fieldContext_User_followRequestsCount(ctx context.Co
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_postsCount(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16485,9 +16010,9 @@ func (ec *executionContext) _User_postsCount(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(int64)
 	fc.Result = res
-	return ec.marshalNInt2int(ctx, field.Selections, res)
+	return ec.marshalNTotalCount2int64(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_postsCount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16497,13 +16022,13 @@ func (ec *executionContext) fieldContext_User_postsCount(ctx context.Context, fi
 		IsMethod:   true,
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type Int does not have child fields")
+			return nil, errors.New("field of type TotalCount does not have child fields")
 		},
 	}
 	return fc, nil
 }
 
-func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_createdAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16526,9 +16051,9 @@ func (ec *executionContext) _User_createdAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16544,7 +16069,7 @@ func (ec *executionContext) fieldContext_User_createdAt(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.CollectedField, obj *model.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.CollectedField, obj *db.User) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_User_updatedAt(ctx, field)
 	if err != nil {
 		return graphql.Null
@@ -16567,9 +16092,9 @@ func (ec *executionContext) _User_updatedAt(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*time.Time)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalOTime2ᚖtimeᚐTime(ctx, field.Selections, res)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_User_updatedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16606,11 +16131,14 @@ func (ec *executionContext) _Users_edges(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]*model.UsersEdge)
 	fc.Result = res
-	return ec.marshalOUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx, field.Selections, res)
+	return ec.marshalNUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Users_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -16653,9 +16181,9 @@ func (ec *executionContext) _UsersEdge_node(ctx context.Context, field graphql.C
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*model.User)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_UsersEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -18902,7 +18430,7 @@ func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalOID2ᚖstring(ctx, v)
+			it.ParentID, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -19052,7 +18580,7 @@ func (ec *executionContext) _AuthToken(ctx context.Context, sel ast.SelectionSet
 
 var connectionImplementors = []string{"Connection"}
 
-func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj *model.Connection) graphql.Marshaler {
+func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSet, obj *db.Connection) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, connectionImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19111,6 +18639,9 @@ func (ec *executionContext) _Connection(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._Connection_status(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "createdAt":
 
 			out.Values[i] = ec._Connection_createdAt(ctx, field, obj)
@@ -19144,10 +18675,16 @@ func (ec *executionContext) _Connections(ctx context.Context, sel ast.SelectionS
 
 			out.Values[i] = ec._Connections_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Connections_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._Connections_pageInfo(ctx, field, obj)
@@ -19177,16 +18714,42 @@ func (ec *executionContext) _ConnectionsEdge(ctx context.Context, sel ast.Select
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("ConnectionsEdge")
 		case "cursor":
+			field := field
 
-			out.Values[i] = ec._ConnectionsEdge_cursor(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ConnectionsEdge_cursor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "node":
+			field := field
 
-			out.Values[i] = ec._ConnectionsEdge_node(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._ConnectionsEdge_node(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19200,7 +18763,7 @@ func (ec *executionContext) _ConnectionsEdge(ctx context.Context, sel ast.Select
 
 var creditTransactionImplementors = []string{"CreditTransaction"}
 
-func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransaction) graphql.Marshaler {
+func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransaction) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19256,16 +18819,42 @@ func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.Sele
 
 			})
 		case "amount":
+			field := field
 
-			out.Values[i] = ec._CreditTransaction_amount(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransaction_amount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "type":
+			field := field
 
-			out.Values[i] = ec._CreditTransaction_type(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransaction_type(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "url":
 
 			out.Values[i] = ec._CreditTransaction_url(ctx, field, obj)
@@ -19323,7 +18912,7 @@ func (ec *executionContext) _CreditTransaction(ctx context.Context, sel ast.Sele
 
 var creditTransactionDescriptionVariableImplementors = []string{"CreditTransactionDescriptionVariable"}
 
-func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionDescriptionVariableImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19339,19 +18928,45 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Co
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "type":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionDescriptionVariable_type(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionDescriptionVariable_type(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "key":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionDescriptionVariable_key(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionDescriptionVariable_key(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "content":
 			field := field
 
@@ -19419,7 +19034,7 @@ func (ec *executionContext) _CreditTransactionDescriptionVariable(ctx context.Co
 
 var creditTransactionInfoImplementors = []string{"CreditTransactionInfo"}
 
-func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionInfo) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionInfoImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19435,9 +19050,22 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "description":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionInfo_description(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionInfo_description(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "descriptionVariables":
 			field := field
 
@@ -19456,12 +19084,25 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 
 			})
 		case "status":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionInfo_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionInfo_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "template":
 			field := field
 
@@ -19500,7 +19141,7 @@ func (ec *executionContext) _CreditTransactionInfo(ctx context.Context, sel ast.
 
 var creditTransactionTemplateImplementors = []string{"CreditTransactionTemplate"}
 
-func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, obj *model.CreditTransactionTemplate) graphql.Marshaler {
+func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, obj *db.CreditTransactionTemplate) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, creditTransactionTemplateImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19513,21 +19154,34 @@ func (ec *executionContext) _CreditTransactionTemplate(ctx context.Context, sel 
 			out.Values[i] = ec._CreditTransactionTemplate_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
+			field := field
 
-			out.Values[i] = ec._CreditTransactionTemplate_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._CreditTransactionTemplate_name(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "content":
 
 			out.Values[i] = ec._CreditTransactionTemplate_content(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -19554,10 +19208,16 @@ func (ec *executionContext) _CreditTransactions(ctx context.Context, sel ast.Sel
 
 			out.Values[i] = ec._CreditTransactions_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._CreditTransactions_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._CreditTransactions_pageInfo(ctx, field, obj)
@@ -19636,7 +19296,7 @@ func (ec *executionContext) _CreditTransactionsEdge(ctx context.Context, sel ast
 
 var fileImplementors = []string{"File"}
 
-func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *model.File) graphql.Marshaler {
+func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *db.File) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, fileImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19648,6 +19308,9 @@ func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._File_id(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "name":
 
 			out.Values[i] = ec._File_name(ctx, field, obj)
@@ -19686,48 +19349,22 @@ func (ec *executionContext) _InvitedUser(ctx context.Context, sel ast.SelectionS
 			out.Values[i] = ec._InvitedUser_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+				invalids++
 			}
 		case "inviter":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUser_inviter(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUser_inviter(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "invitee":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUser_invitee(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUser_invitee(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "createdAt":
 
 			out.Values[i] = ec._InvitedUser_createdAt(ctx, field, obj)
@@ -19761,10 +19398,16 @@ func (ec *executionContext) _InvitedUsers(ctx context.Context, sel ast.Selection
 
 			out.Values[i] = ec._InvitedUsers_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._InvitedUsers_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._InvitedUsers_pageInfo(ctx, field, obj)
@@ -19794,42 +19437,16 @@ func (ec *executionContext) _InvitedUsersEdge(ctx context.Context, sel ast.Selec
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("InvitedUsersEdge")
 		case "cursor":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUsersEdge_cursor(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._InvitedUsersEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "node":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._InvitedUsersEdge_node(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._InvitedUsersEdge_node(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -19843,7 +19460,7 @@ func (ec *executionContext) _InvitedUsersEdge(ctx context.Context, sel ast.Selec
 
 var likedPostImplementors = []string{"LikedPost"}
 
-func (ec *executionContext) _LikedPost(ctx context.Context, sel ast.SelectionSet, obj *model.LikedPost) graphql.Marshaler {
+func (ec *executionContext) _LikedPost(ctx context.Context, sel ast.SelectionSet, obj *db.LikedPost) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, likedPostImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -19931,10 +19548,16 @@ func (ec *executionContext) _LikedPosts(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._LikedPosts_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._LikedPosts_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._LikedPosts_pageInfo(ctx, field, obj)
@@ -20163,7 +19786,7 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 var notificationImplementors = []string{"Notification"}
 
-func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *model.Notification) graphql.Marshaler {
+func (ec *executionContext) _Notification(ctx context.Context, sel ast.SelectionSet, obj *db.Notification) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20304,7 +19927,7 @@ func (ec *executionContext) _Notification(ctx context.Context, sel ast.Selection
 
 var notificationTypeImplementors = []string{"NotificationType"}
 
-func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.SelectionSet, obj *model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.SelectionSet, obj *db.NotificationType) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, notificationTypeImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20317,21 +19940,34 @@ func (ec *executionContext) _NotificationType(ctx context.Context, sel ast.Selec
 			out.Values[i] = ec._NotificationType_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
+			field := field
 
-			out.Values[i] = ec._NotificationType_name(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._NotificationType_name(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "template":
 
 			out.Values[i] = ec._NotificationType_template(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
@@ -20358,14 +19994,23 @@ func (ec *executionContext) _Notifications(ctx context.Context, sel ast.Selectio
 
 			out.Values[i] = ec._Notifications_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Notifications_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "unreadNotificationsCount":
 
 			out.Values[i] = ec._Notifications_unreadNotificationsCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._Notifications_pageInfo(ctx, field, obj)
@@ -20442,70 +20087,6 @@ func (ec *executionContext) _NotificationsEdge(ctx context.Context, sel ast.Sele
 	return out
 }
 
-var onlineUserImplementors = []string{"OnlineUser"}
-
-func (ec *executionContext) _OnlineUser(ctx context.Context, sel ast.SelectionSet, obj *model.OnlineUser) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, onlineUserImplementors)
-	out := graphql.NewFieldSet(fields)
-	var invalids uint32
-	for i, field := range fields {
-		switch field.Name {
-		case "__typename":
-			out.Values[i] = graphql.MarshalString("OnlineUser")
-		case "id":
-
-			out.Values[i] = ec._OnlineUser_id(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "userId":
-
-			out.Values[i] = ec._OnlineUser_userId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "token":
-
-			out.Values[i] = ec._OnlineUser_token(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "socketId":
-
-			out.Values[i] = ec._OnlineUser_socketId(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "userAgent":
-
-			out.Values[i] = ec._OnlineUser_userAgent(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
-			}
-		case "createdAt":
-
-			out.Values[i] = ec._OnlineUser_createdAt(ctx, field, obj)
-
-		case "updatedAt":
-
-			out.Values[i] = ec._OnlineUser_updatedAt(ctx, field, obj)
-
-		default:
-			panic("unknown field " + strconv.Quote(field.Name))
-		}
-	}
-	out.Dispatch()
-	if invalids > 0 {
-		return graphql.Null
-	}
-	return out
-}
-
 var pageInfoImplementors = []string{"PageInfo"}
 
 func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *model.PageInfo) graphql.Marshaler {
@@ -20540,7 +20121,7 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 
 var postImplementors = []string{"Post"}
 
-func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *model.Post) graphql.Marshaler {
+func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj *db.Post) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, postImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -20556,12 +20137,25 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
+			field := field
 
-			out.Values[i] = ec._Post_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "parent":
 			field := field
 
@@ -20758,10 +20352,16 @@ func (ec *executionContext) _Posts(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Values[i] = ec._Posts_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Posts_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._Posts_pageInfo(ctx, field, obj)
@@ -21422,7 +21022,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 
 var savedPostImplementors = []string{"SavedPost"}
 
-func (ec *executionContext) _SavedPost(ctx context.Context, sel ast.SelectionSet, obj *model.SavedPost) graphql.Marshaler {
+func (ec *executionContext) _SavedPost(ctx context.Context, sel ast.SelectionSet, obj *db.SavedPost) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, savedPostImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -21510,10 +21110,16 @@ func (ec *executionContext) _SavedPosts(ctx context.Context, sel ast.SelectionSe
 
 			out.Values[i] = ec._SavedPosts_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._SavedPosts_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._SavedPosts_pageInfo(ctx, field, obj)
@@ -21619,28 +21225,6 @@ func (ec *executionContext) _Search(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var subscriptionImplementors = []string{"Subscription"}
-
-func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
-	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
-		Object: "Subscription",
-	})
-	if len(fields) != 1 {
-		ec.Errorf(ctx, "must subscribe to exactly one stream")
-		return nil
-	}
-
-	switch fields[0].Name {
-	case "test":
-		return ec._Subscription_test(ctx, fields[0])
-	case "getNotification":
-		return ec._Subscription_getNotification(ctx, fields[0])
-	default:
-		panic("unknown field " + strconv.Quote(fields[0].Name))
-	}
-}
-
 var tagImplementors = []string{"Tag"}
 
 func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj *model.Tag) graphql.Marshaler {
@@ -21675,6 +21259,9 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 					}
 				}()
 				res = ec._Tag_count(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
 				return res
 			}
 
@@ -21715,6 +21302,9 @@ func (ec *executionContext) _Tags(ctx context.Context, sel ast.SelectionSet, obj
 
 			out.Values[i] = ec._Tags_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -21791,7 +21381,7 @@ func (ec *executionContext) _Test(ctx context.Context, sel ast.SelectionSet, obj
 
 var ticketImplementors = []string{"Ticket"}
 
-func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, obj *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, obj *db.Ticket) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, ticketImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -21834,12 +21424,25 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "status":
+			field := field
 
-			out.Values[i] = ec._Ticket_status(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Ticket_status(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "url":
 
 			out.Values[i] = ec._Ticket_url(ctx, field, obj)
@@ -21905,7 +21508,7 @@ func (ec *executionContext) _Ticket(ctx context.Context, sel ast.SelectionSet, o
 
 var ticketMessageImplementors = []string{"TicketMessage"}
 
-func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.SelectionSet, obj *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) _TicketMessage(ctx context.Context, sel ast.SelectionSet, obj *db.TicketMessage) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, ticketMessageImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -22021,6 +21624,9 @@ func (ec *executionContext) _TicketMessages(ctx context.Context, sel ast.Selecti
 
 			out.Values[i] = ec._TicketMessages_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "ticket":
 			field := field
 
@@ -22042,6 +21648,9 @@ func (ec *executionContext) _TicketMessages(ctx context.Context, sel ast.Selecti
 
 			out.Values[i] = ec._TicketMessages_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._TicketMessages_pageInfo(ctx, field, obj)
@@ -22132,10 +21741,16 @@ func (ec *executionContext) _Tickets(ctx context.Context, sel ast.SelectionSet, 
 
 			out.Values[i] = ec._Tickets_totalCount(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "edges":
 
 			out.Values[i] = ec._Tickets_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "pageInfo":
 
 			out.Values[i] = ec._Tickets_pageInfo(ctx, field, obj)
@@ -22214,7 +21829,7 @@ func (ec *executionContext) _TicketsEdge(ctx context.Context, sel ast.SelectionS
 
 var userImplementors = []string{"User"}
 
-func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *model.User) graphql.Marshaler {
+func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *db.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.OperationContext, sel, userImplementors)
 	out := graphql.NewFieldSet(fields)
 	var invalids uint32
@@ -22237,19 +21852,45 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "backgroundColor":
+			field := field
 
-			out.Values[i] = ec._User_backgroundColor(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_backgroundColor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "primaryColor":
+			field := field
 
-			out.Values[i] = ec._User_primaryColor(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_primaryColor(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "avatar":
 			field := field
 
@@ -22306,16 +21947,42 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 				atomic.AddUint32(&invalids, 1)
 			}
 		case "bio":
+			field := field
 
-			out.Values[i] = ec._User_bio(ctx, field, obj)
-
-		case "role":
-
-			out.Values[i] = ec._User_role(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&invalids, 1)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_bio(ctx, field, obj)
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "role":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._User_role(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "credits":
 			field := field
 
@@ -22480,6 +22147,9 @@ func (ec *executionContext) _Users(ctx context.Context, sel ast.SelectionSet, ob
 
 			out.Values[i] = ec._Users_edges(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -22892,9 +22562,57 @@ func (ec *executionContext) unmarshalNChangePasswordInput2githubᚗcomᚋplogto�
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNConnectionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.ConnectionsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOConnectionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNCreateTicketInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreateTicketInput(ctx context.Context, v interface{}) (model.CreateTicketInput, error) {
 	res, err := ec.unmarshalInputCreateTicketInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx context.Context, v interface{}) (model.CreditTransactionDescriptionVariableKey, error) {
+	var res model.CreditTransactionDescriptionVariableKey
+	err := res.UnmarshalGQL(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNCreditTransactionDescriptionVariableKey2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableKey(ctx context.Context, sel ast.SelectionSet, v model.CreditTransactionDescriptionVariableKey) graphql.Marshaler {
+	return v
 }
 
 func (ec *executionContext) unmarshalNCreditTransactionDescriptionVariableType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariableType(ctx context.Context, v interface{}) (model.CreditTransactionDescriptionVariableType, error) {
@@ -22907,11 +22625,11 @@ func (ec *executionContext) marshalNCreditTransactionDescriptionVariableType2git
 	return v
 }
 
-func (ec *executionContext) marshalNCreditTransactionInfo2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNCreditTransactionInfo2githubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v db.CreditTransactionInfo) graphql.Marshaler {
 	return ec._CreditTransactionInfo(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionInfo) graphql.Marshaler {
+func (ec *executionContext) marshalNCreditTransactionInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionInfo(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionInfo) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22941,12 +22659,50 @@ func (ec *executionContext) marshalNCreditTransactionTemplateName2githubᚗcom�
 	return v
 }
 
+func (ec *executionContext) marshalNCreditTransactionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.CreditTransactionsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOCreditTransactionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditUserInput(ctx context.Context, v interface{}) (model.EditUserInput, error) {
 	res, err := ec.unmarshalInputEditUserInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v *model.File) graphql.Marshaler {
+func (ec *executionContext) marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v *db.File) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22971,13 +22727,13 @@ func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.S
 	return graphql.WrapContextMarshaler(ctx, res)
 }
 
-func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
+func (ec *executionContext) unmarshalNInt2int32(ctx context.Context, v interface{}) (int32, error) {
+	res, err := graphql.UnmarshalInt32(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
+func (ec *executionContext) marshalNInt2int32(ctx context.Context, sel ast.SelectionSet, v int32) graphql.Marshaler {
+	res := graphql.MarshalInt32(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -22986,19 +22742,80 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 	return res
 }
 
-func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
-	res, err := graphql.UnmarshalInt(v)
-	return res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) marshalNInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, v []*model.InvitedUsersEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
-func (ec *executionContext) marshalNInt2int(ctx context.Context, sel ast.SelectionSet, v int) graphql.Marshaler {
-	res := graphql.MarshalInt(v)
-	if res == graphql.Null {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
+func (ec *executionContext) marshalNLikedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.LikedPostsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
 	}
-	return res
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOLikedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLoginInput(ctx context.Context, v interface{}) (model.LoginInput, error) {
@@ -23006,11 +22823,11 @@ func (ec *executionContext) unmarshalNLoginInput2githubᚗcomᚋplogtoᚋcoreᚋ
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2githubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v db.NotificationType) graphql.Marshaler {
 	return ec._NotificationType(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *model.NotificationType) graphql.Marshaler {
+func (ec *executionContext) marshalNNotificationType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotificationType(ctx context.Context, sel ast.SelectionSet, v *db.NotificationType) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23030,6 +22847,44 @@ func (ec *executionContext) marshalNNotificationTypeName2githubᚗcomᚋplogto�
 	return v
 }
 
+func (ec *executionContext) marshalNNotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNOAuthGoogleInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐOAuthGoogleInput(ctx context.Context, v interface{}) (model.OAuthGoogleInput, error) {
 	res, err := ec.unmarshalInputOAuthGoogleInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23045,11 +22900,11 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋplogtoᚋcoreᚋg
 	return ec._PageInfo(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2githubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v db.Post) graphql.Marshaler {
 	return ec._Post(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v *db.Post) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23059,20 +22914,52 @@ func (ec *executionContext) marshalNPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Post(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (*model.PostStatus, error) {
-	var res = new(model.PostStatus)
+func (ec *executionContext) unmarshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, v interface{}) (model.PostStatus, error) {
+	var res model.PostStatus
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v *model.PostStatus) graphql.Marshaler {
-	if v == nil {
-		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
-			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
-		}
-		return graphql.Null
-	}
+func (ec *executionContext) marshalNPostStatus2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx context.Context, sel ast.SelectionSet, v model.PostStatus) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.PostsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNPrimaryColor2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPrimaryColor(ctx context.Context, v interface{}) (model.PrimaryColor, error) {
@@ -23090,6 +22977,44 @@ func (ec *executionContext) unmarshalNRegisterInput2githubᚗcomᚋplogtoᚋcore
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) marshalNSavedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SavedPostsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOSavedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalString(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23105,16 +23030,54 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 	return res
 }
 
+func (ec *executionContext) marshalNTagsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TagsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTagsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNTestInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTestInput(ctx context.Context, v interface{}) (model.TestInput, error) {
 	res, err := ec.unmarshalInputTestInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalNTicket2githubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v db.Ticket) graphql.Marshaler {
 	return ec._Ticket(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v *db.Ticket) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23124,11 +23087,11 @@ func (ec *executionContext) marshalNTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgra
 	return ec._Ticket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalNTicketMessage2githubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v db.TicketMessage) graphql.Marshaler {
 	return ec._TicketMessage(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *db.TicketMessage) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23136,6 +23099,44 @@ func (ec *executionContext) marshalNTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcor
 		return graphql.Null
 	}
 	return ec._TicketMessage(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTicketMessagesEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TicketMessagesEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTicketMessagesEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalNTicketPermission2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketPermission(ctx context.Context, v interface{}) ([]*model.TicketPermission, error) {
@@ -23203,6 +23204,44 @@ func (ec *executionContext) marshalNTicketStatus2githubᚗcomᚋplogtoᚋcoreᚋ
 	return v
 }
 
+func (ec *executionContext) marshalNTicketsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TicketsEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTicketsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
+}
+
 func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
 	res, err := graphql.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -23210,6 +23249,36 @@ func (ec *executionContext) unmarshalNTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalNTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	res := graphql.MarshalTime(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNTotalCount2int64(ctx context.Context, v interface{}) (int64, error) {
+	res, err := graphql.UnmarshalInt64(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNTotalCount2int64(ctx context.Context, sel ast.SelectionSet, v int64) graphql.Marshaler {
+	res := graphql.MarshalInt64(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
+func (ec *executionContext) unmarshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (uuid.UUID, error) {
+	res, err := db.UnmarshalUUID(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNUUID2githubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v uuid.UUID) graphql.Marshaler {
+	res := db.MarshalUUID(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23271,11 +23340,11 @@ func (ec *executionContext) marshalNUpload2ᚖgithubᚗcomᚋ99designsᚋgqlgen�
 	return res
 }
 
-func (ec *executionContext) marshalNUser2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2githubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v db.User) graphql.Marshaler {
 	return ec._User(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) marshalNUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v *db.User) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -23293,6 +23362,44 @@ func (ec *executionContext) unmarshalNUserRole2githubᚗcomᚋplogtoᚋcoreᚋgr
 
 func (ec *executionContext) marshalNUserRole2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserRole(ctx context.Context, sel ast.SelectionSet, v model.UserRole) graphql.Marshaler {
 	return v
+}
+
+func (ec *executionContext) marshalNUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UsersEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	return ret
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {
@@ -23607,7 +23714,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnection(ctx context.Context, sel ast.SelectionSet, v *model.Connection) graphql.Marshaler {
+func (ec *executionContext) marshalOConnection2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐConnection(ctx context.Context, sel ast.SelectionSet, v *db.Connection) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23621,47 +23728,6 @@ func (ec *executionContext) marshalOConnections2ᚖgithubᚗcomᚋplogtoᚋcore�
 	return ec._Connections(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOConnectionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.ConnectionsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOConnectionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOConnectionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐConnectionsEdge(ctx context.Context, sel ast.SelectionSet, v *model.ConnectionsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -23669,14 +23735,14 @@ func (ec *executionContext) marshalOConnectionsEdge2ᚖgithubᚗcomᚋplogtoᚋc
 	return ec._ConnectionsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransaction(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransaction) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransaction2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransaction(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransaction) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreditTransaction(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v []*model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v []*db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23703,7 +23769,7 @@ func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖg
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx, sel, v[i])
+			ret[i] = ec.marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23717,27 +23783,33 @@ func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚕᚖg
 	return ret
 }
 
-func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionDescriptionVariable) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionDescriptionVariable2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionDescriptionVariable(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionDescriptionVariable) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreditTransactionDescriptionVariable(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionTemplate) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionTemplate2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐCreditTransactionTemplate(ctx context.Context, sel ast.SelectionSet, v *db.CreditTransactionTemplate) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._CreditTransactionTemplate(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalOCreditTransactionType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx context.Context, v interface{}) (model.CreditTransactionType, error) {
-	var res model.CreditTransactionType
+func (ec *executionContext) unmarshalOCreditTransactionType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx context.Context, v interface{}) (*model.CreditTransactionType, error) {
+	if v == nil {
+		return nil, nil
+	}
+	var res = new(model.CreditTransactionType)
 	err := res.UnmarshalGQL(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOCreditTransactionType2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx context.Context, sel ast.SelectionSet, v model.CreditTransactionType) graphql.Marshaler {
+func (ec *executionContext) marshalOCreditTransactionType2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionType(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionType) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
 	return v
 }
 
@@ -23748,47 +23820,6 @@ func (ec *executionContext) marshalOCreditTransactions2ᚖgithubᚗcomᚋplogto�
 	return ec._CreditTransactions(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOCreditTransactionsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.CreditTransactionsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOCreditTransactionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOCreditTransactionsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐCreditTransactionsEdge(ctx context.Context, sel ast.SelectionSet, v *model.CreditTransactionsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -23796,7 +23827,7 @@ func (ec *executionContext) marshalOCreditTransactionsEdge2ᚖgithubᚗcomᚋplo
 	return ec._CreditTransactionsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v []*model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v []*db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23823,7 +23854,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23837,7 +23868,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ret
 }
 
-func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFileᚄ(ctx context.Context, sel ast.SelectionSet, v []*db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -23864,7 +23895,7 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx, sel, v[i])
+			ret[i] = ec.marshalNFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -23884,37 +23915,11 @@ func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ret
 }
 
-func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐFile(ctx context.Context, sel ast.SelectionSet, v *model.File) graphql.Marshaler {
+func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐFile(ctx context.Context, sel ast.SelectionSet, v *db.File) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._File(ctx, sel, v)
-}
-
-func (ec *executionContext) unmarshalOID2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalID(v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalID(v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOID2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalID(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOID2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalID(*v)
-	return res
 }
 
 func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface{}) (int32, error) {
@@ -23957,47 +23962,6 @@ func (ec *executionContext) marshalOInvitedUsers2ᚖgithubᚗcomᚋplogtoᚋcore
 	return ec._InvitedUsers(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOInvitedUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, v []*model.InvitedUsersEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐInvitedUsersEdge(ctx context.Context, sel ast.SelectionSet, v *model.InvitedUsersEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24005,7 +23969,7 @@ func (ec *executionContext) marshalOInvitedUsersEdge2ᚖgithubᚗcomᚋplogtoᚋ
 	return ec._InvitedUsersEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPost(ctx context.Context, sel ast.SelectionSet, v *model.LikedPost) graphql.Marshaler {
+func (ec *executionContext) marshalOLikedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐLikedPost(ctx context.Context, sel ast.SelectionSet, v *db.LikedPost) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24019,47 +23983,6 @@ func (ec *executionContext) marshalOLikedPosts2ᚖgithubᚗcomᚋplogtoᚋcore�
 	return ec._LikedPosts(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOLikedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.LikedPostsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOLikedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOLikedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐLikedPostsEdge(ctx context.Context, sel ast.SelectionSet, v *model.LikedPostsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24067,7 +23990,7 @@ func (ec *executionContext) marshalOLikedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋco
 	return ec._LikedPostsEdge(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotification(ctx context.Context, sel ast.SelectionSet, v *model.Notification) graphql.Marshaler {
+func (ec *executionContext) marshalONotification2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐNotification(ctx context.Context, sel ast.SelectionSet, v *db.Notification) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24079,47 +24002,6 @@ func (ec *executionContext) marshalONotifications2ᚖgithubᚗcomᚋplogtoᚋcor
 		return graphql.Null
 	}
 	return ec._Notifications(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalONotificationsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.NotificationsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalONotificationsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐNotificationsEdge(ctx context.Context, sel ast.SelectionSet, v *model.NotificationsEdge) graphql.Marshaler {
@@ -24137,7 +24019,7 @@ func (ec *executionContext) unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋc
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx context.Context, sel ast.SelectionSet, v *model.Post) graphql.Marshaler {
+func (ec *executionContext) marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐPost(ctx context.Context, sel ast.SelectionSet, v *db.Post) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24167,47 +24049,6 @@ func (ec *executionContext) marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgrap
 	return ec._Posts(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.PostsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostsEdge(ctx context.Context, sel ast.SelectionSet, v *model.PostsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24231,7 +24072,7 @@ func (ec *executionContext) marshalOPrimaryColor2ᚖgithubᚗcomᚋplogtoᚋcore
 	return v
 }
 
-func (ec *executionContext) marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPost(ctx context.Context, sel ast.SelectionSet, v *model.SavedPost) graphql.Marshaler {
+func (ec *executionContext) marshalOSavedPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐSavedPost(ctx context.Context, sel ast.SelectionSet, v *db.SavedPost) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24243,47 +24084,6 @@ func (ec *executionContext) marshalOSavedPosts2ᚖgithubᚗcomᚋplogtoᚋcore�
 		return graphql.Null
 	}
 	return ec._SavedPosts(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOSavedPostsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.SavedPostsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOSavedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalOSavedPostsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐSavedPostsEdge(ctx context.Context, sel ast.SelectionSet, v *model.SavedPostsEdge) graphql.Marshaler {
@@ -24410,47 +24210,6 @@ func (ec *executionContext) marshalOTags2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Tags(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTagsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TagsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOTagsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOTagsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTagsEdge(ctx context.Context, sel ast.SelectionSet, v *model.TagsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -24465,14 +24224,14 @@ func (ec *executionContext) marshalOTest2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraph
 	return ec._Test(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicket(ctx context.Context, sel ast.SelectionSet, v *model.Ticket) graphql.Marshaler {
+func (ec *executionContext) marshalOTicket2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicket(ctx context.Context, sel ast.SelectionSet, v *db.Ticket) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._Ticket(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessage) graphql.Marshaler {
+func (ec *executionContext) marshalOTicketMessage2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐTicketMessage(ctx context.Context, sel ast.SelectionSet, v *db.TicketMessage) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24484,47 +24243,6 @@ func (ec *executionContext) marshalOTicketMessages2ᚖgithubᚗcomᚋplogtoᚋco
 		return graphql.Null
 	}
 	return ec._TicketMessages(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOTicketMessagesEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TicketMessagesEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOTicketMessagesEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalOTicketMessagesEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketMessagesEdge(ctx context.Context, sel ast.SelectionSet, v *model.TicketMessagesEdge) graphql.Marshaler {
@@ -24557,52 +24275,21 @@ func (ec *executionContext) marshalOTickets2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgr
 	return ec._Tickets(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTicketsEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx context.Context, sel ast.SelectionSet, v []*model.TicketsEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOTicketsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
-}
-
 func (ec *executionContext) marshalOTicketsEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐTicketsEdge(ctx context.Context, sel ast.SelectionSet, v *model.TicketsEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
 	return ec._TicketsEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := graphql.UnmarshalTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := graphql.MarshalTime(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
@@ -24621,7 +24308,23 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 	return res
 }
 
-func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUser(ctx context.Context, sel ast.SelectionSet, v *model.User) graphql.Marshaler {
+func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, v interface{}) (*uuid.UUID, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := db.UnmarshalUUID(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx context.Context, sel ast.SelectionSet, v *uuid.UUID) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := db.MarshalUUID(*v)
+	return res
+}
+
+func (ec *executionContext) marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx context.Context, sel ast.SelectionSet, v *db.User) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -24633,47 +24336,6 @@ func (ec *executionContext) marshalOUsers2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgrap
 		return graphql.Null
 	}
 	return ec._Users(ctx, sel, v)
-}
-
-func (ec *executionContext) marshalOUsersEdge2ᚕᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx context.Context, sel ast.SelectionSet, v []*model.UsersEdge) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	return ret
 }
 
 func (ec *executionContext) marshalOUsersEdge2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsersEdge(ctx context.Context, sel ast.SelectionSet, v *model.UsersEdge) graphql.Marshaler {

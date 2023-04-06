@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -18,8 +19,10 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
+	_ "github.com/lib/pq"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
+	"github.com/plogto/core/db"
 	graphDataloader "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/generated"
 	graphResolver "github.com/plogto/core/graph/resolver"
@@ -35,9 +38,13 @@ func init() {
 }
 
 func main() {
-	DB := database.New()
+	DB, err := db.Open(os.Getenv("NEW_DATABASE_URL"))
 
-	defer DB.Close()
+	queries := db.New(DB)
+
+	if err != nil {
+		fmt.Println(err)
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -45,7 +52,7 @@ func main() {
 	}
 	router := chi.NewRouter()
 
-	users := database.Users{DB: DB}
+	users := database.Users{Queries: queries}
 
 	router.Use(cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000", "*"},
@@ -59,31 +66,28 @@ func main() {
 	router.Use(customMiddleware.AuthMiddleware(users))
 
 	s := service.New(service.Service{
+		Connections:                           database.Connections{Queries: queries},
+		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{Queries: queries},
+		CreditTransactionTemplates:            database.CreditTransactionTemplates{Queries: queries},
+		CreditTransactionInfos:                database.CreditTransactionInfos{Queries: queries},
+		CreditTransactions:                    database.CreditTransactions{Queries: queries},
+		Files:                                 database.Files{Queries: queries},
+		InvitedUsers:                          database.InvitedUsers{Queries: queries},
+		LikedPosts:                            database.LikedPosts{Queries: queries},
+		NotificationTypes:                     database.NotificationTypes{Queries: queries},
+		Notifications:                         database.Notifications{Queries: queries},
+		Passwords:                             database.Passwords{Queries: queries},
+		PostAttachments:                       database.PostAttachments{Queries: queries},
+		PostMentions:                          database.PostMentions{Queries: queries},
+		PostTags:                              database.PostTags{Queries: queries},
+		Posts:                                 database.Posts{Queries: queries},
+		SavedPosts:                            database.SavedPosts{Queries: queries},
+		Tags:                                  database.Tags{Queries: queries},
+		TicketMessageAttachments:              database.TicketMessageAttachments{Queries: queries},
+		TicketMessages:                        database.TicketMessages{Queries: queries},
+		Tickets:                               database.Tickets{Queries: queries},
 		Users:                                 users,
-		Passwords:                             database.Passwords{DB: DB},
-		Posts:                                 database.Posts{DB: DB},
-		Files:                                 database.Files{DB: DB},
-		Connections:                           database.Connections{DB: DB},
-		CreditTransactions:                    database.CreditTransactions{DB: DB},
-		CreditTransactionInfos:                database.CreditTransactionInfos{DB: DB},
-		CreditTransactionTemplates:            database.CreditTransactionTemplates{DB: DB},
-		CreditTransactionDescriptionVariables: database.CreditTransactionDescriptionVariables{DB: DB},
-		Tickets:                               database.Tickets{DB: DB},
-		TicketMessages:                        database.TicketMessages{DB: DB},
-		Tags:                                  database.Tags{DB: DB},
-		TicketMessageAttachments:              database.TicketMessageAttachments{DB: DB},
-		PostAttachments:                       database.PostAttachments{DB: DB},
-		PostTags:                              database.PostTags{DB: DB},
-		PostMentions:                          database.PostMentions{DB: DB},
-		LikedPosts:                            database.LikedPosts{DB: DB},
-		SavedPosts:                            database.SavedPosts{DB: DB},
-		InvitedUsers:                          database.InvitedUsers{DB: DB},
-		OnlineUsers:                           database.OnlineUsers{DB: DB},
-		Notifications:                         database.Notifications{DB: DB},
-		NotificationTypes:                     database.NotificationTypes{DB: DB},
 	})
-
-	s.OnlineUsers.DeleteAllOnlineUsers()
 
 	c := generated.Config{Resolvers: &graphResolver.Resolver{Service: s}}
 	queryHandler := handler.New(generated.NewExecutableSchema(c))
@@ -132,7 +136,7 @@ func main() {
 	queryHandler.Use(extension.Introspection{})
 
 	router.Handle("/", playground.Handler("GraphQL playground", "/query"))
-	router.Handle("/query", graphDataloader.DataloaderMiddleware(DB, queryHandler))
+	router.Handle("/query", graphDataloader.DataloaderMiddleware(queries, queryHandler))
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, router))

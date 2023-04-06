@@ -8,14 +8,16 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/database"
-	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/db"
+	"github.com/plogto/core/validation"
 )
 
 type OnlineUserContext struct {
-	User      model.User
+	User      db.User
 	Token     string
 	SocketID  string
 	UserAgent string
@@ -39,7 +41,7 @@ func AuthMiddleware(users database.Users) func(http.Handler) http.Handler {
 				return
 			}
 
-			user, err := users.GetUserByID(claims["jti"].(string))
+			user, err := users.GetUserByID(r.Context(), uuid.MustParse(claims["jti"].(string)))
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return
@@ -81,14 +83,14 @@ func parseToken(r *http.Request) (*jwt.Token, error) {
 	return jwtToken, errors.Wrap(err, "parseToken error: ")
 }
 
-func GetCurrentUserFromCTX(ctx context.Context) (*model.User, error) {
+func GetCurrentUserFromCTX(ctx context.Context) (*db.User, error) {
 	if ctx.Value(constants.CURRENT_USER_KEY) == nil {
 		return nil, errAuthenticationFailed
 	}
 
-	user, ok := ctx.Value(constants.CURRENT_USER_KEY).(*model.User)
+	user, ok := ctx.Value(constants.CURRENT_USER_KEY).(*db.User)
 
-	if !ok || user.ID == "" {
+	if !ok || !validation.IsUserExists(user) {
 		return nil, errAuthenticationFailed
 	}
 

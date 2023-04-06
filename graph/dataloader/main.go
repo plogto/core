@@ -5,16 +5,19 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 )
 
-func DataloaderMiddleware(db *pg.DB, next http.Handler) http.Handler {
+func DataloaderMiddleware(queries *db.Queries, next http.Handler) http.Handler {
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		userLoader := PrepareUserLoader(db)
-		postLoader := PreparePostLoader(db)
-		tagLoader := PrepareTagLoader(db)
+		userLoader := PrepareUserLoader(r.Context(), queries)
+		postLoader := PreparePostLoader(r.Context(), queries)
+		tagLoader := PrepareTagLoader(r.Context(), queries)
 
 		ctxUser := context.WithValue(r.Context(), constants.USER_LOADER_KEY, &userLoader)
 		ctxPost := context.WithValue(ctxUser, constants.POST_LOADER_KEY, &postLoader)
@@ -39,29 +42,28 @@ func GetTagLoader(ctx context.Context) *TagLoader {
 }
 
 // prepare functions
-func PrepareUserLoader(db *pg.DB) UserLoader {
+func PrepareUserLoader(ctx context.Context, queries *db.Queries) UserLoader {
 	return UserLoader{
 		maxBatch: 100,
 		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*model.User, []error) {
-			var users []*model.User
+		fetch: func(ids []string) ([]*db.User, []error) {
 
-			err := db.Model(&users).Where("id in (?)", pg.In(ids)).Select()
+			users, err := queries.GetUsersByIDs(ctx, convertor.StringsToUUIDs(ids))
 
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			u := make(map[string]*model.User, len(users))
+			u := make(map[uuid.UUID]*db.User, len(users))
 
 			for _, user := range users {
 				u[user.ID] = user
 			}
 
-			result := make([]*model.User, len(ids))
+			result := make([]*db.User, len(ids))
 
 			for i, id := range ids {
-				result[i] = u[id]
+				result[i] = u[uuid.MustParse(id)]
 			}
 
 			return result, nil
@@ -69,29 +71,28 @@ func PrepareUserLoader(db *pg.DB) UserLoader {
 	}
 }
 
-func PreparePostLoader(db *pg.DB) PostLoader {
+func PreparePostLoader(ctx context.Context, queries *db.Queries) PostLoader {
 	return PostLoader{
 		maxBatch: 100,
 		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*model.Post, []error) {
-			var posts []*model.Post
+		fetch: func(ids []string) ([]*db.Post, []error) {
 
-			err := db.Model(&posts).Where("id in (?)", pg.In(ids)).Select()
+			posts, err := queries.GetPostsByIDs(ctx, convertor.StringsToUUIDs(ids))
 
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			p := make(map[string]*model.Post, len(posts))
+			p := make(map[uuid.UUID]*db.Post, len(posts))
 
 			for _, post := range posts {
 				p[post.ID] = post
 			}
 
-			result := make([]*model.Post, len(ids))
+			result := make([]*db.Post, len(ids))
 
 			for i, id := range ids {
-				result[i] = p[id]
+				result[i] = p[uuid.MustParse(id)]
 			}
 
 			return result, nil
@@ -99,29 +100,28 @@ func PreparePostLoader(db *pg.DB) PostLoader {
 	}
 }
 
-func PrepareTagLoader(db *pg.DB) TagLoader {
+func PrepareTagLoader(ctx context.Context, queries *db.Queries) TagLoader {
 	return TagLoader{
 		maxBatch: 100,
 		wait:     1 * time.Millisecond,
 		fetch: func(ids []string) ([]*model.Tag, []error) {
-			var tags []*model.Tag
 
-			err := db.Model(&tags).Where("id in (?)", pg.In(ids)).Select()
+			tags, err := queries.GetTagByIDs(ctx, convertor.StringsToUUIDs(ids))
 
 			if err != nil {
 				return nil, []error{err}
 			}
 
-			t := make(map[string]*model.Tag, len(tags))
+			t := make(map[uuid.UUID]*model.Tag, len(tags))
 
-			for _, post := range tags {
-				t[post.ID] = post
+			for _, tag := range tags {
+				t[tag.ID] = convertor.DBTagToModel(tag)
 			}
 
 			result := make([]*model.Tag, len(ids))
 
 			for i, id := range ids {
-				result[i] = t[id]
+				result[i] = t[uuid.MustParse(id)]
 			}
 
 			return result, nil

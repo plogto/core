@@ -1,46 +1,29 @@
 package database
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
+	"github.com/plogto/core/util"
 )
 
 type CreditTransactionDescriptionVariables struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByID(id string) (*model.CreditTransactionDescriptionVariable, error) {
-	return c.GetCreditTransactionDescriptionVariableByField("id", id)
+func (c *CreditTransactionDescriptionVariables) CreateCreditTransactionDescriptionVariable(ctx context.Context, arg db.CreateCreditTransactionDescriptionVariableParams) (*db.CreditTransactionDescriptionVariable, error) {
+	return util.HandleDBResponse(c.Queries.CreateCreditTransactionDescriptionVariable(ctx, arg))
+
 }
 
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByContentID(contentID string) (*model.CreditTransactionDescriptionVariable, error) {
-	return c.GetCreditTransactionDescriptionVariableByField("content_id", contentID)
+func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByContentID(ctx context.Context, contentID uuid.UUID) (*db.CreditTransactionDescriptionVariable, error) {
+	return util.HandleDBResponse(c.Queries.GetCreditTransactionDescriptionVariableByContentID(ctx, contentID))
+
 }
 
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(creditTransactionInfoID string) ([]*model.CreditTransactionDescriptionVariable, error) {
-	var creditTransactionDescriptionVariables []*model.CreditTransactionDescriptionVariable
-	err := c.DB.Model(&creditTransactionDescriptionVariables).
-		Where("credit_transaction_info_id = ?", creditTransactionInfoID).
-		Where("deleted_at is ?", nil).
-		Select()
+func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID uuid.UUID) ([]*db.CreditTransactionDescriptionVariable, error) {
+	creditTransactionDescriptionVariables, _ := c.Queries.GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx, creditTransactionInfoID)
 
-	return creditTransactionDescriptionVariables, err
-}
-
-func (c *CreditTransactionDescriptionVariables) GetCreditTransactionDescriptionVariableByField(field string, value string) (*model.CreditTransactionDescriptionVariable, error) {
-	var creditTransactionDescriptionVariable model.CreditTransactionDescriptionVariable
-	err := c.DB.Model(&creditTransactionDescriptionVariable).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC").
-		First()
-
-	return &creditTransactionDescriptionVariable, err
-}
-
-func (c *CreditTransactionDescriptionVariables) CreateCreditTransactionDescriptionVariable(creditTransactionDescriptionVariable *model.CreditTransactionDescriptionVariable) (*model.CreditTransactionDescriptionVariable, error) {
-	_, err := c.DB.Model(creditTransactionDescriptionVariable).Returning("*").Insert()
-	return creditTransactionDescriptionVariable, err
+	return creditTransactionDescriptionVariables, nil
 }

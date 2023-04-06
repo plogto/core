@@ -6,9 +6,15 @@ enum CreditTransactionStatus {
 }
 
 enum CreditTransactionDescriptionVariableType {
-  TICKET
-  USER
-  TAG
+  ticket
+  user
+  tag
+}
+
+enum CreditTransactionDescriptionVariableKey {
+  ticket
+  invited_user
+  inviter_user
 }
 
 enum CreditTransactionTemplateName {
@@ -25,22 +31,22 @@ enum CreditTransactionType {
 }
 
 type CreditTransactionDescriptionVariable {
-  id: ID!
+  id: UUID!
   type: CreditTransactionDescriptionVariableType!
-  key: String!
+  key: CreditTransactionDescriptionVariableKey!
   content: String!
   url: String
   image: String
 }
 
 type CreditTransactionTemplate {
-  id: ID!
+  id: UUID!
   name: CreditTransactionTemplateName!
   content: String!
 }
 
 type CreditTransactionInfo {
-  id: ID!
+  id: UUID!
   description: String
   descriptionVariables: [CreditTransactionDescriptionVariable]
   status: CreditTransactionStatus!
@@ -50,7 +56,7 @@ type CreditTransactionInfo {
 }
 
 type CreditTransaction {
-  id: ID!
+  id: UUID!
   user: User!
   recipient: User!
   amount: Float!
@@ -66,8 +72,8 @@ type CreditTransactionsEdge {
 }
 
 type CreditTransactions {
-  totalCount: Int
-  edges: [CreditTransactionsEdge]
+  totalCount: TotalCount!
+  edges: [CreditTransactionsEdge]!
   pageInfo: PageInfo!
 }
 

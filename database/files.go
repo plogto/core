@@ -1,71 +1,44 @@
 package database
 
 import (
-	"fmt"
+	"context"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
+	"github.com/plogto/core/util"
 )
 
 type Files struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (f *Files) GetFileByField(field string, value string) (*model.File, error) {
-	var file model.File
-	err := f.DB.Model(&file).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	if len(file.ID) < 1 {
-		return nil, nil
-	}
-	return &file, err
+func (f *Files) CreateFile(ctx context.Context, arg db.CreateFileParams) (*db.File, error) {
+	return util.HandleDBResponse(f.Queries.CreateFile(ctx, arg))
 }
 
-func (f *Files) GetFilesByPostId(postID string) ([]*model.File, error) {
-	var files []*model.File
-	err := f.DB.Model(&files).
-		ColumnExpr("file.*").
-		ColumnExpr("post_attachments.file_id").
-		Join("INNER JOIN post_attachments ON post_attachments.file_id = file.id").
-		GroupExpr("post_attachments.file_id, file.id").
-		Where("post_attachments.post_id = ?", postID).
-		Where("file.deleted_at is ?", nil).
-		Where("post_attachments.deleted_at is ?", nil).
-		Returning("*").Select()
+func (f *Files) GetFilesByPostID(ctx context.Context, postID uuid.UUID) ([]*db.File, error) {
+	files, _ := f.Queries.GetFilesByPostID(ctx, postID)
 
-	return files, err
+	return files, nil
 }
 
-func (f *Files) GetFilesByTicketMessageID(ticketMessageID string) ([]*model.File, error) {
-	var files []*model.File
-	err := f.DB.Model(&files).
-		ColumnExpr("file.*").
-		ColumnExpr("ticket_message_attachments.ticket_message_id").
-		Join("INNER JOIN ticket_message_attachments ON ticket_message_attachments.file_id = file.id").
-		GroupExpr("ticket_message_attachments.ticket_message_id, file.id").
-		Where("ticket_message_attachments.ticket_message_id = ?", ticketMessageID).
-		Where("file.deleted_at is ?", nil).
-		Where("ticket_message_attachments.deleted_at is ?", nil).
-		Returning("*").Select()
+func (f *Files) GetFilesByTicketMessageID(ctx context.Context, ticketMessageID uuid.UUID) ([]*db.File, error) {
+	files, _ := f.Queries.GetFilesByTicketMessageID(ctx, ticketMessageID)
 
-	return files, err
+	return files, nil
 }
 
-func (f *Files) GetFileByHash(hash string) (*model.File, error) {
-	return f.GetFileByField("hash", hash)
+func (f *Files) GetFileByHash(ctx context.Context, hash string) (*db.File, error) {
+	// TODO: use dataloader
+	return util.HandleDBResponse(f.Queries.GetFileByHash(ctx, hash))
 }
 
-func (f *Files) GetFileByName(name string) (*model.File, error) {
-	return f.GetFileByField("name", name)
+func (f *Files) GetFileByName(ctx context.Context, name string) (*db.File, error) {
+	// TODO: use dataloader
+	return util.HandleDBResponse(f.Queries.GetFileByName(ctx, name))
 }
 
-func (f *Files) GetFileByID(id string) (*model.File, error) {
-	return f.GetFileByField("id", id)
-}
-
-func (f *Files) CreateFile(file *model.File) (*model.File, error) {
-	_, err := f.DB.Model(file).Returning("*").Insert()
-	if len(file.ID) < 1 {
-		return nil, err
-	}
-	return file, err
+func (f *Files) GetFileByID(ctx context.Context, id uuid.UUID) (*db.File, error) {
+	// TODO: use dataloader
+	return util.HandleDBResponse(f.Queries.GetFileByID(ctx, id))
 }

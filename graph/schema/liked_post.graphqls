@@ -1,5 +1,5 @@
 type LikedPost {
-  id: ID!
+  id: UUID!
   user: User!
   post: Post!
   createdAt: Time
@@ -12,13 +12,13 @@ type LikedPostsEdge {
 }
 
 type LikedPosts {
-  totalCount: Int
-  edges: [LikedPostsEdge]
+  totalCount: TotalCount!
+  edges: [LikedPostsEdge]!
   pageInfo: PageInfo!
 }
 
 extend type Query {
-  getLikedPostsByPostId(postId: ID!, pageInfo: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(postId: UUID!, pageInfo: PageInfoInput): LikedPosts
   getLikedPostsByUsername(
     username: String!
     pageInfo: PageInfoInput
@@ -26,5 +26,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: ID!): LikedPost
+  likePost(postId: UUID!): LikedPost
 }

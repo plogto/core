@@ -1,25 +1,17 @@
 package database
 
 import (
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"context"
+
+	"github.com/plogto/core/db"
 )
 
 type InvitedUsers struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (i *InvitedUsers) CreateInvitedUser(invitedUser *model.InvitedUser) (*model.InvitedUser, error) {
-	_, err := i.DB.Model(invitedUser).
-		Where("inviter_id = ?inviter_id").
-		Where("invitee_id = ?invitee_id").
-		Insert()
+func (i *InvitedUsers) CreateInvitedUser(ctx context.Context, arg db.CreateInvitedUserParams) (*db.InvitedUser, error) {
+	invitedUser, _ := i.Queries.CreateInvitedUser(ctx, arg)
 
-	return invitedUser, err
-}
-
-func (i *InvitedUsers) UpdateInvitedUser(invitedUser *model.InvitedUser) (*model.InvitedUser, error) {
-	_, err := i.DB.Model(invitedUser).Where("id = ?", invitedUser.ID).Where("deleted_at is ?", nil).Returning("*").Update()
-
-	return invitedUser, err
+	return invitedUser, nil
 }

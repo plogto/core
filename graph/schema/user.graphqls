@@ -20,7 +20,7 @@ enum PrimaryColor {
 }
 
 type User {
-  id: ID!
+  id: UUID!
   username: String!
   backgroundColor: BackgroundColor!
   primaryColor: PrimaryColor!
@@ -35,10 +35,10 @@ type User {
   isPrivate: Boolean!
   isVerified: Boolean!
   connectionStatus: Int
-  followingCount: Int!
-  followersCount: Int!
-  followRequestsCount: Int!
-  postsCount: Int!
+  followingCount: TotalCount!
+  followersCount: TotalCount!
+  followRequestsCount: TotalCount!
+  postsCount: TotalCount!
   createdAt: Time
   updatedAt: Time
 }
@@ -48,7 +48,7 @@ type UsersEdge {
 }
 
 type Users {
-  edges: [UsersEdge]
+  edges: [UsersEdge]!
 }
 
 input EditUserInput {
