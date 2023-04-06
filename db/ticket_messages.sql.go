@@ -24,8 +24,6 @@ WITH _count_wrapper AS (
 		AND deleted_at IS NULL
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -36,11 +34,10 @@ FROM
 type CountTicketMessagesByTicketIDAndPageInfoParams struct {
 	TicketID  uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountTicketMessagesByTicketIDAndPageInfo(ctx context.Context, arg CountTicketMessagesByTicketIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countTicketMessagesByTicketIDAndPageInfo, arg.TicketID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countTicketMessagesByTicketIDAndPageInfo, arg.TicketID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

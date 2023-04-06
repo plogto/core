@@ -10,12 +10,11 @@ import (
 
 type PageInfoResult struct {
 	First int
-	After string
+	After time.Time
 }
 
 func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *PageInfoResult) {
-	now := time.Now()
-	after := now.Format(time.RFC3339)
+	after := time.Now()
 
 	result := &PageInfoResult{
 		First: constants.POSTS_PAGE_LIMIT,
@@ -30,8 +29,8 @@ func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *PageInfoResult) {
 		if params.After != nil {
 			date := ConvertCursorToDateTime(*params.After)
 
-			if time, err := time.Parse(time.RFC3339, date); err == nil {
-				result.After = time.String()
+			if time, err := time.Parse(time.RFC3339Nano, date); err == nil {
+				result.After = time
 			}
 		}
 	}

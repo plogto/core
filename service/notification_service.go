@@ -63,16 +63,18 @@ func (s *Service) GetNotification(ctx context.Context) (*model.NotificationsEdge
 func (s *Service) CreateNotification(ctx context.Context, args CreateNotificationArgs) error {
 
 	if args.SenderID != args.ReceiverID {
-		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
+		notificationType, _ := util.HandleDBResponse(s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name))
 
-		s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
-			NotificationTypeID: notificationType.ID,
-			SenderID:           args.SenderID,
-			ReceiverID:         args.ReceiverID,
-			Url:                args.Url,
-			PostID:             args.PostID,
-			ReplyID:            args.ReplyID,
-		})
+		if notificationType != nil {
+			s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
+				NotificationTypeID: notificationType.ID,
+				SenderID:           args.SenderID,
+				ReceiverID:         args.ReceiverID,
+				Url:                args.Url,
+				PostID:             args.PostID,
+				ReplyID:            args.ReplyID,
+			})
+		}
 
 		// TODO: handle online users
 

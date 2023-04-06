@@ -244,7 +244,7 @@ FROM
 	INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id
 WHERE
 	credit_transaction.user_id = $1
-	AND credit_transaction_infos.status = 'APPROVED'
+	AND credit_transaction_infos.status = 'approved'
 	AND credit_transaction.deleted_at IS NULL
 `
 

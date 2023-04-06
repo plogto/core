@@ -49,8 +49,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 	}
 
 	for _, id := range input.Attachment {
-		ID, _ := uuid.Parse(id)
-		file, _ := s.Files.GetFileByID(ctx, ID)
+		file, _ := s.Files.GetFileByID(ctx, uuid.MustParse(id))
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -58,13 +57,21 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 
 	content, userIDs := s.FormatPostContent(ctx, *input.Content)
 
-	parentID, _ := uuid.Parse(input.ParentID.String())
+	var parentID uuid.NullUUID
+	if input.ParentID != nil {
+		parentID = uuid.NullUUID{uuid.MustParse(input.ParentID.String()), true}
+	}
 
-	post, err := s.Posts.CreatePost(ctx, db.CreatePostParams{
-		ParentID: uuid.NullUUID{parentID, true},
+	var status = db.PostStatusPublic
+	if input.Status != nil {
+		status = db.PostStatus(*input.Status)
+	}
+
+	post, _ := s.Posts.CreatePost(ctx, db.CreatePostParams{
+		ParentID: parentID,
 		UserID:   user.ID,
 		Content:  sql.NullString{content, true},
-		Status:   db.PostStatus(input.Status.String()),
+		Status:   status,
 		Url:      util.RandomString(20),
 	})
 
@@ -75,14 +82,13 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 	// check attachment
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			V, _ := uuid.Parse(v)
-			s.PostAttachments.CreatePostAttachment(ctx, post.ID, V)
+			s.PostAttachments.CreatePostAttachment(ctx, post.ID, uuid.MustParse(v))
 		}
 	}
 
 	if validation.IsPostExists(post) {
 		if lo.IsNotEmpty(post.Content) {
-			s.SaveTagsPost(ctx, post.ID.String(), post.Content.String)
+			s.SaveTagsPost(ctx, post.ID, post.Content.String)
 			s.CreatePostMentionNotifications(ctx, CreatePostMentionNotificationsArgs{
 				UserIDs:  userIDs,
 				SenderID: user.ID,
@@ -157,8 +163,8 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 				Post:     *post,
 			})
 
-			s.PostTags.DeletePostTagsByPostID(ctx, post.ID.String())
-			s.SaveTagsPost(ctx, post.ID.String(), content)
+			s.PostTags.DeletePostTagsByPostID(ctx, post.ID)
+			s.SaveTagsPost(ctx, post.ID, content)
 
 			post.Content = sql.NullString{content, true}
 			didUpdate = true
@@ -206,23 +212,23 @@ func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, e
 
 	deletedPost, err := s.Posts.DeletePostByID(ctx, postID)
 
-	if err == nil {
+	if validation.IsPostExists(deletedPost) {
 		s.Notifications.RemovePostNotificationsByPostID(ctx,
 			postID,
 		)
 
 		s.PostMentions.DeletePostMentionsByPostID(ctx, postID)
+		s.PostTags.DeletePostTagsByPostID(ctx, postID)
 	}
 
 	return deletedPost, nil
 }
 
-func (s *Service) GetPostsByParentID(ctx context.Context, parentID string) (*model.Posts, error) {
+func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	parentPost, _ := graph.GetPostLoader(ctx).Load(parentID)
+	parentPost, _ := graph.GetPostLoader(ctx).Load(parentID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
-	now := time.Now()
-	after := now.Format(time.RFC3339)
+	after := time.Now()
 
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
@@ -286,14 +292,14 @@ func (s *Service) GetPostsCount(ctx context.Context, userID uuid.UUID) (int64, e
 	return s.Posts.CountPostsByUserID(ctx, userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id *string) (*db.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id uuid.NullUUID) (*db.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil {
+	if !id.Valid {
 		return nil, nil
 	}
 
-	post, err := graph.GetPostLoader(ctx).Load(*id)
+	post, err := graph.GetPostLoader(ctx).Load(id.UUID.String())
 
 	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
@@ -302,16 +308,16 @@ func (s *Service) GetPostByID(ctx context.Context, id *string) (*db.Post, error)
 	return post, err
 }
 
-func (s *Service) GetPostContentByPostID(ctx context.Context, id *string) (*string, error) {
+func (s *Service) GetPostContentByPostID(ctx context.Context, id uuid.NullUUID) (*string, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil {
+	if !id.Valid {
 		return nil, nil
 	}
 
-	post, err := graph.GetPostLoader(ctx).Load(*id)
+	post, err := graph.GetPostLoader(ctx).Load(id.UUID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 

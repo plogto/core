@@ -10,18 +10,13 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type TicketTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 type TicketPermissionTestData struct {
 	Expected, Actual model.TicketPermission
 	Message          string
 }
 
 func TestIsTicketExists(t *testing.T) {
-	var testData = []TicketTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsTicketExist(nil),
@@ -45,7 +40,7 @@ func TestIsTicketExists(t *testing.T) {
 }
 
 func TestIsTicketOwner(t *testing.T) {
-	var testData = []TicketTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsTicketOwner(nil, nil),
@@ -69,7 +64,7 @@ func TestIsTicketOwner(t *testing.T) {
 }
 
 func TestIsUserAllowToUpdateTicket(t *testing.T) {
-	var testData = []TicketTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsUserAllowToUpdateTicket(nil, nil),
@@ -105,7 +100,7 @@ func TestIsUserAllowToUpdateTicket(t *testing.T) {
 func TestCheckUserPermission(t *testing.T) {
 	var permissions []*model.TicketPermission
 
-	var testData = []TicketTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   CheckUserPermission(nil, db.TicketStatusTypeOpen),

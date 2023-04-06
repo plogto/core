@@ -7,9 +7,8 @@ import (
 	"github.com/plogto/core/db"
 )
 
-func (s *Service) GetTicketMessageAttachmentsByTicketMessageID(ctx context.Context, ticketMessageID string) ([]*db.File, error) {
-	TicketMessageID, _ := uuid.Parse(ticketMessageID)
-	ticketMessageAttachments, _ := s.Files.GetFilesByTicketMessageID(ctx, TicketMessageID)
+func (s *Service) GetTicketMessageAttachmentsByTicketMessageID(ctx context.Context, ticketMessageID uuid.UUID) ([]*db.File, error) {
+	ticketMessageAttachments, _ := s.Files.GetFilesByTicketMessageID(ctx, ticketMessageID)
 
 	return ticketMessageAttachments, nil
 }

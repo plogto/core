@@ -16,8 +16,7 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, inpu
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	for _, id := range input.Attachment {
-		ID, _ := uuid.Parse(*id)
-		file, _ := s.Files.GetFileByID(ctx, ID)
+		file, _ := s.Files.GetFileByID(ctx, uuid.MustParse(*id))
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -33,8 +32,7 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, inpu
 
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			V, _ := uuid.Parse(*v)
-			s.TicketMessageAttachments.CreateTicketMessageAttachment(ctx, ticketMessage.ID, V)
+			s.TicketMessageAttachments.CreateTicketMessageAttachment(ctx, ticketMessage.ID, uuid.MustParse(*v))
 		}
 	}
 

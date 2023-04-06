@@ -20,15 +20,13 @@ WITH _count_wrapper AS (
 		tickets
 	WHERE
 		(
-			user_id = $3
-			OR $3 IS NULL
+			user_id = $2
+			OR $2 IS NULL
 		)
 		AND updated_at < $1
 		AND deleted_at IS NULL
 	ORDER BY
 		updated_at DESC
-	LIMIT
-		$2
 )
 SELECT
 	count(*)
@@ -38,12 +36,11 @@ FROM
 
 type CountTicketsByUserIDAndPageInfoParams struct {
 	UpdatedAt time.Time
-	Limit     int32
 	UserID    uuid.NullUUID
 }
 
 func (q *Queries) CountTicketsByUserIDAndPageInfo(ctx context.Context, arg CountTicketsByUserIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countTicketsByUserIDAndPageInfo, arg.UpdatedAt, arg.Limit, arg.UserID)
+	row := q.db.QueryRowContext(ctx, countTicketsByUserIDAndPageInfo, arg.UpdatedAt, arg.UserID)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

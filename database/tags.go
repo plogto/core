@@ -8,6 +8,8 @@ import (
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 type Tags struct {
@@ -15,9 +17,9 @@ type Tags struct {
 }
 
 func (t *Tags) CreateTag(ctx context.Context, name string) (*model.Tag, error) {
-	tag, _ := t.Queries.GetTagByName(ctx, name)
+	tag := util.HandleDBResponseWithoutError(t.Queries.GetTagByName(ctx, name))
 
-	if tag != nil {
+	if validation.IsTagExists(tag) {
 		return &model.Tag{
 			ID:   tag.ID,
 			Name: tag.Name,
@@ -26,10 +28,10 @@ func (t *Tags) CreateTag(ctx context.Context, name string) (*model.Tag, error) {
 
 	newTag, _ := t.Queries.CreateTag(ctx, name)
 
-	return &model.Tag{
+	return util.HandleDBResponse(&model.Tag{
 		ID:   newTag.ID,
 		Name: newTag.Name,
-	}, nil
+	}, nil)
 }
 
 func (t *Tags) GetTagByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.Tag, error) {
@@ -38,12 +40,12 @@ func (t *Tags) GetTagByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.Tag, 
 	return convertor.DBTagsToModel(tags), nil
 }
 func (t *Tags) GetTagByName(ctx context.Context, name string) (*model.Tag, error) {
-	tag, _ := t.Queries.GetTagByName(ctx, name)
+	tag, err := t.Queries.GetTagByName(ctx, name)
 
-	return &model.Tag{
+	return util.HandleDBResponse(&model.Tag{
 		ID:   tag.ID,
 		Name: tag.Name,
-	}, nil
+	}, err)
 }
 
 func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, limit int) (*model.Tags, error) {

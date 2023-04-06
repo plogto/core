@@ -210,7 +210,7 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userID uuid.UUID) (*i
 	connection, err := s.Connections.GetConnection(ctx, userID, user.ID)
 
 	zeroStatus := 0
-	if len(connection.ID) < 1 {
+	if !validation.IsConnectionExists(connection) {
 		return &zeroStatus, nil
 	}
 

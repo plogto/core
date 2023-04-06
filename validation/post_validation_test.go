@@ -7,13 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type PostTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 func TestIsPostExists(t *testing.T) {
-	var testData = []PostTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsPostExists(nil),
@@ -37,7 +32,7 @@ func TestIsPostExists(t *testing.T) {
 }
 
 func TestIsParentPostExists(t *testing.T) {
-	var testData = []PostTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsParentPostExists(nil),

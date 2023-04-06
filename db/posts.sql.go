@@ -32,8 +32,6 @@ WITH _count_wrapper AS (
 		post.id
 	ORDER BY
 		post.created_at DESC
-	LIMIT
-		$2
 )
 SELECT
 	count(*)
@@ -41,13 +39,8 @@ FROM
 	_count_wrapper
 `
 
-type CountExplorePostsByPageInfoParams struct {
-	CreatedAt time.Time
-	Limit     int32
-}
-
-func (q *Queries) CountExplorePostsByPageInfo(ctx context.Context, arg CountExplorePostsByPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countExplorePostsByPageInfo, arg.CreatedAt, arg.Limit)
+func (q *Queries) CountExplorePostsByPageInfo(ctx context.Context, createdAt time.Time) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countExplorePostsByPageInfo, createdAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -62,10 +55,10 @@ WITH _posts AS (
 			posts AS post
 			INNER JOIN users ON users.id = post.user_id
 		WHERE
-			post.user_id = $2
-			AND post.parent_id = $3
+			post.user_id = $1
+			AND post.parent_id = $2
 			AND post.deleted_at IS NULL
-			AND post.created_at < $4
+			AND post.created_at < $3
 	)
 	UNION
 	(
@@ -73,7 +66,7 @@ WITH _posts AS (
 			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = $2
+			INNER JOIN connections ON connections.follower_id = $1
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
 			(
@@ -81,10 +74,10 @@ WITH _posts AS (
 				OR users.is_private = FALSE
 			)
 			AND post.user_id = users.id
-			AND post.parent_id = $3
+			AND post.parent_id = $2
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
-			AND post.created_at < $4
+			AND post.created_at < $3
 		ORDER BY
 			post.created_at DESC
 	)
@@ -93,24 +86,16 @@ SELECT
 	count(*)
 FROM
 	_posts
-LIMIT
-	$1
 `
 
 type CountPostsByParentIDAndPageInfoParams struct {
-	Limit     int32
 	UserID    uuid.NullUUID
 	ParentID  uuid.NullUUID
 	CreatedAt time.Time
 }
 
 func (q *Queries) CountPostsByParentIDAndPageInfo(ctx context.Context, arg CountPostsByParentIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostsByParentIDAndPageInfo,
-		arg.Limit,
-		arg.UserID,
-		arg.ParentID,
-		arg.CreatedAt,
-	)
+	row := q.db.QueryRowContext(ctx, countPostsByParentIDAndPageInfo, arg.UserID, arg.ParentID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -129,8 +114,8 @@ WITH _count_wrapper AS (
 		AND post.deleted_at IS NULL
 		AND users.is_private IS FALSE
 		AND post.created_at < $2
-	LIMIT
-		$3
+	ORDER BY
+		post.created_at DESC
 )
 SELECT
 	count(*)
@@ -141,11 +126,10 @@ FROM
 type CountPostsByTagIDAndPageInfoParams struct {
 	TagID     uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountPostsByTagIDAndPageInfo(ctx context.Context, arg CountPostsByTagIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostsByTagIDAndPageInfo, arg.TagID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countPostsByTagIDAndPageInfo, arg.TagID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -182,8 +166,6 @@ WITH _count_wrapper AS (
 		AND created_at < $2
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -194,11 +176,10 @@ FROM
 type CountPostsByUserIDAndPageInfoParams struct {
 	UserID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountPostsByUserIDAndPageInfo(ctx context.Context, arg CountPostsByUserIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -217,8 +198,6 @@ WITH _count_wrapper AS (
 		AND created_at < $2
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -229,11 +208,10 @@ FROM
 type CountPostsWithParentIDByUserIDAndPageInfoParams struct {
 	UserID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, arg CountPostsWithParentIDByUserIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostsWithParentIDByUserIDAndPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countPostsWithParentIDByUserIDAndPageInfo, arg.UserID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -247,10 +225,10 @@ WITH _posts AS (
 		FROM
 			posts AS post
 		WHERE
-			post.user_id = $2
+			post.user_id = $1
 			AND post.parent_id IS NULL
 			AND post.deleted_at IS NULL
-			AND post.created_at < $3
+			AND post.created_at < $2
 	)
 	UNION
 	(
@@ -258,7 +236,7 @@ WITH _posts AS (
 			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = $2
+			INNER JOIN connections ON connections.follower_id = $1
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
 			(
@@ -269,7 +247,7 @@ WITH _posts AS (
 			AND post.parent_id IS NULL
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
-			AND post.created_at < $3
+			AND post.created_at < $2
 		ORDER BY
 			post.created_at DESC
 	)
@@ -278,18 +256,15 @@ SELECT
 	count(*)
 FROM
 	_posts
-LIMIT
-	$1
 `
 
 type CountTimelinePostsByPageInfoParams struct {
-	Limit     int32
 	UserID    uuid.UUID
 	CreatedAt time.Time
 }
 
 func (q *Queries) CountTimelinePostsByPageInfo(ctx context.Context, arg CountTimelinePostsByPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countTimelinePostsByPageInfo, arg.Limit, arg.UserID, arg.CreatedAt)
+	row := q.db.QueryRowContext(ctx, countTimelinePostsByPageInfo, arg.UserID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -642,6 +617,8 @@ WHERE
 	AND post.deleted_at IS NULL
 	AND users.is_private IS FALSE
 	AND post.created_at < $2
+ORDER BY
+	post.created_at DESC
 LIMIT
 	$3
 `

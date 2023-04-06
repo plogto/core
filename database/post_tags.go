@@ -8,22 +8,18 @@ import (
 	"github.com/google/uuid"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
 )
 
 type PostTags struct {
 	Queries *db.Queries
 }
 
-func (p *PostTags) CreatePostTag(ctx context.Context, tagID, postID string) (*db.PostTag, error) {
-	TagID, _ := uuid.Parse(tagID)
-	PostID, _ := uuid.Parse(postID)
-
-	postTag, _ := p.Queries.CreatePostTag(ctx, db.CreatePostTagParams{
-		TagID:  TagID,
-		PostID: PostID,
-	})
-
-	return postTag, nil
+func (p *PostTags) CreatePostTag(ctx context.Context, tagID, postID uuid.UUID) (*db.PostTag, error) {
+	return util.HandleDBResponse(p.Queries.CreatePostTag(ctx, db.CreatePostTagParams{
+		TagID:  tagID,
+		PostID: postID,
+	}))
 }
 
 func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int) (*model.Tags, error) {
@@ -45,19 +41,17 @@ func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int) (*mod
 	}, nil
 }
 
-func (p *PostTags) CountPostTagsByTagID(ctx context.Context, tagID string) (int64, error) {
-	TagID, _ := uuid.Parse(tagID)
-	totalCount, _ := p.Queries.CountPostTagsByTagID(ctx, TagID)
+func (p *PostTags) CountPostTagsByTagID(ctx context.Context, tagID uuid.UUID) (int64, error) {
+	totalCount, _ := p.Queries.CountPostTagsByTagID(ctx, tagID)
 
 	return totalCount, nil
 }
 
-func (p *PostTags) DeletePostTagsByPostID(ctx context.Context, postID string) ([]*db.PostTag, error) {
+func (p *PostTags) DeletePostTagsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.PostTag, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
-	PostID, _ := uuid.Parse(postID)
 	postTags, _ := p.Queries.DeletePostTagsByPostID(ctx, db.DeletePostTagsByPostIDParams{
-		PostID:    PostID,
+		PostID:    postID,
 		DeletedAt: DeletedAt,
 	})
 

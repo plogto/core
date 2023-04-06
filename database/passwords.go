@@ -5,6 +5,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/db"
+	"github.com/plogto/core/util"
 )
 
 type Passwords struct {
@@ -12,19 +13,13 @@ type Passwords struct {
 }
 
 func (p *Passwords) GetPasswordByUserID(ctx context.Context, id uuid.UUID) (*db.Password, error) {
-	password, _ := p.Queries.GetPasswordByUserID(ctx, id)
-
-	return password, nil
+	return util.HandleDBResponse(p.Queries.GetPasswordByUserID(ctx, id))
 }
 
 func (p *Passwords) AddPassword(ctx context.Context, arg db.CreatePasswordParams) (*db.Password, error) {
-	password, _ := p.Queries.CreatePassword(ctx, arg)
-
-	return password, nil
+	return util.HandleDBResponse(p.Queries.CreatePassword(ctx, arg))
 }
 
 func (p *Passwords) UpdatePassword(ctx context.Context, arg db.UpdatePasswordParams) (*db.Password, error) {
-	password, _ := p.Queries.UpdatePassword(ctx, arg)
-
-	return password, nil
+	return util.HandleDBResponse(p.Queries.UpdatePassword(ctx, arg))
 }

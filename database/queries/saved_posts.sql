@@ -49,8 +49,6 @@ WITH _count_wrapper AS (
 		AND deleted_at IS NULL
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -109,8 +107,6 @@ WITH _count_wrapper AS (
 		saved_post.id,
 		posts.id,
 		users.id
-	LIMIT
-		$3
 )
 SELECT
 	count(*)

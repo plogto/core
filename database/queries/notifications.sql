@@ -46,6 +46,8 @@ WHERE
 	receiver_id = $1
 	AND deleted_at IS NULL
 	AND created_at < $2
+ORDER BY
+	created_at DESC
 LIMIT
 	$3;
 
@@ -59,8 +61,6 @@ WITH _count_wrapper AS (
 		receiver_id = $1
 		AND deleted_at IS NULL
 		AND created_at < $2
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
