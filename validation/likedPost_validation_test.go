@@ -7,13 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type LikedPostTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 func TestIsLikedPostExists(t *testing.T) {
-	var testData = []LikedPostTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsLikedPostExists(nil),

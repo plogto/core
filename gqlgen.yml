@@ -41,27 +41,107 @@ autobind: []
 # modelgen, the others will be allowed when binding to fields. Configure them to
 # your liking
 models:
-  User:
-    model: github.com/plogto/core/graph/model.User
+  Int:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int
+      - github.com/99designs/gqlgen/graphql.Int64
+      - github.com/99designs/gqlgen/graphql.Int32
+  UUID:
+    model:
+      - github.com/plogto/core/db.UUID
+  TotalCount:
+    model:
+      - github.com/99designs/gqlgen/graphql.Int64
+  Connection:
+    model: github.com/plogto/core/db.Connection
     fields:
-      avatar:
+      following:
         resolver: true
-      background:
+      follower:
         resolver: true
-      connectionStatus:
+  ConnectionsEdge:
+    fields:
+      cursor:
         resolver: true
-      followingCount:
+      node:
         resolver: true
-      followersCount:
+  CreditTransactionDescriptionVariable:
+    model: github.com/plogto/core/db.CreditTransactionDescriptionVariable
+    fields:
+      url:
         resolver: true
-      followRequestsCount:
+      image:
         resolver: true
-      postsCount:
+  CreditTransactionInfo:
+    model: github.com/plogto/core/db.CreditTransactionInfo
+    fields:
+      template:
         resolver: true
-      credits:
+      descriptionVariables:
         resolver: true
+  CreditTransactionTemplate:
+    model: github.com/plogto/core/db.CreditTransactionTemplate
+  CreditTransaction:
+    model: github.com/plogto/core/db.CreditTransaction
+    fields:
+      user:
+        resolver: true
+      recipient:
+        resolver: true
+      info:
+        resolver: true
+      relevantTransaction:
+        resolver: true
+  CreditTransactionsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  File:
+    model: github.com/plogto/core/db.File
+  LikedPost:
+    model: github.com/plogto/core/db.LikedPost
+    fields:
+      user:
+        resolver: true
+      post:
+        resolver: true
+  LikedPostsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  NotificationType:
+    model: github.com/plogto/core/db.NotificationType
+  Notification:
+    model: github.com/plogto/core/db.Notification
+    fields:
+      notificationType:
+        resolver: true
+      sender:
+        resolver: true
+      receiver:
+        resolver: true
+      post:
+        resolver: true
+      reply:
+        resolver: true
+  NotificationsEdge:
+    fields:
+      cursor:
+        resolver: true
+      node:
+        resolver: true
+  Password:
+    model: github.com/plogto/core/db.Password
+  PostAttachment:
+    model: github.com/plogto/core/db.PostAttachment
+  PostTag:
+    model: github.com/plogto/core/db.PostTag
   Post:
-    model: github.com/plogto/core/graph/model.Post
+    model: github.com/plogto/core/db.Post
     fields:
       user:
         resolver: true
@@ -79,107 +159,38 @@ models:
         resolver: true
       isSaved:
         resolver: true
-  File:
-    model: github.com/plogto/core/graph/model.File
-  Connection:
-    model: github.com/plogto/core/graph/model.Connection
-    fields:
-      following:
-        resolver: true
-      follower:
-        resolver: true
-  Tag:
-    model: github.com/plogto/core/graph/model.Tag
-    fields:
-      count:
-        resolver: true
-  LikedPost:
-    model: github.com/plogto/core/graph/model.LikedPost
-    fields:
-      user:
-        resolver: true
-      post:
-        resolver: true
-  LikedPostsEdge:
+  PostsEdge:
     fields:
       cursor:
         resolver: true
       node:
         resolver: true
   SavedPost:
-    model: github.com/plogto/core/graph/model.SavedPost
+    model: github.com/plogto/core/db.SavedPost
     fields:
       user:
         resolver: true
       post:
         resolver: true
-  InvitedUser:
-    model: github.com/plogto/core/graph/model.InvitedUser
-    fields:
-      inviter:
-        resolver: true
-      invitee:
-        resolver: true
-  InvitedUsersEdge:
+  SavedPostsEdge:
     fields:
       cursor:
         resolver: true
       node:
         resolver: true
-  CreditTransactionDescriptionVariable:
-    model: github.com/plogto/core/graph/model.CreditTransactionDescriptionVariable
+  Tag:
+    model: github.com/plogto/core/graph/model.Tag
     fields:
-      url:
+      count:
         resolver: true
-      image:
-        resolver: true
-  CreditTransactionTemplate:
-    model: github.com/plogto/core/graph/model.CreditTransactionTemplate
-  CreditTransactionInfo:
-    model: github.com/plogto/core/graph/model.CreditTransactionInfo
-    fields:
-      template:
-        resolver: true
-      descriptionVariables:
-        resolver: true
-  CreditTransaction:
-    model: github.com/plogto/core/graph/model.CreditTransaction
-    fields:
-      user:
-        resolver: true
-      recipient:
-        resolver: true
-      info:
-        resolver: true
-      relevantTransaction:
-        resolver: true
-  CreditTransactionsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  Ticket:
-    model: github.com/plogto/core/graph/model.Ticket
-    fields:
-      user:
-        resolver: true
-      lastMessage:
-        resolver: true
-      permissions:
-        resolver: true
-  TicketMessages:
-    fields:
-      ticket:
-        resolver: true
-  TicketsEdge:
+  TagsEdge:
     fields:
       cursor:
         resolver: true
       node:
         resolver: true
   TicketMessage:
-    model: github.com/plogto/core/graph/model.TicketMessage
+    model: github.com/plogto/core/db.TicketMessage
     fields:
       sender:
         resolver: true
@@ -191,16 +202,43 @@ models:
         resolver: true
       node:
         resolver: true
-  SavedPostsEdge:
+  TicketMessages:
+    fields:
+      ticket:
+        resolver: true
+  Ticket:
+    model: github.com/plogto/core/db.Ticket
+    fields:
+      user:
+        resolver: true
+      lastMessage:
+        resolver: true
+      permissions:
+        resolver: true
+  TicketsEdge:
     fields:
       cursor:
         resolver: true
       node:
         resolver: true
-  OnlineUser:
-    model: github.com/plogto/core/graph/model.OnlineUser
+  User:
+    model: github.com/plogto/core/db.User
     fields:
-      user:
+      avatar:
+        resolver: true
+      background:
+        resolver: true
+      connectionStatus:
+        resolver: true
+      followingCount:
+        resolver: true
+      followersCount:
+        resolver: true
+      followRequestsCount:
+        resolver: true
+      postsCount:
+        resolver: true
+      credits:
         resolver: true
   UsersEdge:
     fields:
@@ -208,36 +246,3 @@ models:
         resolver: true
       node:
         resolver: true
-  TagsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  PostsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  NotificationsEdge:
-    fields:
-      cursor:
-        resolver: true
-      node:
-        resolver: true
-  Notification:
-    model: github.com/plogto/core/graph/model.Notification
-    fields:
-      notificationType:
-        resolver: true
-      sender:
-        resolver: true
-      receiver:
-        resolver: true
-      post:
-        resolver: true
-      reply:
-        resolver: true
-  NotificationType:
-    model: github.com/plogto/core/graph/model.NotificationType

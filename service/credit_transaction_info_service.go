@@ -3,7 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/middleware"
 )
 
@@ -13,16 +14,12 @@ type DescriptionVariable struct {
 	Image   *string
 }
 
-func (s *Service) CreateCreditTransactionInfo(creditTransactionInfo model.CreditTransactionInfo) (*model.CreditTransactionInfo, error) {
-	return s.CreditTransactionInfos.CreateCreditTransactionInfo(&creditTransactionInfo)
-}
-
-func (s *Service) GetCreditTransactionInfoByID(ctx context.Context, id *string) (*model.CreditTransactionInfo, error) {
+func (s *Service) GetCreditTransactionInfoByID(ctx context.Context, id uuid.UUID) (*db.CreditTransactionInfo, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil || err != nil {
+	if err != nil {
 		return nil, nil
 	}
 
-	return s.CreditTransactionInfos.GetCreditTransactionInfoByID(*id)
+	return s.CreditTransactionInfos.GetCreditTransactionInfoByID(ctx, id)
 }

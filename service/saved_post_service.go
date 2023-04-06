@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -11,28 +13,24 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) SavePost(ctx context.Context, postID string) (*model.SavedPost, error) {
+func (s *Service) SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, errors.New("access denied")
 	}
 
-	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
+	savedPost, _ := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, user.ID, postID)
 
 	if !validation.IsSavedPostExists(savedPost) {
-		savedPost := &model.SavedPost{
-			UserID: user.ID,
-			PostID: postID,
-		}
-		return s.SavedPosts.CreateSavedPost(savedPost)
+		return s.SavedPosts.CreateSavedPost(ctx, user.ID, postID)
 	} else {
-		return s.SavedPosts.DeleteSavedPostByID(savedPost.ID)
+		return s.SavedPosts.DeleteSavedPostByID(ctx, savedPost.ID)
 	}
 }
 
@@ -48,34 +46,34 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput)
 	}
 
 	pageInfoInput := util.ExtractPageInfo(input)
-	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(user.ID, *pageInfoInput.First, *pageInfoInput.After)
+	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
 }
 
-func (s *Service) GetSavedPostByID(ctx context.Context, id string) (*model.SavedPost, error) {
+func (s *Service) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	savedPost, _ := s.SavedPosts.GetSavedPostByID(id)
-	post, err := graph.GetPostLoader(ctx).Load(savedPost.PostID)
+	savedPost, _ := s.SavedPosts.GetSavedPostByID(ctx, id)
+	post, err := graph.GetPostLoader(ctx).Load(savedPost.PostID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID); s.CheckUserAccess(user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, err
 	}
 
 	return savedPost, err
 }
 
-func (s *Service) IsPostSaved(ctx context.Context, postID string) (*model.SavedPost, error) {
+func (s *Service) IsPostSaved(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	if user == nil {
 		return nil, nil
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID)
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID)
-	if s.CheckUserAccess(user, followingUser) == bool(false) {
+	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(user.ID, postID)
+		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, user.ID, postID)
 
 		if !validation.IsSavedPostExists(savedPost) {
 			return nil, nil

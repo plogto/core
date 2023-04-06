@@ -1,61 +1,47 @@
 package database
 
 import (
-	"fmt"
+	"context"
+	"database/sql"
 	"time"
 
-	"github.com/go-pg/pg/v10"
-	"github.com/plogto/core/graph/model"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 )
 
 type PostMentions struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (p *PostMentions) CreatePostMention(postMention *model.PostMention) (*model.PostMention, error) {
-	_, err := p.DB.Model(postMention).Returning("*").Insert()
-	return postMention, err
+func (p *PostMentions) CreatePostMention(ctx context.Context, userID, postID uuid.UUID) (*db.PostMention, error) {
+	postMention, _ := p.Queries.CreatePostMention(ctx, db.CreatePostMentionParams{
+		UserID: userID,
+		PostID: postID,
+	})
+
+	return postMention, nil
 }
 
-func (p *PostMentions) GetPostMentionByField(field string, value string) (*model.PostMention, error) {
-	var postMention model.PostMention
-	err := p.DB.Model(&postMention).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		First()
+func (p *PostMentions) DeletePostMention(ctx context.Context, userID, postID uuid.UUID) ([]*db.PostMention, error) {
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-	return &postMention, err
+	postMentions, _ := p.Queries.DeletePostMention(ctx, db.DeletePostMentionParams{
+		PostID:    postID,
+		UserID:    userID,
+		DeletedAt: DeletedAt,
+	})
+
+	return postMentions, nil
+
 }
 
-func (p *PostMentions) GetPostMentionsByPostID(postID string) ([]*model.PostMention, error) {
-	var postMentions []*model.PostMention
-	err := p.DB.Model(&postMentions).
-		Where("post_id = ?", postID).
-		Where("deleted_at is ?", nil).
-		First()
+func (p *PostMentions) DeletePostMentionsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.PostMention, error) {
+	DeletedAt := sql.NullTime{time.Now(), true}
 
-	return postMentions, err
-}
+	postMentions, _ := p.Queries.DeletePostMentionsByPostID(ctx, db.DeletePostMentionsByPostIDParams{
+		PostID:    postID,
+		DeletedAt: DeletedAt,
+	})
 
-func (p *PostMentions) DeletePostMention(postMention *model.PostMention) (*model.PostMention, error) {
-	DeletedAt := time.Now()
-	postMention.DeletedAt = &DeletedAt
-
-	_, err := p.DB.Model(postMention).
-		Set("deleted_at = ?deleted_at").
-		Where("post_id =?post_id").
-		Where("user_id =?user_id").
-		Where("deleted_at is ?", nil).
-		Update()
-
-	return postMention, err
-}
-
-func (p *PostMentions) DeletePostMentionsByPostID(postMention *model.PostMention) ([]*model.PostMention, error) {
-	var postMentions []*model.PostMention
-	query := p.DB.Model(&postMentions).
-		Where("post_id = ?", postMention.PostID)
-
-	_, err := query.Set("deleted_at = ?", postMention.DeletedAt).Update()
-	return postMentions, err
+	return postMentions, nil
 }

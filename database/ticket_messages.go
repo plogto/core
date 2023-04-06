@@ -1,44 +1,48 @@
 package database
 
 import (
-	"fmt"
+	"context"
+	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type TicketMessages struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (t *TicketMessages) GetTicketMessageByField(field string, value string) (*model.TicketMessage, error) {
-	var ticketMessage model.TicketMessage
-	err := t.DB.Model(&ticketMessage).Where(fmt.Sprintf("%v = ?", field), value).Where("deleted_at is ?", nil).First()
-	if len(ticketMessage.ID) < 1 {
-		return nil, nil
-	}
-	return &ticketMessage, err
+func (t *TicketMessages) CreateTicketMessage(ctx context.Context, arg db.CreateTicketMessageParams) (*db.TicketMessage, error) {
+	return util.HandleDBResponse(t.Queries.CreateTicketMessage(ctx, arg))
 }
 
-func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ticketID string, limit int, after string) (*model.TicketMessages, error) {
-	var ticketMessages []*model.TicketMessage
+func (t *TicketMessages) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.TicketMessage, error) {
+	return util.HandleDBResponse(t.Queries.GetTicketMessageByID(ctx, id))
+}
+
+func (t *TicketMessages) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
+	return util.HandleDBResponse(t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID))
+}
+
+func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Context, ticketID uuid.UUID, limit int32, after time.Time) (*model.TicketMessages, error) {
 	var edges []*model.TicketMessagesEdge
 	var endCursor string
 
-	query := t.DB.Model(&ticketMessages).
-		Where("ticket_id = ?", ticketID).
-		Where("deleted_at is ?", nil).
-		Order("created_at DESC")
+	ticketMessages, _ := t.Queries.GetTicketMessagesByTicketIDAndPageInfo(ctx, db.GetTicketMessagesByTicketIDAndPageInfoParams{
+		TicketID:  ticketID,
+		Limit:     limit,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := t.Queries.CountTicketMessagesByTicketIDAndPageInfo(ctx, db.CountTicketMessagesByTicketIDAndPageInfoParams{
+		TicketID:  ticketID,
+		CreatedAt: after,
+	})
 
 	for _, value := range ticketMessages {
-		edges = append(edges, &model.TicketMessagesEdge{Node: &model.TicketMessage{
+		edges = append(edges, &model.TicketMessagesEdge{Node: &db.TicketMessage{
 			ID:        value.ID,
 			TicketID:  value.TicketID,
 			CreatedAt: value.CreatedAt,
@@ -46,49 +50,31 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ticketID string,
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > int64(limit) {
+		hasNextPage = true
 	}
 
 	return &model.TicketMessages{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
-			EndCursor: endCursor,
+			EndCursor:   endCursor,
+			HasNextPage: &hasNextPage,
 		},
-	}, err
+	}, nil
 }
 
-func (t *TicketMessages) GetTicketMessageByID(id string) (*model.TicketMessage, error) {
-	return t.GetTicketMessageByField("id", id)
-}
+func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (bool, error) {
+	_, err := t.Queries.UpdateReadTicketMessagesByUserIDAndTicketID(ctx, db.UpdateReadTicketMessagesByUserIDAndTicketIDParams{
+		SenderID: userID,
+		TicketID: ticketID,
+	})
 
-func (t *TicketMessages) GetLastTicketMessageByTicketID(ticketID string) (*model.TicketMessage, error) {
-	var ticketMessage model.TicketMessage
-	err := t.DB.Model(&ticketMessage).Where("ticket_id = ?", ticketID).Where("deleted_at is ?", nil).Order("created_at DESC").First()
-	if len(ticketMessage.ID) < 1 {
-		return nil, nil
-	}
-	return &ticketMessage, err
-}
-
-func (t *TicketMessages) CreateTicketMessage(ticketMessage *model.TicketMessage) (*model.TicketMessage, error) {
-	_, err := t.DB.Model(ticketMessage).Returning("*").Insert()
-	if len(ticketMessage.ID) < 1 {
-		return nil, err
-	}
-	return ticketMessage, err
-}
-
-func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(userID, ticketID string) (bool, error) {
-	var ticketMessages []*model.TicketMessage
-
-	query := t.DB.Model(&ticketMessages).
-		// TODO: change = to !=
-		Where("sender_id = ?", userID).
-		Where("ticket_id = ?", ticketID)
-
-	_, err := query.Set("read = ?", true).Returning("*").Update()
-
+	// TODO: improve it
 	if err != nil {
 		return false, nil
 	}

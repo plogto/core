@@ -1,36 +1,63 @@
 package database
 
 import (
-	"fmt"
+	"context"
 	"strings"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/convertor"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
+	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 type Tags struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (t *Tags) GetTagsByTagNameAndPageInfo(value string, limit int) (*model.Tags, error) {
-	var tags []*model.Tag
+func (t *Tags) CreateTag(ctx context.Context, name string) (*model.Tag, error) {
+	tag := util.HandleDBResponseWithoutError(t.Queries.GetTagByName(ctx, name))
+
+	if validation.IsTagExists(tag) {
+		return &model.Tag{
+			ID:   tag.ID,
+			Name: tag.Name,
+		}, nil
+	}
+
+	newTag, _ := t.Queries.CreateTag(ctx, name)
+
+	return util.HandleDBResponse(&model.Tag{
+		ID:   newTag.ID,
+		Name: newTag.Name,
+	}, nil)
+}
+
+func (t *Tags) GetTagByIDs(ctx context.Context, ids []uuid.UUID) ([]*model.Tag, error) {
+	tags, _ := t.Queries.GetTagByIDs(ctx, ids)
+
+	return convertor.DBTagsToModel(tags), nil
+}
+func (t *Tags) GetTagByName(ctx context.Context, name string) (*model.Tag, error) {
+	tag, err := t.Queries.GetTagByName(ctx, name)
+
+	return util.HandleDBResponse(&model.Tag{
+		ID:   tag.ID,
+		Name: tag.Name,
+	}, err)
+}
+
+func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, limit int) (*model.Tags, error) {
 	var edges []*model.TagsEdge
 
-	value = strings.ToLower(value)
+	name = strings.ToLower(name)
 
-	err := t.DB.Model(&tags).
-		ColumnExpr("tag.*, count(tag.id)").
-		ColumnExpr("post_tags.tag_id").
-		Join("INNER JOIN post_tags ON post_tags.tag_id = tag.id").
-		Join("INNER JOIN posts ON post_tags.post_id = posts.id").
-		Join("INNER JOIN users ON users.id = posts.user_id").
-		GroupExpr("post_tags.tag_id, tag.id").
-		Where("lower(tag.name) LIKE lower(?)", strings.ToLower(value)).
-		Where("posts.deleted_at is ?", nil).
-		Where("users.is_private is false").
-		Order("count DESC").
-		Limit(limit).
-		Select()
+	Limit := int32(limit)
+	tags, _ := t.Queries.GetTagsByTagNameAndPageInfo(ctx, db.GetTagsByTagNameAndPageInfoParams{
+		Name:  name,
+		Limit: Limit,
+	})
 
 	for _, value := range tags {
 		edges = append(edges, &model.TagsEdge{Node: &model.Tag{
@@ -42,26 +69,5 @@ func (t *Tags) GetTagsByTagNameAndPageInfo(value string, limit int) (*model.Tags
 
 	return &model.Tags{
 		Edges: edges,
-	}, err
-}
-
-func (t *Tags) GetTagByField(field, value string) (*model.Tag, error) {
-	var tag model.Tag
-	err := t.DB.Model(&tag).
-		Where(fmt.Sprintf("tag.%v = ?", field), value).First()
-
-	return &tag, err
-}
-
-func (t *Tags) GetTagByName(value string) (*model.Tag, error) {
-	var tag model.Tag
-	err := t.DB.Model(&tag).
-		Where("lower(tag.name) = lower(?)", value).First()
-
-	return &tag, err
-}
-
-func (t *Tags) CreateTag(tag *model.Tag) (*model.Tag, error) {
-	_, err := t.DB.Model(tag).Where("name = ?name").Group("id").Returning("*").SelectOrInsert()
-	return tag, err
+	}, nil
 }

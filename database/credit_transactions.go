@@ -1,93 +1,74 @@
 package database
 
 import (
-	"fmt"
+	"context"
+	"time"
 
-	"github.com/go-pg/pg/v10"
+	"github.com/google/uuid"
+	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
 )
 
 type CreditTransactions struct {
-	DB *pg.DB
+	Queries *db.Queries
 }
 
-func (c *CreditTransactions) CreateCreditTransaction(creditTransaction *model.CreditTransaction) (*model.CreditTransaction, error) {
-	_, err := c.DB.Model(creditTransaction).Returning("*").Insert()
-	return creditTransaction, err
+func (c *CreditTransactions) CreateCreditTransaction(ctx context.Context, arg db.CreateCreditTransactionParams) (*db.CreditTransaction, error) {
+	return util.HandleDBResponse(c.Queries.CreateCreditTransaction(ctx, arg))
 }
 
-func (c *CreditTransactions) GetCreditTransactionByID(id string) (*model.CreditTransaction, error) {
-	return c.GetCreditTransactionByField("id", id)
+func (c *CreditTransactions) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*db.CreditTransaction, error) {
+	return util.HandleDBResponse(c.Queries.GetCreditTransactionByID(ctx, id))
 }
 
-func (c *CreditTransactions) GetCreditTransactionByUrl(url string) (*model.CreditTransaction, error) {
-	return c.GetCreditTransactionByField("url", url)
+func (c *CreditTransactions) GetCreditTransactionByUrl(ctx context.Context, url string) (*db.CreditTransaction, error) {
+	return util.HandleDBResponse(c.Queries.GetCreditTransactionByUrl(ctx, url))
 }
 
-func (c *CreditTransactions) GetCreditTransactionByField(field string, value string) (*model.CreditTransaction, error) {
-	var creditTransaction model.CreditTransaction
-	err := c.DB.Model(&creditTransaction).
-		Where(fmt.Sprintf("%v = ?", field), value).
-		Where("deleted_at is ?", nil).
-		First()
+func (c *CreditTransactions) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
+	amount, _ := c.Queries.GetCreditsByUserID(ctx, userID)
 
-	return &creditTransaction, err
+	return float64(amount), nil
 }
 
-func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(userID string, limit int, after string) (*model.CreditTransactions, error) {
-	var creditTransactions []*model.CreditTransaction
+func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.CreditTransactions, error) {
 	var edges []*model.CreditTransactionsEdge
 	var endCursor string
 
-	query := c.DB.Model(&creditTransactions).
-		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id").
-		Where("credit_transaction.user_id = ?", userID).
-		Where("credit_transaction.deleted_at is ?", nil).
-		Order("credit_transaction_infos.created_at DESC")
+	creditTransactions, _ := c.Queries.GetCreditTransactionsByUserIDAndPageInfo(ctx, db.GetCreditTransactionsByUserIDAndPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
-	if len(after) > 0 {
-		query.Where("credit_transaction_infos.created_at < ?", after)
-	}
-
-	totalCount, err := query.Limit(limit).SelectAndCount()
+	totalCount, _ := c.Queries.CountCreditTransactionsByUserIDAndPageInfo(ctx, db.CountCreditTransactionsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
 
 	for _, value := range creditTransactions {
-		edges = append(edges, &model.CreditTransactionsEdge{Node: &model.CreditTransaction{
+		edges = append(edges, &model.CreditTransactionsEdge{Node: &db.CreditTransaction{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
 	}
 
 	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(*edges[len(edges)-1].Node.CreatedAt)
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
 	}
 
 	hasNextPage := false
-	if totalCount > limit {
+	if totalCount > int64(limit) {
 		hasNextPage = true
 	}
 
 	return &model.CreditTransactions{
-		TotalCount: &totalCount,
+		TotalCount: totalCount,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
 			HasNextPage: &hasNextPage,
 		},
-	}, err
-}
-
-func (c *CreditTransactions) GetCreditsByUserID(userID string) (float64, error) {
-	var creditTransactions []*model.CreditTransaction
-
-	err := c.DB.Model(&creditTransactions).
-		ColumnExpr("sum(credit_transaction.amount) as amount").
-		Join("INNER JOIN credit_transaction_infos ON credit_transaction_infos.id = credit_transaction.credit_transaction_info_id").
-		Where("credit_transaction.user_id = ?", userID).
-		Where("credit_transaction_infos.status = ?", model.CreditTransactionStatusApproved).
-		Where("credit_transaction.deleted_at is ?", nil).
-		Select()
-
-	return creditTransactions[0].Amount, err
+	}, nil
 }

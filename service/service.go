@@ -3,64 +3,58 @@ package service
 import (
 	"context"
 	"fmt"
-	"sync"
 
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/graph/model"
 )
 
 type Service struct {
-	Users                                 database.Users
-	Passwords                             database.Passwords
-	Posts                                 database.Posts
-	Files                                 database.Files
 	Connections                           database.Connections
-	CreditTransactions                    database.CreditTransactions
+	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
 	CreditTransactionTemplates            database.CreditTransactionTemplates
 	CreditTransactionInfos                database.CreditTransactionInfos
-	CreditTransactionDescriptionVariables database.CreditTransactionDescriptionVariables
-	Tickets                               database.Tickets
-	TicketMessages                        database.TicketMessages
+	CreditTransactions                    database.CreditTransactions
+	Files                                 database.Files
+	InvitedUsers                          database.InvitedUsers
+	LikedPosts                            database.LikedPosts
+	NotificationTypes                     database.NotificationTypes
+	Notifications                         database.Notifications
+	Passwords                             database.Passwords
+	PostAttachments                       database.PostAttachments
+	PostMentions                          database.PostMentions
+	PostTags                              database.PostTags
+	Posts                                 database.Posts
+	SavedPosts                            database.SavedPosts
 	Tags                                  database.Tags
 	TicketMessageAttachments              database.TicketMessageAttachments
-	PostAttachments                       database.PostAttachments
-	PostTags                              database.PostTags
-	PostMentions                          database.PostMentions
-	LikedPosts                            database.LikedPosts
-	SavedPosts                            database.SavedPosts
-	InvitedUsers                          database.InvitedUsers
-	OnlineUsers                           database.OnlineUsers
-	Notifications                         database.Notifications
-	NotificationTypes                     database.NotificationTypes
-	OnlineNotifications                   map[string]chan *model.NotificationsEdge
-	mu                                    sync.Mutex
+	TicketMessages                        database.TicketMessages
+	Tickets                               database.Tickets
+	Users                                 database.Users
 }
 
 func New(service Service) *Service {
 	return &Service{
-		Users:                                 service.Users,
-		Passwords:                             service.Passwords,
-		Posts:                                 service.Posts,
-		Files:                                 service.Files,
 		Connections:                           service.Connections,
-		CreditTransactions:                    service.CreditTransactions,
+		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
 		CreditTransactionTemplates:            service.CreditTransactionTemplates,
 		CreditTransactionInfos:                service.CreditTransactionInfos,
-		CreditTransactionDescriptionVariables: service.CreditTransactionDescriptionVariables,
-		Tickets:                               service.Tickets,
-		TicketMessages:                        service.TicketMessages,
-		Tags:                                  service.Tags,
-		PostTags:                              service.PostTags,
-		PostMentions:                          service.PostMentions,
-		TicketMessageAttachments:              service.TicketMessageAttachments,
-		PostAttachments:                       service.PostAttachments,
-		LikedPosts:                            service.LikedPosts,
-		SavedPosts:                            service.SavedPosts,
+		CreditTransactions:                    service.CreditTransactions,
+		Files:                                 service.Files,
 		InvitedUsers:                          service.InvitedUsers,
-		OnlineUsers:                           service.OnlineUsers,
-		Notifications:                         service.Notifications,
+		LikedPosts:                            service.LikedPosts,
 		NotificationTypes:                     service.NotificationTypes,
-		OnlineNotifications:                   map[string]chan *model.NotificationsEdge{},
+		Notifications:                         service.Notifications,
+		Passwords:                             service.Passwords,
+		PostAttachments:                       service.PostAttachments,
+		PostMentions:                          service.PostMentions,
+		PostTags:                              service.PostTags,
+		Posts:                                 service.Posts,
+		SavedPosts:                            service.SavedPosts,
+		Tags:                                  service.Tags,
+		TicketMessageAttachments:              service.TicketMessageAttachments,
+		TicketMessages:                        service.TicketMessages,
+		Tickets:                               service.Tickets,
+		Users:                                 service.Users,
 	}
 }
 

@@ -18,7 +18,7 @@ enum TicketPermission {
 }
 
 type Ticket {
-  id: ID!
+  id: UUID!
   user: User!
   subject: String!
   status: TicketStatus!
@@ -30,7 +30,7 @@ type Ticket {
 }
 
 type TicketMessage {
-  id: ID!
+  id: UUID!
   sender: User!
   message: String!
   ticket: Ticket!
@@ -46,8 +46,8 @@ type TicketsEdge {
 }
 
 type Tickets {
-  totalCount: Int
-  edges: [TicketsEdge]
+  totalCount: TotalCount!
+  edges: [TicketsEdge]!
   pageInfo: PageInfo!
 }
 
@@ -57,9 +57,9 @@ type TicketMessagesEdge {
 }
 
 type TicketMessages {
-  totalCount: Int
+  totalCount: TotalCount!
   ticket: Ticket
-  edges: [TicketMessagesEdge]
+  edges: [TicketMessagesEdge]!
   pageInfo: PageInfo!
 }
 
@@ -84,7 +84,10 @@ extend type Query {
 
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
-  addTicketMessage(ticketId: ID!, input: AddTicketMessageInput!): TicketMessage
-  readTicketMessages(ticketId: ID!): Boolean
-  updateTicketStatus(ticketId: ID!, status: TicketStatus!): Ticket
+  addTicketMessage(
+    ticketId: UUID!
+    input: AddTicketMessageInput!
+  ): TicketMessage
+  readTicketMessages(ticketId: UUID!): Boolean
+  updateTicketStatus(ticketId: UUID!, status: TicketStatus!): Ticket
 }

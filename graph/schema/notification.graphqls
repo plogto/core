@@ -9,13 +9,13 @@ enum NotificationTypeName {
 }
 
 type NotificationType {
-  id: ID!
+  id: UUID!
   name: NotificationTypeName!
   template: String!
 }
 
 type Notification {
-  id: ID!
+  id: UUID!
   notificationType: NotificationType!
   sender: User!
   receiver: User!
@@ -33,9 +33,9 @@ type NotificationsEdge {
 }
 
 type Notifications {
-  totalCount: Int
-  edges: [NotificationsEdge]
-  unreadNotificationsCount: Int
+  totalCount: TotalCount!
+  edges: [NotificationsEdge]!
+  unreadNotificationsCount: TotalCount!
   pageInfo: PageInfo!
 }
 
@@ -45,8 +45,4 @@ extend type Query {
 
 extend type Mutation {
   readNotifications: Boolean
-}
-
-extend type Subscription {
-  getNotification: NotificationsEdge
 }

@@ -1,15 +1,17 @@
 package model
 
 import (
+	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Tag struct {
-	tableName struct{} `pg:"tags,discard_unknown_columns"`
-	ID        string
+	ID        uuid.UUID
 	Name      string
-	Count     int64 `pg:"-"`
-	CreatedAt *time.Time
-	UpdatedAt *time.Time
-	DeletedAt *time.Time `pg:"-,soft_delete"`
+	Count     int64
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
 }
