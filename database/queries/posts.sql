@@ -59,8 +59,6 @@ WITH _count_wrapper AS (
 		AND created_at < $2
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -95,8 +93,6 @@ WITH _count_wrapper AS (
 		AND created_at < $2
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -115,6 +111,8 @@ WHERE
 	AND post.deleted_at IS NULL
 	AND users.is_private IS FALSE
 	AND post.created_at < $2
+ORDER BY
+	post.created_at DESC
 LIMIT
 	$3;
 
@@ -131,8 +129,8 @@ WITH _count_wrapper AS (
 		AND post.deleted_at IS NULL
 		AND users.is_private IS FALSE
 		AND post.created_at < $2
-	LIMIT
-		$3
+	ORDER BY
+		post.created_at DESC
 )
 SELECT
 	count(*)
@@ -177,8 +175,6 @@ WITH _count_wrapper AS (
 		post.id
 	ORDER BY
 		post.created_at DESC
-	LIMIT
-		$2
 )
 SELECT
 	count(*)
@@ -277,9 +273,7 @@ WITH _posts AS (
 SELECT
 	count(*)
 FROM
-	_posts
-LIMIT
-	$1;
+	_posts;
 
 -- name: GetTimelinePostsByPageInfo :many
 WITH _posts AS (
@@ -361,9 +355,7 @@ WITH _posts AS (
 SELECT
 	count(*)
 FROM
-	_posts
-LIMIT
-	$1;
+	_posts;
 
 -- name: UpdatePost :one
 UPDATE

@@ -25,8 +25,6 @@ WITH _count_wrapper AS (
 		AND deleted_at IS NULL
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -37,11 +35,10 @@ FROM
 type CountLikedPostsByPostIDAndPageInfoParams struct {
 	PostID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountLikedPostsByPostIDAndPageInfo(ctx context.Context, arg CountLikedPostsByPostIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLikedPostsByPostIDAndPageInfo, arg.PostID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countLikedPostsByPostIDAndPageInfo, arg.PostID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -72,8 +69,6 @@ WITH _count_wrapper AS (
 		liked_post.id,
 		posts.id,
 		users.id
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -84,11 +79,10 @@ FROM
 type CountLikedPostsByUserIDAndPageInfoParams struct {
 	UserID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 func (q *Queries) CountLikedPostsByUserIDAndPageInfo(ctx context.Context, arg CountLikedPostsByUserIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countLikedPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countLikedPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

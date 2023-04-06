@@ -1,7 +1,11 @@
 package service
 
-import "context"
+import (
+	"context"
 
-func (s *Service) CountPostTagsByTagID(ctx context.Context, id string) (int64, error) {
+	"github.com/google/uuid"
+)
+
+func (s *Service) CountPostTagsByTagID(ctx context.Context, id uuid.UUID) (int64, error) {
 	return s.PostTags.CountPostTagsByTagID(ctx, id)
 }

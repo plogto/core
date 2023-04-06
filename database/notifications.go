@@ -16,45 +16,39 @@ type Notifications struct {
 }
 
 func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
-	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams{
+	notification, _ := util.HandleDBResponse(n.Queries.GetNotification(ctx, db.GetNotificationParams{
 		NotificationTypeID: arg.NotificationTypeID,
 		SenderID:           arg.SenderID,
 		ReceiverID:         arg.ReceiverID,
 		PostID:             arg.PostID,
 		ReplyID:            arg.ReplyID,
 		Url:                arg.Url,
-	})
+	}))
 
 	if notification != nil {
 		return notification, nil
 	}
 
-	newNotification, _ := n.Queries.CreateNotification(ctx, arg)
-
-	return newNotification, nil
+	return util.HandleDBResponse(n.Queries.CreateNotification(ctx, arg))
 }
 
 func (n *Notifications) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
-	notification, _ := n.Queries.GetNotificationByID(ctx, id)
-
-	return notification, nil
+	return util.HandleDBResponse(n.Queries.GetNotificationByID(ctx, id))
 }
 
-func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID uuid.UUID, limit int32, after string) (*model.Notifications, error) {
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID uuid.UUID, limit int32, after time.Time) (*model.Notifications, error) {
 	var edges []*model.NotificationsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	notifications, _ := n.Queries.GetNotificationsByReceiverIDAndPageInfo(ctx, db.GetNotificationsByReceiverIDAndPageInfoParams{
 		Limit:      limit,
 		ReceiverID: receiverID,
-		CreatedAt:  createdAt,
+		CreatedAt:  after,
 	})
 
 	totalCount, _ := n.Queries.CountNotificationsByReceiverIDAndPageInfo(ctx, db.CountNotificationsByReceiverIDAndPageInfoParams{
 		ReceiverID: receiverID,
-		CreatedAt:  createdAt,
+		CreatedAt:  after,
 	})
 
 	unreadNotificationsCount, _ := n.CountUnreadNotificationsByReceiverID(ctx, receiverID)
@@ -103,9 +97,7 @@ func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID 
 }
 
 func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNotificationParams) (*db.Notification, error) {
-	notification, _ := n.Queries.RemoveNotification(ctx, arg)
-
-	return notification, nil
+	return util.HandleDBResponse(n.Queries.RemoveNotification(ctx, arg))
 }
 
 func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.Notification, error) {

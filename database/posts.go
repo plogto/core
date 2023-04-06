@@ -16,40 +16,26 @@ type Posts struct {
 }
 
 func (p *Posts) CreatePost(ctx context.Context, arg db.CreatePostParams) (*db.Post, error) {
-	post, _ := p.Queries.CreatePost(ctx, arg)
-
-	return post, nil
-}
-
-func (p *Posts) GetPostByID(ctx context.Context, id string) (*db.Post, error) {
-	ID, _ := uuid.Parse(id)
-	post, _ := p.Queries.GetPostByID(ctx, ID)
-
-	return post, nil
+	return util.HandleDBResponse(p.Queries.CreatePost(ctx, arg))
 }
 
 func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
-	post, _ := p.Queries.GetPostByURL(ctx, url)
-
-	return post, nil
+	return util.HandleDBResponse(p.Queries.GetPostByURL(ctx, url))
 }
 
-func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	posts, _ := p.Queries.GetPostsByUserIDAndPageInfo(ctx, db.GetPostsByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByUserIDAndPageInfo(ctx, db.CountPostsByUserIDAndPageInfoParams{
-		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range posts {
@@ -79,22 +65,19 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 	}, nil
 }
 
-func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	posts, _ := p.Queries.GetPostsWithParentIDByUserIDAndPageInfo(ctx, db.GetPostsWithParentIDByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsWithParentIDByUserIDAndPageInfo(ctx, db.CountPostsWithParentIDByUserIDAndPageInfoParams{
-		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range posts {
@@ -124,23 +107,21 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 	}, nil
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		ParentID:  uuid.NullUUID{parentID, true},
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
-		Limit:     limit,
 		UserID:    userID,
 		ParentID:  uuid.NullUUID{parentID, true},
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range posts {
@@ -163,22 +144,19 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.N
 	}, nil
 }
 
-func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	posts, _ := p.Queries.GetPostsByTagIDAndPageInfo(ctx, db.GetPostsByTagIDAndPageInfoParams{
 		Limit:     limit,
 		TagID:     tagID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByTagIDAndPageInfo(ctx, db.CountPostsByTagIDAndPageInfoParams{
-		Limit:     limit,
 		TagID:     tagID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range posts {
@@ -207,22 +185,19 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 	}, nil
 }
 
-func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	posts, _ := p.Queries.GetTimelinePostsByPageInfo(ctx, db.GetTimelinePostsByPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountTimelinePostsByPageInfo(ctx, db.CountTimelinePostsByPageInfoParams{
-		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range posts {
@@ -251,21 +226,16 @@ func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID
 	}, nil
 }
 
-func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, after string) (*model.Posts, error) {
+func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	createdAt, _ := time.Parse(time.RFC3339, after)
-
 	posts, _ := p.Queries.GetExplorePostsByPageInfo(ctx, db.GetExplorePostsByPageInfoParams{
 		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
-	totalCount, _ := p.Queries.CountExplorePostsByPageInfo(ctx, db.CountExplorePostsByPageInfoParams{
-		Limit:     limit,
-		CreatedAt: createdAt,
-	})
+	totalCount, _ := p.Queries.CountExplorePostsByPageInfo(ctx, after)
 
 	for _, value := range posts {
 		edges = append(edges, &model.PostsEdge{Node: &db.Post{

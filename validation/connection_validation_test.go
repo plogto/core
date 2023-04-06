@@ -7,13 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type ConnectionTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 func TestIsConnectionExists(t *testing.T) {
-	var testData = []ConnectionTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsConnectionExists(nil),
@@ -32,7 +27,7 @@ func TestIsConnectionExists(t *testing.T) {
 }
 
 func TestIsConnectionStatusAccepted(t *testing.T) {
-	var testData = []ConnectionTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsConnectionStatusAccepted(nil),

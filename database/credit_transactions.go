@@ -15,21 +15,15 @@ type CreditTransactions struct {
 }
 
 func (c *CreditTransactions) CreateCreditTransaction(ctx context.Context, arg db.CreateCreditTransactionParams) (*db.CreditTransaction, error) {
-	creditTransaction, _ := c.Queries.CreateCreditTransaction(ctx, arg)
-
-	return creditTransaction, nil
+	return util.HandleDBResponse(c.Queries.CreateCreditTransaction(ctx, arg))
 }
 
 func (c *CreditTransactions) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*db.CreditTransaction, error) {
-	creditTransaction, _ := c.Queries.GetCreditTransactionByID(ctx, id)
-
-	return creditTransaction, nil
+	return util.HandleDBResponse(c.Queries.GetCreditTransactionByID(ctx, id))
 }
 
 func (c *CreditTransactions) GetCreditTransactionByUrl(ctx context.Context, url string) (*db.CreditTransaction, error) {
-	creditTransaction, _ := c.Queries.GetCreditTransactionByUrl(ctx, url)
-
-	return creditTransaction, nil
+	return util.HandleDBResponse(c.Queries.GetCreditTransactionByUrl(ctx, url))
 }
 
 func (c *CreditTransactions) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
@@ -38,21 +32,19 @@ func (c *CreditTransactions) GetCreditsByUserID(ctx context.Context, userID uuid
 	return float64(amount), nil
 }
 
-func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.CreditTransactions, error) {
+func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.CreditTransactions, error) {
 	var edges []*model.CreditTransactionsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	creditTransactions, _ := c.Queries.GetCreditTransactionsByUserIDAndPageInfo(ctx, db.GetCreditTransactionsByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := c.Queries.CountCreditTransactionsByUserIDAndPageInfo(ctx, db.CountCreditTransactionsByUserIDAndPageInfoParams{
 		UserID:    userID,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range creditTransactions {

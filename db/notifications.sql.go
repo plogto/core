@@ -23,8 +23,6 @@ WITH _count_wrapper AS (
 		receiver_id = $1
 		AND deleted_at IS NULL
 		AND created_at < $2
-	LIMIT
-		$3
 )
 SELECT
 	count(*)
@@ -35,11 +33,10 @@ FROM
 type CountNotificationsByReceiverIDAndPageInfoParams struct {
 	ReceiverID uuid.UUID
 	CreatedAt  time.Time
-	Limit      int32
 }
 
 func (q *Queries) CountNotificationsByReceiverIDAndPageInfo(ctx context.Context, arg CountNotificationsByReceiverIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countNotificationsByReceiverIDAndPageInfo, arg.ReceiverID, arg.CreatedAt, arg.Limit)
+	row := q.db.QueryRowContext(ctx, countNotificationsByReceiverIDAndPageInfo, arg.ReceiverID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -211,6 +208,8 @@ WHERE
 	receiver_id = $1
 	AND deleted_at IS NULL
 	AND created_at < $2
+ORDER BY
+	created_at DESC
 LIMIT
 	$3
 `

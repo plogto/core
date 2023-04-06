@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/db"
@@ -72,7 +73,8 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID) (
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
-		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(ctx, postID, 50, "")
+		after := time.Now()
+		return s.LikedPosts.GetLikedPostsByPostIDAndPageInfo(ctx, postID, 50, after)
 	}
 }
 
@@ -106,24 +108,24 @@ func (s *Service) IsPostLiked(ctx context.Context, postID uuid.UUID) (*db.LikedP
 	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
 		return nil, nil
 	} else {
-		isPostLiked, err := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, user.ID, postID)
-		if len(isPostLiked.ID) < 1 {
+		isPostLiked, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, user.ID, postID)
+
+		if !validation.IsLikedPostExists(isPostLiked) {
 			return nil, nil
 		}
 
-		return isPostLiked, err
+		return isPostLiked, nil
 	}
 }
 
-func (s *Service) GetLikedPostByID(ctx context.Context, id *string) (*db.LikedPost, error) {
+func (s *Service) GetLikedPostByID(ctx context.Context, id uuid.NullUUID) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	if id == nil || !validation.IsUserExists(user) {
+	if !id.Valid || !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
-	ID, _ := uuid.Parse(*id)
-	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, ID)
+	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, id.UUID)
 	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID.String())
 
 	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {

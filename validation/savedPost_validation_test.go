@@ -7,13 +7,8 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-type SavedPostTestData struct {
-	Expected, Actual bool
-	Message          string
-}
-
 func TestIsSavedPostExists(t *testing.T) {
-	var testData = []SavedPostTestData{
+	var testData = []TestData{
 		{
 			Expected: false,
 			Actual:   IsSavedPostExists(nil),

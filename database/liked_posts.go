@@ -16,45 +16,38 @@ type LikedPosts struct {
 }
 
 func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
-	likedPost, _ := l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+	likedPost, _ := util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	})
+	}))
 
 	if likedPost != nil {
 		return likedPost, nil
 	}
 
-	newLikedPost, _ := l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
+	return util.HandleDBResponse(l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
 		UserID: userID,
 		PostID: postID,
-	})
-
-	return newLikedPost, nil
+	}))
 }
 
 func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
-	likedPost, _ := l.Queries.GetLikedPostByID(ctx, id)
-
-	return likedPost, nil
+	return util.HandleDBResponse(l.Queries.GetLikedPostByID(ctx, id))
 }
 
-func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID uuid.UUID, limit int32, after string) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	likedPosts, _ := l.Queries.GetLikedPostsByPostIDAndPageInfo(ctx, db.GetLikedPostsByPostIDAndPageInfoParams{
 		PostID:    postID,
 		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := l.Queries.CountLikedPostsByPostIDAndPageInfo(ctx, db.CountLikedPostsByPostIDAndPageInfoParams{
 		PostID:    postID,
-		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range likedPosts {
@@ -80,30 +73,26 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 }
 
 func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
-	likedPost, _ := l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+	return util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	})
+	}))
 
-	return likedPost, nil
 }
 
-func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	likedPosts, _ := l.Queries.GetLikedPostsByUserIDAndPageInfo(ctx, db.GetLikedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
 		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := l.Queries.CountLikedPostsByUserIDAndPageInfo(ctx, db.CountLikedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
-		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range likedPosts {

@@ -64,8 +64,6 @@ WITH _count_wrapper AS (
 		id
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$4
 )
 SELECT
 	count(*)

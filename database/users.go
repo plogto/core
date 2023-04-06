@@ -21,39 +21,27 @@ func (u *Users) CreateUser(ctx context.Context, email, fullName string) (*db.Use
 		InvitationCode: util.RandomString(7),
 	}
 
-	user, _ := u.Queries.CreateUser(ctx, newUser)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.CreateUser(ctx, newUser))
 }
 
 func (u *Users) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
-	user, _ := u.Queries.GetUserByID(ctx, id)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.GetUserByID(ctx, id))
 }
 
 func (u *Users) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
-	user, _ := u.Queries.GetUserByInvitationCode(ctx, invitationCode)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.GetUserByInvitationCode(ctx, invitationCode))
 }
 
 func (u *Users) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
-	user, _ := u.Queries.GetUserByEmail(ctx, email)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.GetUserByEmail(ctx, email))
 }
 
 func (u *Users) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
-	user, _ := u.Queries.GetUserByUsername(ctx, username)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.GetUserByUsername(ctx, username))
 }
 
 func (u *Users) GetUserByUsernameOrEmail(ctx context.Context, value string) (*db.User, error) {
-	user, _ := u.Queries.GetUserByUsernameOrEmail(ctx, value)
-
-	return user, nil
+	return util.HandleDBResponse(u.Queries.GetUserByUsernameOrEmail(ctx, value))
 }
 
 func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(ctx context.Context, value string, limit int32) (*model.Users, error) {

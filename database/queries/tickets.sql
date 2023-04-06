@@ -54,8 +54,6 @@ WITH _count_wrapper AS (
 		AND deleted_at IS NULL
 	ORDER BY
 		updated_at DESC
-	LIMIT
-		$2
 )
 SELECT
 	count(*)

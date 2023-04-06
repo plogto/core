@@ -38,18 +38,15 @@ func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag,
 	return s.Tags.GetTagByName(ctx, tagName)
 }
 
-func (s *Service) SaveTagsPost(ctx context.Context, postID, content string) {
+func (s *Service) SaveTagsPost(ctx context.Context, postID uuid.UUID, content string) {
 	r := regexp.MustCompile("#(\\w|_)+")
 	tags := r.FindAllString(content, -1)
 	for i, tag := range tags {
 		tags[i] = strings.TrimLeft(tag, "#")
 	}
 	for _, tagName := range util.UniqueSliceElement(tags) {
-		tag := &model.Tag{
-			Name: strings.ToLower(tagName),
-		}
-		s.Tags.CreateTag(ctx, tag.Name)
+		tag, _ := s.Tags.CreateTag(ctx, strings.ToLower(tagName))
 
-		s.PostTags.CreatePostTag(ctx, tag.ID.String(), postID)
+		s.PostTags.CreatePostTag(ctx, tag.ID, postID)
 	}
 }

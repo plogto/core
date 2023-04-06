@@ -29,8 +29,6 @@ WITH _count_wrapper AS (
 		id
 	ORDER BY
 		created_at DESC
-	LIMIT
-		$4
 )
 SELECT
 	count(*)
@@ -42,16 +40,10 @@ type CountFollowersByUserIDAndPageInfoParams struct {
 	FollowingID uuid.UUID
 	Status      int32
 	CreatedAt   time.Time
-	Limit       int32
 }
 
 func (q *Queries) CountFollowersByUserIDAndPageInfo(ctx context.Context, arg CountFollowersByUserIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countFollowersByUserIDAndPageInfo,
-		arg.FollowingID,
-		arg.Status,
-		arg.CreatedAt,
-		arg.Limit,
-	)
+	row := q.db.QueryRowContext(ctx, countFollowersByUserIDAndPageInfo, arg.FollowingID, arg.Status, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

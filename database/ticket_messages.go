@@ -15,39 +15,30 @@ type TicketMessages struct {
 }
 
 func (t *TicketMessages) CreateTicketMessage(ctx context.Context, arg db.CreateTicketMessageParams) (*db.TicketMessage, error) {
-	ticketMessage, _ := t.Queries.CreateTicketMessage(ctx, arg)
-
-	return ticketMessage, nil
+	return util.HandleDBResponse(t.Queries.CreateTicketMessage(ctx, arg))
 }
 
 func (t *TicketMessages) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.TicketMessage, error) {
-	ticketMessage, _ := t.Queries.GetTicketMessageByID(ctx, id)
-
-	return ticketMessage, nil
+	return util.HandleDBResponse(t.Queries.GetTicketMessageByID(ctx, id))
 }
 
 func (t *TicketMessages) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
-	ticketMessage, _ := t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID)
-
-	return ticketMessage, nil
+	return util.HandleDBResponse(t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID))
 }
 
-func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Context, ticketID uuid.UUID, limit int32, after string) (*model.TicketMessages, error) {
+func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Context, ticketID uuid.UUID, limit int32, after time.Time) (*model.TicketMessages, error) {
 	var edges []*model.TicketMessagesEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	ticketMessages, _ := t.Queries.GetTicketMessagesByTicketIDAndPageInfo(ctx, db.GetTicketMessagesByTicketIDAndPageInfoParams{
 		TicketID:  ticketID,
 		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := t.Queries.CountTicketMessagesByTicketIDAndPageInfo(ctx, db.CountTicketMessagesByTicketIDAndPageInfoParams{
 		TicketID:  ticketID,
-		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range ticketMessages {
@@ -78,12 +69,12 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 }
 
 func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (bool, error) {
-
 	_, err := t.Queries.UpdateReadTicketMessagesByUserIDAndTicketID(ctx, db.UpdateReadTicketMessagesByUserIDAndTicketIDParams{
 		SenderID: userID,
 		TicketID: ticketID,
 	})
 
+	// TODO: improve it
 	if err != nil {
 		return false, nil
 	}

@@ -34,36 +34,31 @@ func (s *SavedPosts) CreateSavedPost(ctx context.Context, userID, postID uuid.UU
 }
 
 func (s *SavedPosts) GetSavedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.SavedPost, error) {
-	savedPost, _ := s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
+	return util.HandleDBResponse(s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	})
+	}))
 
-	return savedPost, nil
 }
 
 func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
-	savedPost, _ := s.Queries.GetSavedPostByID(ctx, id)
+	return util.HandleDBResponse(s.Queries.GetSavedPostByID(ctx, id))
 
-	return savedPost, nil
 }
 
-func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after string) (*model.SavedPosts, error) {
+func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.SavedPosts, error) {
 	var edges []*model.SavedPostsEdge
 	var endCursor string
-
-	createdAt, _ := time.Parse(time.RFC3339, after)
 
 	savedPosts, _ := s.Queries.GetSavedPostsByUserIDAndPageInfo(ctx, db.GetSavedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
 		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	totalCount, _ := s.Queries.CountSavedPostsByUserIDAndPageInfo(ctx, db.CountSavedPostsByUserIDAndPageInfoParams{
 		UserID:    userID,
-		Limit:     limit,
-		CreatedAt: createdAt,
+		CreatedAt: after,
 	})
 
 	for _, value := range savedPosts {
