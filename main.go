@@ -38,7 +38,7 @@ func init() {
 }
 
 func main() {
-	DB, err := db.Open(os.Getenv("NEW_DATABASE_URL"))
+	DB, err := db.Open(os.Getenv("DATABASE_URL"))
 
 	queries := db.New(DB)
 
