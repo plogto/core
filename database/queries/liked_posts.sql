@@ -32,6 +32,9 @@ WHERE
 	post_id = $1
 	AND created_at < $2
 	AND deleted_at IS NULL
+GROUP BY
+	id,
+	created_at
 ORDER BY
 	created_at DESC
 LIMIT
@@ -47,6 +50,8 @@ WITH _count_wrapper AS (
 		post_id = $1
 		AND created_at < $2
 		AND deleted_at IS NULL
+	GROUP BY
+		created_at
 	ORDER BY
 		created_at DESC
 )

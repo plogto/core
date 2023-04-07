@@ -127,7 +127,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*db.
 		didUpdate = true
 	}
 
-	if didUpdate == bool(false) {
+	if !didUpdate {
 		return nil, nil
 	}
 
