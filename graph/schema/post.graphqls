@@ -31,14 +31,14 @@ type Posts {
   pageInfo: PageInfo!
 }
 
-input addPostInput {
+input AddPostInput {
   parentId: UUID
   content: String
   status: PostStatus
   attachment: [String!]
 }
 
-input editPostInput {
+input EditPostInput {
   content: String
   status: PostStatus
 }
@@ -53,7 +53,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post
-  editPost(postId: UUID!, input: editPostInput!): Post
+  addPost(input: AddPostInput!): Post
+  editPost(postId: UUID!, input: EditPostInput!): Post
   deletePost(postId: UUID!): Post
 }

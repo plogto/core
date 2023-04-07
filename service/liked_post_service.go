@@ -23,7 +23,7 @@ func (s *Service) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
 
@@ -69,7 +69,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID) (
 	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) || !validation.IsUserExists(user) {
+	if !s.CheckUserAccess(ctx, user, followingUser) || !validation.IsUserExists(user) {
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
@@ -85,7 +85,7 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
 			return nil, errors.New("access denied")
 		}
 
@@ -105,7 +105,7 @@ func (s *Service) IsPostLiked(ctx context.Context, postID uuid.UUID) (*db.LikedP
 	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
 
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, nil
 	} else {
 		isPostLiked, _ := s.LikedPosts.GetLikedPostByUserIDAndPostID(ctx, user.ID, postID)
@@ -128,7 +128,7 @@ func (s *Service) GetLikedPostByID(ctx context.Context, id uuid.NullUUID) (*db.L
 	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, id.UUID)
 	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 

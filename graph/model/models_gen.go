@@ -12,6 +12,13 @@ import (
 	"github.com/plogto/core/db"
 )
 
+type AddPostInput struct {
+	ParentID   *uuid.UUID  `json:"parentId,omitempty"`
+	Content    *string     `json:"content,omitempty"`
+	Status     *PostStatus `json:"status,omitempty"`
+	Attachment []string    `json:"attachment,omitempty"`
+}
+
 type AddTicketMessageInput struct {
 	Message    string    `json:"message"`
 	Attachment []*string `json:"attachment,omitempty"`
@@ -58,6 +65,11 @@ type CreditTransactions struct {
 type CreditTransactionsEdge struct {
 	Cursor string                `json:"cursor"`
 	Node   *db.CreditTransaction `json:"node,omitempty"`
+}
+
+type EditPostInput struct {
+	Content *string     `json:"content,omitempty"`
+	Status  *PostStatus `json:"status,omitempty"`
 }
 
 type EditUserInput struct {
@@ -213,18 +225,6 @@ type Users struct {
 
 type UsersEdge struct {
 	Node *db.User `json:"node,omitempty"`
-}
-
-type AddPostInput struct {
-	ParentID   *uuid.UUID  `json:"parentId,omitempty"`
-	Content    *string     `json:"content,omitempty"`
-	Status     *PostStatus `json:"status,omitempty"`
-	Attachment []string    `json:"attachment,omitempty"`
-}
-
-type EditPostInput struct {
-	Content *string     `json:"content,omitempty"`
-	Status  *PostStatus `json:"status,omitempty"`
 }
 
 type BackgroundColor string

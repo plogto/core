@@ -2451,17 +2451,17 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAddPostInput,
 		ec.unmarshalInputAddTicketMessageInput,
 		ec.unmarshalInputChangePasswordInput,
 		ec.unmarshalInputCreateTicketInput,
+		ec.unmarshalInputEditPostInput,
 		ec.unmarshalInputEditUserInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputOAuthGoogleInput,
 		ec.unmarshalInputPageInfoInput,
 		ec.unmarshalInputRegisterInput,
 		ec.unmarshalInputTestInput,
-		ec.unmarshalInputaddPostInput,
-		ec.unmarshalInputeditPostInput,
 	)
 	first := true
 
@@ -2859,14 +2859,14 @@ type Posts {
   pageInfo: PageInfo!
 }
 
-input addPostInput {
+input AddPostInput {
   parentId: UUID
   content: String
   status: PostStatus
   attachment: [String!]
 }
 
-input editPostInput {
+input EditPostInput {
   content: String
   status: PostStatus
 }
@@ -2881,8 +2881,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  addPost(input: addPostInput!): Post
-  editPost(postId: UUID!, input: editPostInput!): Post
+  addPost(input: AddPostInput!): Post
+  editPost(postId: UUID!, input: EditPostInput!): Post
   deletePost(postId: UUID!): Post
 }
 `, BuiltIn: false},
@@ -3148,7 +3148,7 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 	var arg0 model.AddPostInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg0, err = ec.unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
+		arg0, err = ec.unmarshalNAddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3241,7 +3241,7 @@ func (ec *executionContext) field_Mutation_editPost_args(ctx context.Context, ra
 	var arg1 model.EditPostInput
 	if tmp, ok := rawArgs["input"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
-		arg1, err = ec.unmarshalNeditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx, tmp)
+		arg1, err = ec.unmarshalNEditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -18016,6 +18016,58 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAddPostInput(ctx context.Context, obj interface{}) (model.AddPostInput, error) {
+	var it model.AddPostInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"parentId", "content", "status", "attachment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "parentId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
+			it.ParentID, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "content":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "attachment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
+			it.Attachment, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputAddTicketMessageInput(ctx context.Context, obj interface{}) (model.AddTicketMessageInput, error) {
 	var it model.AddTicketMessageInput
 	asMap := map[string]interface{}{}
@@ -18123,6 +18175,42 @@ func (ec *executionContext) unmarshalInputCreateTicketInput(ctx context.Context,
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
 			it.Attachment, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputEditPostInput(ctx context.Context, obj interface{}) (model.EditPostInput, error) {
+	var it model.EditPostInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"content", "status"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "content":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
+			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "status":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
+			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -18403,94 +18491,6 @@ func (ec *executionContext) unmarshalInputTestInput(ctx context.Context, obj int
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
 			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputaddPostInput(ctx context.Context, obj interface{}) (model.AddPostInput, error) {
-	var it model.AddPostInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"parentId", "content", "status", "attachment"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "parentId":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋgoogleᚋuuidᚐUUID(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "content":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "status":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "attachment":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
-			it.Attachment, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		}
-	}
-
-	return it, nil
-}
-
-func (ec *executionContext) unmarshalInputeditPostInput(ctx context.Context, obj interface{}) (model.EditPostInput, error) {
-	var it model.EditPostInput
-	asMap := map[string]interface{}{}
-	for k, v := range obj.(map[string]interface{}) {
-		asMap[k] = v
-	}
-
-	fieldsInOrder := [...]string{"content", "status"}
-	for _, k := range fieldsInOrder {
-		v, ok := asMap[k]
-		if !ok {
-			continue
-		}
-		switch k {
-		case "content":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
-		case "status":
-			var err error
-
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22517,6 +22517,11 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) unmarshalNAddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx context.Context, v interface{}) (model.AddPostInput, error) {
+	res, err := ec.unmarshalInputAddPostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalNAddTicketMessageInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddTicketMessageInput(ctx context.Context, v interface{}) (model.AddTicketMessageInput, error) {
 	res, err := ec.unmarshalInputAddTicketMessageInput(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -22695,6 +22700,11 @@ func (ec *executionContext) marshalNCreditTransactionsEdge2ᚕᚖgithubᚗcomᚋ
 	wg.Wait()
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalNEditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx context.Context, v interface{}) (model.EditPostInput, error) {
+	res, err := ec.unmarshalInputEditPostInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNEditUserInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditUserInput(ctx context.Context, v interface{}) (model.EditUserInput, error) {
@@ -23653,16 +23663,6 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
-}
-
-func (ec *executionContext) unmarshalNaddPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAddPostInput(ctx context.Context, v interface{}) (model.AddPostInput, error) {
-	res, err := ec.unmarshalInputaddPostInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) unmarshalNeditPostInput2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐEditPostInput(ctx context.Context, v interface{}) (model.EditPostInput, error) {
-	res, err := ec.unmarshalInputeditPostInput(ctx, v)
-	return res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) marshalOAuthResponse2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐAuthResponse(ctx context.Context, sel ast.SelectionSet, v *model.AuthResponse) graphql.Marshaler {

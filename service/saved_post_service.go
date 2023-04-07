@@ -21,7 +21,7 @@ func (s *Service) SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
 
@@ -55,7 +55,7 @@ func (s *Service) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.Saved
 	savedPost, _ := s.SavedPosts.GetSavedPostByID(ctx, id)
 	post, err := graph.GetPostLoader(ctx).Load(savedPost.PostID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
@@ -70,7 +70,7 @@ func (s *Service) IsPostSaved(ctx context.Context, postID uuid.UUID) (*db.SavedP
 
 	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
 	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, nil
 	} else {
 		savedPost, err := s.SavedPosts.GetSavedPostByUserIDAndPostID(ctx, user.ID, postID)

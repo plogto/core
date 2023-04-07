@@ -37,7 +37,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 		}
 
 		followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
-		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
 			return nil, errors.New("access denied")
 		}
 	}
@@ -176,7 +176,7 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 		didUpdate = true
 	}
 
-	if didUpdate == bool(false) {
+	if !didUpdate {
 		return nil, nil
 	}
 
@@ -230,7 +230,7 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*
 	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
 	after := time.Now()
 
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, nil
 	} else {
 		// TODO: add inputPageInfo
@@ -249,7 +249,7 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
 			return nil, errors.New("access denied")
 		}
 
@@ -266,7 +266,7 @@ func (s *Service) GetRepliesByUsername(ctx context.Context, username string, inp
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
 			return nil, errors.New("access denied")
 		}
 
@@ -301,7 +301,7 @@ func (s *Service) GetPostByID(ctx context.Context, id uuid.NullUUID) (*db.Post, 
 
 	post, err := graph.GetPostLoader(ctx).Load(id.UUID.String())
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
@@ -331,7 +331,7 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*db.Post, error
 
 	post, err := s.Posts.GetPostByURL(ctx, url)
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 

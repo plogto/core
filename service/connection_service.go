@@ -161,7 +161,7 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	pageInfo := util.ExtractPageInfo(input)
 
-	if s.CheckUserAccess(ctx, user, followingUser) == bool(false) {
+	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
 
