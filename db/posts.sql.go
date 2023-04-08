@@ -46,6 +46,39 @@ func (q *Queries) CountExplorePostsByPageInfo(ctx context.Context, createdAt tim
 	return count, err
 }
 
+const countExplorePostsWithAttachmentByPageInfo = `-- name: CountExplorePostsWithAttachmentByPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+	FROM
+		posts AS post
+		INNER JOIN users ON users.id = post.user_id
+		INNER JOIN post_tags ON post_tags.post_id = post.id
+		INNER JOIN post_attachments ON post_attachments.post_id = post.id
+	WHERE
+		post.parent_id IS NULL
+		AND users.is_private = FALSE
+		AND post.deleted_at IS NULL
+		AND post_tags.id IS NOT NULL
+		AND post.created_at < $1
+	GROUP BY
+		post.id
+	ORDER BY
+		post.created_at DESC
+)
+SELECT
+	count(*)
+FROM
+	_count_wrapper
+`
+
+func (q *Queries) CountExplorePostsWithAttachmentByPageInfo(ctx context.Context, createdAt time.Time) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countExplorePostsWithAttachmentByPageInfo, createdAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countPostsByParentIDAndPageInfo = `-- name: CountPostsByParentIDAndPageInfo :one
 WITH _posts AS (
 	(
@@ -370,6 +403,67 @@ type GetExplorePostsByPageInfoParams struct {
 
 func (q *Queries) GetExplorePostsByPageInfo(ctx context.Context, arg GetExplorePostsByPageInfoParams) ([]*Post, error) {
 	rows, err := q.db.QueryContext(ctx, getExplorePostsByPageInfo, arg.CreatedAt, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ParentID,
+			&i.ChildID,
+			&i.Status,
+			&i.Content,
+			&i.Url,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getExplorePostsWithAttachmentByPageInfo = `-- name: GetExplorePostsWithAttachmentByPageInfo :many
+SELECT
+	post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+FROM
+	posts AS post
+	INNER JOIN users ON users.id = post.user_id
+	INNER JOIN post_tags ON post_tags.post_id = post.id
+	INNER JOIN post_attachments ON post_attachments.post_id = post.id
+WHERE
+	post.parent_id IS NULL
+	AND users.is_private = FALSE
+	AND post.deleted_at IS NULL
+	AND post_tags.id IS NOT NULL
+	AND post.created_at < $1
+GROUP BY
+	post.id
+ORDER BY
+	post.created_at DESC
+LIMIT
+	$2
+`
+
+type GetExplorePostsWithAttachmentByPageInfoParams struct {
+	CreatedAt time.Time
+	Limit     int32
+}
+
+func (q *Queries) GetExplorePostsWithAttachmentByPageInfo(ctx context.Context, arg GetExplorePostsWithAttachmentByPageInfoParams) ([]*Post, error) {
+	rows, err := q.db.QueryContext(ctx, getExplorePostsWithAttachmentByPageInfo, arg.CreatedAt, arg.Limit)
 	if err != nil {
 		return nil, err
 	}

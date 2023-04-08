@@ -263,6 +263,43 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 	}, nil
 }
 
+func (p *Posts) GetExplorePostsWithAttachmentByPageInfo(ctx context.Context, limit int32, after time.Time) (*model.Posts, error) {
+	var edges []*model.PostsEdge
+	var endCursor string
+
+	posts, _ := p.Queries.GetExplorePostsWithAttachmentByPageInfo(ctx, db.GetExplorePostsWithAttachmentByPageInfoParams{
+		Limit:     limit,
+		CreatedAt: after,
+	})
+
+	totalCount, _ := p.Queries.CountExplorePostsWithAttachmentByPageInfo(ctx, after)
+
+	for _, value := range posts {
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > int64(limit) {
+		hasNextPage = true
+	}
+
+	return &model.Posts{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: hasNextPage,
+		},
+	}, nil
+}
+
 func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
 	count, _ := p.Queries.CountPostsByUserID(ctx, userID)
 

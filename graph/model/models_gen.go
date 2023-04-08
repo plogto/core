@@ -84,6 +84,10 @@ type EditUserInput struct {
 	IsPrivate       *bool            `json:"isPrivate,omitempty"`
 }
 
+type GetExplorePostsInput struct {
+	IsAttachment *bool `json:"isAttachment,omitempty"`
+}
+
 type InvitedUser struct {
 	ID        uuid.UUID  `json:"id"`
 	Inviter   *db.User   `json:"inviter"`

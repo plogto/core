@@ -43,13 +43,17 @@ input EditPostInput {
   status: PostStatus
 }
 
+input GetExplorePostsInput {
+  isAttachment: Boolean
+}
+
 extend type Query {
   getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfo: PageInfoInput): Posts
-  getExplorePosts(pageInfo: PageInfoInput): Posts
+  getExplorePosts(input: GetExplorePostsInput!, pageInfo: PageInfoInput): Posts
 }
 
 extend type Mutation {

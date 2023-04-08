@@ -345,10 +345,14 @@ func (s *Service) GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfo
 	return s.Posts.GetTimelinePostsByPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
-func (s *Service) GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+func (s *Service) GetExplorePosts(ctx context.Context, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	pagination := util.ExtractPageInfo(pageInfo)
 
-	return s.Posts.GetExplorePostsByPageInfo(ctx, pagination.First, pagination.After)
+	if input == nil || !*input.IsAttachment {
+		return s.Posts.GetExplorePostsByPageInfo(ctx, pagination.First, pagination.After)
+	} else {
+		return s.Posts.GetExplorePostsWithAttachmentByPageInfo(ctx, pagination.First, pagination.After)
+	}
 }
 
 func (s *Service) FormatPostContent(ctx context.Context, content string) (string, []uuid.UUID) {
