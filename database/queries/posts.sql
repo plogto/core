@@ -181,6 +181,52 @@ SELECT
 FROM
 	_count_wrapper;
 
+-- name: GetExplorePostsWithAttachmentByPageInfo :many
+SELECT
+	post.*
+FROM
+	posts AS post
+	INNER JOIN users ON users.id = post.user_id
+	INNER JOIN post_tags ON post_tags.post_id = post.id
+	INNER JOIN post_attachments ON post_attachments.post_id = post.id
+WHERE
+	post.parent_id IS NULL
+	AND users.is_private = FALSE
+	AND post.deleted_at IS NULL
+	AND post_tags.id IS NOT NULL
+	AND post.created_at < $1
+GROUP BY
+	post.id
+ORDER BY
+	post.created_at DESC
+LIMIT
+	$2;
+
+-- name: CountExplorePostsWithAttachmentByPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		post.*
+	FROM
+		posts AS post
+		INNER JOIN users ON users.id = post.user_id
+		INNER JOIN post_tags ON post_tags.post_id = post.id
+		INNER JOIN post_attachments ON post_attachments.post_id = post.id
+	WHERE
+		post.parent_id IS NULL
+		AND users.is_private = FALSE
+		AND post.deleted_at IS NULL
+		AND post_tags.id IS NOT NULL
+		AND post.created_at < $1
+	GROUP BY
+		post.id
+	ORDER BY
+		post.created_at DESC
+)
+SELECT
+	count(*)
+FROM
+	_count_wrapper;
+
 -- name: CountPostsByUserID :one
 SELECT
 	count(*)

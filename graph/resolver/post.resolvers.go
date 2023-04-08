@@ -121,8 +121,8 @@ func (r *queryResolver) GetTimelinePosts(ctx context.Context, pageInfo *model.Pa
 }
 
 // GetExplorePosts is the resolver for the getExplorePosts field.
-func (r *queryResolver) GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
-	return r.Service.GetExplorePosts(ctx, pageInfo)
+func (r *queryResolver) GetExplorePosts(ctx context.Context, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetExplorePosts(ctx, input, pageInfo)
 }
 
 // Post returns generated.PostResolver implementation.

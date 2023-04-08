@@ -285,7 +285,7 @@ type ComplexityRoot struct {
 		CheckEmail                   func(childComplexity int, email string) int
 		CheckUsername                func(childComplexity int, username string) int
 		GetCreditTransactions        func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetExplorePosts              func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetExplorePosts              func(childComplexity int, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) int
 		GetFollowRequests            func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetFollowersByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetFollowingByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
@@ -548,7 +548,7 @@ type QueryResolver interface {
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*db.Post, error)
 	GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
-	GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
+	GetExplorePosts(ctx context.Context, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.SavedPosts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
@@ -1673,7 +1673,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetExplorePosts(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetExplorePosts(childComplexity, args["input"].(*model.GetExplorePostsInput), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getFollowRequests":
 		if e.complexity.Query.GetFollowRequests == nil {
@@ -2457,6 +2457,7 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 		ec.unmarshalInputCreateTicketInput,
 		ec.unmarshalInputEditPostInput,
 		ec.unmarshalInputEditUserInput,
+		ec.unmarshalInputGetExplorePostsInput,
 		ec.unmarshalInputLoginInput,
 		ec.unmarshalInputOAuthGoogleInput,
 		ec.unmarshalInputPageInfoInput,
@@ -2871,13 +2872,17 @@ input EditPostInput {
   status: PostStatus
 }
 
+input GetExplorePostsInput {
+  isAttachment: Boolean
+}
+
 extend type Query {
   getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfo: PageInfoInput): Posts
-  getExplorePosts(pageInfo: PageInfoInput): Posts
+  getExplorePosts(input: GetExplorePostsInput, pageInfo: PageInfoInput): Posts
 }
 
 extend type Mutation {
@@ -3502,15 +3507,24 @@ func (ec *executionContext) field_Query_getCreditTransactions_args(ctx context.C
 func (ec *executionContext) field_Query_getExplorePosts_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfo"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
-		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+	var arg0 *model.GetExplorePostsInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalOGetExplorePostsInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐGetExplorePostsInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfo"] = arg0
+	args["input"] = arg0
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -11788,7 +11802,7 @@ func (ec *executionContext) _Query_getExplorePosts(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetExplorePosts(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetExplorePosts(rctx, fc.Args["input"].(*model.GetExplorePostsInput), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18315,6 +18329,34 @@ func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputGetExplorePostsInput(ctx context.Context, obj interface{}) (model.GetExplorePostsInput, error) {
+	var it model.GetExplorePostsInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"isAttachment"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "isAttachment":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isAttachment"))
+			it.IsAttachment, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj interface{}) (model.LoginInput, error) {
 	var it model.LoginInput
 	asMap := map[string]interface{}{}
@@ -23926,6 +23968,14 @@ func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐ
 		return graphql.Null
 	}
 	return ec._File(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalOGetExplorePostsInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐGetExplorePostsInput(ctx context.Context, v interface{}) (*model.GetExplorePostsInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputGetExplorePostsInput(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInt2int32(ctx context.Context, v interface{}) (int32, error) {
