@@ -150,7 +150,7 @@ func (s *Service) RejectUser(ctx context.Context, userID uuid.UUID) (*db.Connect
 	return s.Connections.DeleteConnection(ctx, connection.ID)
 }
 
-func (s *Service) GetConnectionsByUsername(ctx context.Context, username string, input *model.PageInfoInput, resultType constants.ConnectionResult) (*model.Connections, error) {
+func (s *Service) GetConnectionsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput, resultType constants.ConnectionResult) (*model.Connections, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
@@ -159,31 +159,29 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 
 	followingUser, _ := s.Users.GetUserByUsername(ctx, username)
 
-	pageInfo := util.ExtractPageInfo(input)
+	pagination := util.ExtractPageInfo(pageInfo)
 
 	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
 
-	limit := int32(pageInfo.First)
-
 	switch resultType {
 	case constants.Followers:
 		return s.Connections.GetFollowersByUserIDAndPageInfo(ctx, followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			After:  pageInfo.After,
+			Limit:  pagination.First,
+			After:  pagination.After,
 			Status: 2,
 		})
 	case constants.Following:
 		return s.Connections.GetFollowingByUserIDAndPageInfo(ctx, followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			After:  pageInfo.After,
+			Limit:  pagination.First,
+			After:  pagination.After,
 			Status: 2,
 		})
 	case constants.Requests:
 		return s.Connections.GetFollowersByUserIDAndPageInfo(ctx, followingUser.ID, database.ConnectionFilter{
-			Limit:  limit,
-			After:  pageInfo.After,
+			Limit:  pagination.First,
+			After:  pagination.After,
 			Status: 1,
 		})
 	}
@@ -191,14 +189,14 @@ func (s *Service) GetConnectionsByUsername(ctx context.Context, username string,
 	return nil, nil
 }
 
-func (s *Service) GetFollowRequests(ctx context.Context, input *model.PageInfoInput) (*model.Connections, error) {
+func (s *Service) GetFollowRequests(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Connections, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	return s.GetConnectionsByUsername(ctx, user.Username, input, constants.Requests)
+	return s.GetConnectionsByUsername(ctx, user.Username, pageInfo, constants.Requests)
 }
 
 func (s *Service) GetConnectionStatus(ctx context.Context, userID uuid.UUID) (*int, error) {

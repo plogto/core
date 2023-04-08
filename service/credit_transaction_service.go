@@ -53,16 +53,16 @@ func (s *Service) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*
 	return s.CreditTransactions.GetCreditTransactionByID(ctx, id)
 }
 
-func (s *Service) GetCreditTransactions(ctx context.Context, input *model.PageInfoInput) (*model.CreditTransactions, error) {
+func (s *Service) GetCreditTransactions(ctx context.Context, pageInfo *model.PageInfoInput) (*model.CreditTransactions, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, nil
 	}
 
-	pageInfoInput := util.ExtractPageInfo(input)
+	pagination := util.ExtractPageInfo(pageInfo)
 
-	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
+	return s.CreditTransactions.GetCreditTransactionsByUserIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
 func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransactionParams CreateCreditTransactionParams) (*db.CreditTransactionInfo, error) {

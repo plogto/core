@@ -60,7 +60,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
@@ -102,7 +102,7 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
@@ -180,7 +180,7 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
@@ -221,7 +221,7 @@ func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
@@ -258,7 +258,7 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

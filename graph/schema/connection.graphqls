@@ -21,13 +21,13 @@ type Connections {
 extend type Query {
   getFollowersByUsername(
     username: String!
-    pageInfoInput: PageInfoInput
+    pageInfo: PageInfoInput
   ): Connections
   getFollowingByUsername(
     username: String!
-    pageInfoInput: PageInfoInput
+    pageInfo: PageInfoInput
   ): Connections
-  getFollowRequests(pageInfoInput: PageInfoInput): Connections
+  getFollowRequests(pageInfo: PageInfoInput): Connections
 }
 
 extend type Mutation {

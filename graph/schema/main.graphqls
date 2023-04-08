@@ -4,7 +4,7 @@ scalar UUID
 
 type PageInfo {
   endCursor: String!
-  hasNextPage: Boolean
+  hasNextPage: Boolean!
 }
 
 input PageInfoInput {

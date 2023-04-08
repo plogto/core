@@ -68,7 +68,7 @@ func (t *Tickets) GetTicketsByUserIDAndPageInfo(ctx context.Context, userID uuid
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

@@ -40,7 +40,7 @@ type Notifications {
 }
 
 extend type Query {
-  getNotifications(pageInfoInput: PageInfoInput): Notifications
+  getNotifications(pageInfo: PageInfoInput): Notifications
 }
 
 extend type Mutation {

@@ -75,7 +75,7 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Cont
 		UnreadNotificationsCount: unreadNotificationsCount,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

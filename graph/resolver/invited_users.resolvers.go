@@ -12,6 +12,6 @@ import (
 )
 
 // GetInvitedUsers is the resolver for the getInvitedUsers field.
-func (r *queryResolver) GetInvitedUsers(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.InvitedUsers, error) {
+func (r *queryResolver) GetInvitedUsers(ctx context.Context, pageInfo *model.PageInfoInput) (*model.InvitedUsers, error) {
 	panic(fmt.Errorf("not implemented: GetInvitedUsers - getInvitedUsers"))
 }

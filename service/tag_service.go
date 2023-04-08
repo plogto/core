@@ -19,12 +19,12 @@ func (s *Service) SearchTag(ctx context.Context, expression string) (*model.Tags
 }
 
 func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error) {
-	var limit int
+	var limit int32
 
 	if first == nil {
 		limit = constants.TRENDS_PAGE_LIMIT
 	} else {
-		limit = *first
+		limit = int32(*first)
 	}
 
 	return s.PostTags.GetTagsOrderByCountTags(ctx, limit)

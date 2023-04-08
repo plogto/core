@@ -59,8 +59,8 @@ func (r *notificationsEdgeResolver) Node(ctx context.Context, obj *model.Notific
 }
 
 // GetNotifications is the resolver for the getNotifications field.
-func (r *queryResolver) GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error) {
-	return r.Service.GetNotifications(ctx, pageInfoInput)
+func (r *queryResolver) GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error) {
+	return r.Service.GetNotifications(ctx, pageInfo)
 }
 
 // Notification returns generated.NotificationResolver implementation.

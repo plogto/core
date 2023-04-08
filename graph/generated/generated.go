@@ -284,24 +284,24 @@ type ComplexityRoot struct {
 	Query struct {
 		CheckEmail                   func(childComplexity int, email string) int
 		CheckUsername                func(childComplexity int, username string) int
-		GetCreditTransactions        func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetCreditTransactions        func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetExplorePosts              func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetFollowRequests            func(childComplexity int, pageInfoInput *model.PageInfoInput) int
-		GetFollowersByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetFollowingByUsername       func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetInvitedUsers              func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetFollowRequests            func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetFollowersByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetFollowingByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetInvitedUsers              func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetLikedPostsByPostID        func(childComplexity int, postID uuid.UUID, pageInfo *model.PageInfoInput) int
 		GetLikedPostsByUsername      func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetNotifications             func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetNotifications             func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetPostByURL                 func(childComplexity int, url string) int
-		GetPostsByTagName            func(childComplexity int, tagName string, pageInfoInput *model.PageInfoInput) int
-		GetPostsByUsername           func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetRepliesByUsername         func(childComplexity int, username string, pageInfoInput *model.PageInfoInput) int
-		GetSavedPosts                func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetPostsByTagName            func(childComplexity int, tagName string, pageInfo *model.PageInfoInput) int
+		GetPostsByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetRepliesByUsername         func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetSavedPosts                func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetTagByTagName              func(childComplexity int, tagName string) int
 		GetTicketMessagesByTicketURL func(childComplexity int, ticketURL string, pageInfo *model.PageInfoInput) int
 		GetTickets                   func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetTimelinePosts             func(childComplexity int, pageInfoInput *model.PageInfoInput) int
+		GetTimelinePosts             func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetTrends                    func(childComplexity int, first *int) int
 		GetUserByInvitationCode      func(childComplexity int, invitationCode string) int
 		GetUserByUsername            func(childComplexity int, username string) int
@@ -535,21 +535,21 @@ type PostsEdgeResolver interface {
 type QueryResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error)
-	GetFollowersByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
-	GetFollowingByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
-	GetFollowRequests(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Connections, error)
-	GetCreditTransactions(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.CreditTransactions, error)
-	GetInvitedUsers(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.InvitedUsers, error)
+	GetFollowersByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Connections, error)
+	GetFollowingByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Connections, error)
+	GetFollowRequests(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Connections, error)
+	GetCreditTransactions(ctx context.Context, pageInfo *model.PageInfoInput) (*model.CreditTransactions, error)
+	GetInvitedUsers(ctx context.Context, pageInfo *model.PageInfoInput) (*model.InvitedUsers, error)
 	GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
-	GetNotifications(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Notifications, error)
-	GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
-	GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
-	GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error)
+	GetPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
+	GetRepliesByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
+	GetPostsByTagName(ctx context.Context, tagName string, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*db.Post, error)
-	GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error)
+	GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error)
-	GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error)
+	GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.SavedPosts, error)
 	Search(ctx context.Context, expression string) (*model.Search, error)
 	GetTagByTagName(ctx context.Context, tagName string) (*model.Tag, error)
 	GetTrends(ctx context.Context, first *int) (*model.Tags, error)
@@ -1661,7 +1661,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetCreditTransactions(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetCreditTransactions(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getExplorePosts":
 		if e.complexity.Query.GetExplorePosts == nil {
@@ -1685,7 +1685,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetFollowRequests(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetFollowRequests(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getFollowersByUsername":
 		if e.complexity.Query.GetFollowersByUsername == nil {
@@ -1697,7 +1697,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetFollowersByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetFollowersByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getFollowingByUsername":
 		if e.complexity.Query.GetFollowingByUsername == nil {
@@ -1709,7 +1709,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetFollowingByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetFollowingByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getInvitedUsers":
 		if e.complexity.Query.GetInvitedUsers == nil {
@@ -1721,7 +1721,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetInvitedUsers(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetInvitedUsers(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getLikedPostsByPostId":
 		if e.complexity.Query.GetLikedPostsByPostID == nil {
@@ -1757,7 +1757,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetNotifications(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetNotifications(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getPostByUrl":
 		if e.complexity.Query.GetPostByURL == nil {
@@ -1781,7 +1781,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPostsByTagName(childComplexity, args["tagName"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetPostsByTagName(childComplexity, args["tagName"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getPostsByUsername":
 		if e.complexity.Query.GetPostsByUsername == nil {
@@ -1793,7 +1793,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getRepliesByUsername":
 		if e.complexity.Query.GetRepliesByUsername == nil {
@@ -1805,7 +1805,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetRepliesByUsername(childComplexity, args["username"].(string), args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetRepliesByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getSavedPosts":
 		if e.complexity.Query.GetSavedPosts == nil {
@@ -1817,7 +1817,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetSavedPosts(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetSavedPosts(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getTagByTagName":
 		if e.complexity.Query.GetTagByTagName == nil {
@@ -1865,7 +1865,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetTimelinePosts(childComplexity, args["pageInfoInput"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetTimelinePosts(childComplexity, args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getTrends":
 		if e.complexity.Query.GetTrends == nil {
@@ -2581,13 +2581,13 @@ type Connections {
 extend type Query {
   getFollowersByUsername(
     username: String!
-    pageInfoInput: PageInfoInput
+    pageInfo: PageInfoInput
   ): Connections
   getFollowingByUsername(
     username: String!
-    pageInfoInput: PageInfoInput
+    pageInfo: PageInfoInput
   ): Connections
-  getFollowRequests(pageInfoInput: PageInfoInput): Connections
+  getFollowRequests(pageInfo: PageInfoInput): Connections
 }
 
 extend type Mutation {
@@ -2677,7 +2677,7 @@ type CreditTransactions {
 }
 
 extend type Query {
-  getCreditTransactions(pageInfoInput: PageInfoInput): CreditTransactions
+  getCreditTransactions(pageInfo: PageInfoInput): CreditTransactions
 }
 `, BuiltIn: false},
 	{Name: "../schema/file.graphqls", Input: `scalar Upload
@@ -2713,7 +2713,7 @@ type InvitedUsers {
 }
 
 extend type Query {
-  getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
+  getInvitedUsers(pageInfo: PageInfoInput): InvitedUsers
 }
 `, BuiltIn: false},
 	{Name: "../schema/liked_post.graphqls", Input: `type LikedPost {
@@ -2753,7 +2753,7 @@ scalar UUID
 
 type PageInfo {
   endCursor: String!
-  hasNextPage: Boolean
+  hasNextPage: Boolean!
 }
 
 input PageInfoInput {
@@ -2819,7 +2819,7 @@ type Notifications {
 }
 
 extend type Query {
-  getNotifications(pageInfoInput: PageInfoInput): Notifications
+  getNotifications(pageInfo: PageInfoInput): Notifications
 }
 
 extend type Mutation {
@@ -2872,11 +2872,11 @@ input EditPostInput {
 }
 
 extend type Query {
-  getPostsByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
-  getRepliesByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
-  getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
+  getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
-  getTimelinePosts(pageInfoInput: PageInfoInput): Posts
+  getTimelinePosts(pageInfo: PageInfoInput): Posts
   getExplorePosts(pageInfo: PageInfoInput): Posts
 }
 
@@ -2906,7 +2906,7 @@ type SavedPosts {
 }
 
 extend type Query {
-  getSavedPosts(pageInfoInput: PageInfoInput): SavedPosts
+  getSavedPosts(pageInfo: PageInfoInput): SavedPosts
 }
 
 extend type Mutation {
@@ -3488,14 +3488,14 @@ func (ec *executionContext) field_Query_getCreditTransactions_args(ctx context.C
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -3518,14 +3518,14 @@ func (ec *executionContext) field_Query_getFollowRequests_args(ctx context.Conte
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -3542,14 +3542,14 @@ func (ec *executionContext) field_Query_getFollowersByUsername_args(ctx context.
 	}
 	args["username"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3566,14 +3566,14 @@ func (ec *executionContext) field_Query_getFollowingByUsername_args(ctx context.
 	}
 	args["username"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3581,14 +3581,14 @@ func (ec *executionContext) field_Query_getInvitedUsers_args(ctx context.Context
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -3644,14 +3644,14 @@ func (ec *executionContext) field_Query_getNotifications_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -3683,14 +3683,14 @@ func (ec *executionContext) field_Query_getPostsByTagName_args(ctx context.Conte
 	}
 	args["tagName"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3707,14 +3707,14 @@ func (ec *executionContext) field_Query_getPostsByUsername_args(ctx context.Cont
 	}
 	args["username"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3731,14 +3731,14 @@ func (ec *executionContext) field_Query_getRepliesByUsername_args(ctx context.Co
 	}
 	args["username"] = arg0
 	var arg1 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg1
+	args["pageInfo"] = arg1
 	return args, nil
 }
 
@@ -3746,14 +3746,14 @@ func (ec *executionContext) field_Query_getSavedPosts_args(ctx context.Context, 
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -3815,14 +3815,14 @@ func (ec *executionContext) field_Query_getTimelinePosts_args(ctx context.Contex
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *model.PageInfoInput
-	if tmp, ok := rawArgs["pageInfoInput"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfoInput"))
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
 		arg0, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
-	args["pageInfoInput"] = arg0
+	args["pageInfo"] = arg0
 	return args, nil
 }
 
@@ -9834,11 +9834,14 @@ func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field gra
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*bool)
+	res := resTmp.(bool)
 	fc.Result = res
-	return ec.marshalOBoolean2ᚖbool(ctx, field.Selections, res)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -10981,7 +10984,7 @@ func (ec *executionContext) _Query_getFollowersByUsername(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetFollowersByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetFollowersByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11041,7 +11044,7 @@ func (ec *executionContext) _Query_getFollowingByUsername(ctx context.Context, f
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetFollowingByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetFollowingByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11101,7 +11104,7 @@ func (ec *executionContext) _Query_getFollowRequests(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetFollowRequests(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetFollowRequests(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11161,7 +11164,7 @@ func (ec *executionContext) _Query_getCreditTransactions(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetCreditTransactions(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetCreditTransactions(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11221,7 +11224,7 @@ func (ec *executionContext) _Query_getInvitedUsers(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetInvitedUsers(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetInvitedUsers(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11401,7 +11404,7 @@ func (ec *executionContext) _Query_getNotifications(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetNotifications(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetNotifications(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11463,7 +11466,7 @@ func (ec *executionContext) _Query_getPostsByUsername(ctx context.Context, field
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPostsByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetPostsByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11523,7 +11526,7 @@ func (ec *executionContext) _Query_getRepliesByUsername(ctx context.Context, fie
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetRepliesByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetRepliesByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11583,7 +11586,7 @@ func (ec *executionContext) _Query_getPostsByTagName(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetPostsByTagName(rctx, fc.Args["tagName"].(string), fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetPostsByTagName(rctx, fc.Args["tagName"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11725,7 +11728,7 @@ func (ec *executionContext) _Query_getTimelinePosts(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetTimelinePosts(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetTimelinePosts(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11845,7 +11848,7 @@ func (ec *executionContext) _Query_getSavedPosts(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetSavedPosts(rctx, fc.Args["pageInfoInput"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetSavedPosts(rctx, fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -20108,6 +20111,9 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 
 			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
 
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

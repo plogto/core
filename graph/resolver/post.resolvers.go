@@ -96,18 +96,18 @@ func (r *postsEdgeResolver) Node(ctx context.Context, obj *model.PostsEdge) (*db
 }
 
 // GetPostsByUsername is the resolver for the getPostsByUsername field.
-func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
-	return r.Service.GetPostsByUsername(ctx, username, pageInfoInput)
+func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetPostsByUsername(ctx, username, pageInfo)
 }
 
 // GetRepliesByUsername is the resolver for the getRepliesByUsername field.
-func (r *queryResolver) GetRepliesByUsername(ctx context.Context, username string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
-	return r.Service.GetRepliesByUsername(ctx, username, pageInfoInput)
+func (r *queryResolver) GetRepliesByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetRepliesByUsername(ctx, username, pageInfo)
 }
 
 // GetPostsByTagName is the resolver for the getPostsByTagName field.
-func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
-	return r.Service.GetPostsByTagName(ctx, tagName, pageInfoInput)
+func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetPostsByTagName(ctx, tagName, pageInfo)
 }
 
 // GetPostByURL is the resolver for the getPostByUrl field.
@@ -116,8 +116,8 @@ func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*db.Post,
 }
 
 // GetTimelinePosts is the resolver for the getTimelinePosts field.
-func (r *queryResolver) GetTimelinePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
-	return r.Service.GetTimelinePosts(ctx, pageInfoInput)
+func (r *queryResolver) GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetTimelinePosts(ctx, pageInfo)
 }
 
 // GetExplorePosts is the resolver for the getExplorePosts field.

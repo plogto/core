@@ -9,7 +9,7 @@ import (
 )
 
 type PageInfoResult struct {
-	First int
+	First int32
 	After time.Time
 }
 
@@ -23,7 +23,7 @@ func ExtractPageInfo(params *model.PageInfoInput) (pageInfo *PageInfoResult) {
 
 	if params != nil {
 		if params.First != nil {
-			result.First = *params.First
+			result.First = int32(*params.First)
 		}
 
 		if params.After != nil {

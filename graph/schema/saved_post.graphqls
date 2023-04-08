@@ -18,7 +18,7 @@ type SavedPosts {
 }
 
 extend type Query {
-  getSavedPosts(pageInfoInput: PageInfoInput): SavedPosts
+  getSavedPosts(pageInfo: PageInfoInput): SavedPosts
 }
 
 extend type Mutation {

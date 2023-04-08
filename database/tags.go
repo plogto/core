@@ -48,15 +48,14 @@ func (t *Tags) GetTagByName(ctx context.Context, name string) (*model.Tag, error
 	}, err)
 }
 
-func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, limit int) (*model.Tags, error) {
+func (t *Tags) GetTagsByTagNameAndPageInfo(ctx context.Context, name string, limit int32) (*model.Tags, error) {
 	var edges []*model.TagsEdge
 
 	name = strings.ToLower(name)
 
-	Limit := int32(limit)
 	tags, _ := t.Queries.GetTagsByTagNameAndPageInfo(ctx, db.GetTagsByTagNameAndPageInfoParams{
 		Name:  name,
-		Limit: Limit,
+		Limit: limit,
 	})
 
 	for _, value := range tags {

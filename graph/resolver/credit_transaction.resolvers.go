@@ -123,8 +123,8 @@ func (r *creditTransactionsEdgeResolver) Node(ctx context.Context, obj *model.Cr
 }
 
 // GetCreditTransactions is the resolver for the getCreditTransactions field.
-func (r *queryResolver) GetCreditTransactions(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.CreditTransactions, error) {
-	return r.Service.GetCreditTransactions(ctx, pageInfoInput)
+func (r *queryResolver) GetCreditTransactions(ctx context.Context, pageInfo *model.PageInfoInput) (*model.CreditTransactions, error) {
+	return r.Service.GetCreditTransactions(ctx, pageInfo)
 }
 
 // CreditTransaction returns generated.CreditTransactionResolver implementation.

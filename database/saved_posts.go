@@ -83,7 +83,7 @@ func (s *SavedPosts) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, userI
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

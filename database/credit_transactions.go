@@ -68,7 +68,7 @@ func (c *CreditTransactions) GetCreditTransactionsByUserIDAndPageInfo(ctx contex
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

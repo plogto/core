@@ -66,7 +66,7 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
@@ -112,7 +112,7 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }
