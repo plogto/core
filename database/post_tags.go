@@ -22,11 +22,10 @@ func (p *PostTags) CreatePostTag(ctx context.Context, tagID, postID uuid.UUID) (
 	}))
 }
 
-func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int) (*model.Tags, error) {
+func (p *PostTags) GetTagsOrderByCountTags(ctx context.Context, limit int32) (*model.Tags, error) {
 	var edges []*model.TagsEdge
 
-	Limit := int32(limit)
-	tags, _ := p.Queries.GetTagsOrderByCountTags(ctx, Limit)
+	tags, _ := p.Queries.GetTagsOrderByCountTags(ctx, limit)
 
 	for _, value := range tags {
 		edges = append(edges, &model.TagsEdge{Node: &model.Tag{

@@ -78,7 +78,7 @@ func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID) (
 	}
 }
 
-func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.LikedPosts, error) {
+func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	followingUser, err := s.Users.GetUserByUsername(ctx, username)
 
@@ -89,9 +89,9 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 			return nil, errors.New("access denied")
 		}
 
-		pageInfo := util.ExtractPageInfo(input)
+		pagination := util.ExtractPageInfo(pageInfo)
 
-		return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfo.First), pageInfo.After)
+		return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 	}
 }
 

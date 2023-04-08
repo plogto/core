@@ -63,7 +63,7 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 		Edges:      edges,
 		PageInfo: &model.PageInfo{
 			EndCursor:   endCursor,
-			HasNextPage: &hasNextPage,
+			HasNextPage: hasNextPage,
 		},
 	}, nil
 }

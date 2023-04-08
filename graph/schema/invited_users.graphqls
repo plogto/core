@@ -18,5 +18,5 @@ type InvitedUsers {
 }
 
 extend type Query {
-  getInvitedUsers(pageInfoInput: PageInfoInput): InvitedUsers
+  getInvitedUsers(pageInfo: PageInfoInput): InvitedUsers
 }

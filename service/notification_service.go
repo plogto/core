@@ -32,16 +32,16 @@ type CreatePostMentionNotificationsArgs struct {
 	SenderID uuid.UUID
 }
 
-func (s *Service) GetNotifications(ctx context.Context, input *model.PageInfoInput) (*model.Notifications, error) {
+func (s *Service) GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, err
 	}
 
-	pageInfoInput := util.ExtractPageInfo(input)
+	pagination := util.ExtractPageInfo(pageInfo)
 
-	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
+	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
 func (s *Service) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {

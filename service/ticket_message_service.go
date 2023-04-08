@@ -62,7 +62,7 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 		return nil, nil
 	}
 
-	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ctx, ticket.ID, int32(pagination.First), pagination.After)
+	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ctx, ticket.ID, pagination.First, pagination.After)
 }
 
 func (s *Service) ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error) {

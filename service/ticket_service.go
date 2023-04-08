@@ -33,17 +33,17 @@ func (s *Service) GetTicketByID(ctx context.Context, id uuid.UUID) (*db.Ticket, 
 	return s.Tickets.GetTicketByID(ctx, id)
 }
 
-func (s *Service) GetTickets(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Tickets, error) {
+func (s *Service) GetTickets(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Tickets, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	pagination := util.ExtractPageInfo(pageInfoInput)
+	pagination := util.ExtractPageInfo(pageInfo)
 
 	if validation.IsUser(user) {
-		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, uuid.NullUUID{user.ID, true}, int32(pagination.First), pagination.After)
+		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, uuid.NullUUID{user.ID, true}, pagination.First, pagination.After)
 	}
 
 	var nullUUID uuid.NullUUID
-	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nullUUID, int32(pagination.First), pagination.After)
+	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nullUUID, pagination.First, pagination.After)
 }
 
 func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*model.TicketPermission, error) {

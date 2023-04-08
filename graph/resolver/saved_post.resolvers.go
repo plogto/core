@@ -20,8 +20,8 @@ func (r *mutationResolver) SavePost(ctx context.Context, postID uuid.UUID) (*db.
 }
 
 // GetSavedPosts is the resolver for the getSavedPosts field.
-func (r *queryResolver) GetSavedPosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.SavedPosts, error) {
-	return r.Service.GetSavedPosts(ctx, pageInfoInput)
+func (r *queryResolver) GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.SavedPosts, error) {
+	return r.Service.GetSavedPosts(ctx, pageInfo)
 }
 
 // User is the resolver for the user field.

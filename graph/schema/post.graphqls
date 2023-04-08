@@ -44,11 +44,11 @@ input EditPostInput {
 }
 
 extend type Query {
-  getPostsByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
-  getRepliesByUsername(username: String!, pageInfoInput: PageInfoInput): Posts
-  getPostsByTagName(tagName: String!, pageInfoInput: PageInfoInput): Posts
+  getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
-  getTimelinePosts(pageInfoInput: PageInfoInput): Posts
+  getTimelinePosts(pageInfo: PageInfoInput): Posts
   getExplorePosts(pageInfo: PageInfoInput): Posts
 }
 

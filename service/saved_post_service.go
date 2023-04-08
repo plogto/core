@@ -34,7 +34,7 @@ func (s *Service) SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost
 	}
 }
 
-func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput) (*model.SavedPosts, error) {
+func (s *Service) GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.SavedPosts, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -45,8 +45,8 @@ func (s *Service) GetSavedPosts(ctx context.Context, input *model.PageInfoInput)
 		return nil, nil
 	}
 
-	pageInfoInput := util.ExtractPageInfo(input)
-	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
+	pagination := util.ExtractPageInfo(pageInfo)
+	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
 func (s *Service) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {

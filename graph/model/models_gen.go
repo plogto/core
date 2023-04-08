@@ -138,7 +138,7 @@ type OAuthGoogleInput struct {
 
 type PageInfo struct {
 	EndCursor   string `json:"endCursor"`
-	HasNextPage *bool  `json:"hasNextPage,omitempty"`
+	HasNextPage bool   `json:"hasNextPage"`
 }
 
 type PageInfoInput struct {

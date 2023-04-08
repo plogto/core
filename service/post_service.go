@@ -242,7 +242,7 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*
 	}
 }
 
-func (s *Service) GetPostsByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.Posts, error) {
+func (s *Service) GetPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	followingUser, err := s.Users.GetUserByUsername(ctx, username)
 
@@ -253,13 +253,13 @@ func (s *Service) GetPostsByUsername(ctx context.Context, username string, input
 			return nil, errors.New("access denied")
 		}
 
-		pageInfoInput := util.ExtractPageInfo(input)
+		pagination := util.ExtractPageInfo(pageInfo)
 
-		return s.Posts.GetPostsByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfoInput.First), pageInfoInput.After)
+		return s.Posts.GetPostsByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 	}
 }
 
-func (s *Service) GetRepliesByUsername(ctx context.Context, username string, input *model.PageInfoInput) (*model.Posts, error) {
+func (s *Service) GetRepliesByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	followingUser, err := s.Users.GetUserByUsername(ctx, username)
 
@@ -270,20 +270,20 @@ func (s *Service) GetRepliesByUsername(ctx context.Context, username string, inp
 			return nil, errors.New("access denied")
 		}
 
-		pageInfoInput := util.ExtractPageInfo(input)
+		pagination := util.ExtractPageInfo(pageInfo)
 
-		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(ctx, followingUser.ID, int32(pageInfoInput.First), pageInfoInput.After)
+		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 	}
 }
 
-func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, input *model.PageInfoInput) (*model.Posts, error) {
+func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	tag, err := s.Tags.GetTagByName(ctx, tagName)
 
 	if err != nil {
 		return nil, errors.New("tag not found")
 	} else {
-		pageInfoInput := util.ExtractPageInfo(input)
-		return s.Posts.GetPostsByTagIDAndPageInfo(ctx, tag.ID, int32(pageInfoInput.First), pageInfoInput.After)
+		pagination := util.ExtractPageInfo(pageInfo)
+		return s.Posts.GetPostsByTagIDAndPageInfo(ctx, tag.ID, pagination.First, pagination.After)
 	}
 
 }
@@ -338,17 +338,17 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*db.Post, error
 	return post, err
 }
 
-func (s *Service) GetTimelinePosts(ctx context.Context, input *model.PageInfoInput) (*model.Posts, error) {
+func (s *Service) GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	pageInfoInput := util.ExtractPageInfo(input)
+	pagination := util.ExtractPageInfo(pageInfo)
 
-	return s.Posts.GetTimelinePostsByPageInfo(ctx, user.ID, int32(pageInfoInput.First), pageInfoInput.After)
+	return s.Posts.GetTimelinePostsByPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
-func (s *Service) GetExplorePosts(ctx context.Context, pageInfoInput *model.PageInfoInput) (*model.Posts, error) {
-	pageInfo := util.ExtractPageInfo(pageInfoInput)
+func (s *Service) GetExplorePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	pagination := util.ExtractPageInfo(pageInfo)
 
-	return s.Posts.GetExplorePostsByPageInfo(ctx, int32(pageInfo.First), pageInfo.After)
+	return s.Posts.GetExplorePostsByPageInfo(ctx, pagination.First, pagination.After)
 }
 
 func (s *Service) FormatPostContent(ctx context.Context, content string) (string, []uuid.UUID) {
