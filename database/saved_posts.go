@@ -16,19 +16,19 @@ type SavedPosts struct {
 }
 
 func (s *SavedPosts) CreateSavedPost(ctx context.Context, userID, postID uuid.UUID) (*db.SavedPost, error) {
-	savedPost, _ := s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
+	savedPost, _ := util.HandleDBResponse(s.Queries.GetSavedPostByUserIDAndPostID(ctx, db.GetSavedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	})
+	}))
 
 	if savedPost != nil {
 		return savedPost, nil
 	}
 
-	newSavedPost, _ := s.Queries.CreateSavedPost(ctx, db.CreateSavedPostParams{
+	newSavedPost, _ := util.HandleDBResponse(s.Queries.CreateSavedPost(ctx, db.CreateSavedPostParams{
 		UserID: userID,
 		PostID: postID,
-	})
+	}))
 
 	return newSavedPost, nil
 }
@@ -38,7 +38,6 @@ func (s *SavedPosts) GetSavedPostByUserIDAndPostID(ctx context.Context, userID, 
 		UserID: userID,
 		PostID: postID,
 	}))
-
 }
 
 func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
