@@ -9,6 +9,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -80,12 +81,12 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*db.
 	}
 
 	if input.BackgroundColor != nil {
-		user.BackgroundColor = db.BackgroundColor(*input.BackgroundColor)
+		user.BackgroundColor = convertor.ModelBackgroundColorToDB(*input.BackgroundColor)
 		didUpdate = true
 	}
 
 	if input.PrimaryColor != nil {
-		user.PrimaryColor = db.PrimaryColor(*input.PrimaryColor)
+		user.PrimaryColor = convertor.ModelPrimaryColorToDB(*input.PrimaryColor)
 		didUpdate = true
 	}
 
