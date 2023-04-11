@@ -3,13 +3,9 @@ package graph
 import (
 	"context"
 	"net/http"
-	"time"
 
-	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
-	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
-	"github.com/plogto/core/graph/model"
 )
 
 func DataloaderMiddleware(queries *db.Queries, next http.Handler) http.Handler {
@@ -39,92 +35,4 @@ func GetPostLoader(ctx context.Context) *PostLoader {
 
 func GetTagLoader(ctx context.Context) *TagLoader {
 	return ctx.Value(constants.TAG_LOADER_KEY).(*TagLoader)
-}
-
-// prepare functions
-func PrepareUserLoader(ctx context.Context, queries *db.Queries) UserLoader {
-	return UserLoader{
-		maxBatch: 100,
-		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*db.User, []error) {
-
-			users, err := queries.GetUsersByIDs(ctx, convertor.StringsToUUIDs(ids))
-
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			u := make(map[uuid.UUID]*db.User, len(users))
-
-			for _, user := range users {
-				u[user.ID] = user
-			}
-
-			result := make([]*db.User, len(ids))
-
-			for i, id := range ids {
-				result[i] = u[uuid.MustParse(id)]
-			}
-
-			return result, nil
-		},
-	}
-}
-
-func PreparePostLoader(ctx context.Context, queries *db.Queries) PostLoader {
-	return PostLoader{
-		maxBatch: 100,
-		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*db.Post, []error) {
-
-			posts, err := queries.GetPostsByIDs(ctx, convertor.StringsToUUIDs(ids))
-
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			p := make(map[uuid.UUID]*db.Post, len(posts))
-
-			for _, post := range posts {
-				p[post.ID] = post
-			}
-
-			result := make([]*db.Post, len(ids))
-
-			for i, id := range ids {
-				result[i] = p[uuid.MustParse(id)]
-			}
-
-			return result, nil
-		},
-	}
-}
-
-func PrepareTagLoader(ctx context.Context, queries *db.Queries) TagLoader {
-	return TagLoader{
-		maxBatch: 100,
-		wait:     1 * time.Millisecond,
-		fetch: func(ids []string) ([]*model.Tag, []error) {
-
-			tags, err := queries.GetTagByIDs(ctx, convertor.StringsToUUIDs(ids))
-
-			if err != nil {
-				return nil, []error{err}
-			}
-
-			t := make(map[uuid.UUID]*model.Tag, len(tags))
-
-			for _, tag := range tags {
-				t[tag.ID] = convertor.DBTagToModel(tag)
-			}
-
-			result := make([]*model.Tag, len(ids))
-
-			for i, id := range ids {
-				result[i] = t[uuid.MustParse(id)]
-			}
-
-			return result, nil
-		},
-	}
 }
