@@ -15,8 +15,8 @@ import (
 )
 
 func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.AuthResponse, error) {
-	user, err := s.Users.GetUserByUsernameOrEmail(ctx, input.Username)
-	if err != nil {
+	user, _ := s.Users.GetUserByUsernameOrEmail(ctx, input.Username)
+	if !validation.IsUserExists(user) {
 		return nil, errors.New("username or password is not valid")
 	}
 
@@ -34,12 +34,12 @@ func (s *Service) Login(ctx context.Context, input model.LoginInput) (*model.Aut
 }
 
 func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAuth bool) (*model.AuthResponse, error) {
-	if _, err := s.Users.GetUserByUsernameOrEmail(ctx, input.Email); err == nil {
+	if user, _ := s.Users.GetUserByUsernameOrEmail(ctx, input.Email); validation.IsUser(user) {
 		return nil, errors.New("email has already been taken")
 	}
 
 	user, err := s.Users.CreateUser(ctx, input.Email, input.FullName)
-	if err != nil {
+	if !validation.IsUser(user) {
 		log.Printf("error while creating a user: %v", err)
 		return nil, err
 	}
