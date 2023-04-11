@@ -237,7 +237,7 @@ WHERE
 	AND parent_id IS NULL
 	AND deleted_at IS NULL;
 
--- name: GetPostsByParentIDAndPageInfo :many
+-- name: GetPostsByUserIDAndParentIDAndPageInfo :many
 WITH _posts AS (
 	(
 		SELECT
@@ -246,7 +246,7 @@ WITH _posts AS (
 			posts AS post
 			INNER JOIN users ON users.id = post.user_id
 		WHERE
-			post.user_id = sqlc.narg(user_id)
+			post.user_id = sqlc.arg(user_id)
 			AND post.parent_id = sqlc.narg(parent_id)
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
@@ -257,13 +257,92 @@ WITH _posts AS (
 			post.*
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = sqlc.narg(user_id)
+			INNER JOIN connections ON connections.follower_id = sqlc.arg(user_id)
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
 			(
 				connections.status = 2
 				OR users.is_private = FALSE
 			)
+			AND post.user_id = users.id
+			AND post.parent_id = sqlc.narg(parent_id)
+			AND connections.deleted_at IS NULL
+			AND post.deleted_at IS NULL
+			AND post.created_at < sqlc.arg(created_at)
+		ORDER BY
+			post.created_at DESC
+	)
+)
+SELECT
+	*
+FROM
+	_posts
+LIMIT
+	$1;
+
+-- name: CountPostsByUserIDAndParentIDAndPageInfo :one
+WITH _posts AS (
+	(
+		SELECT
+			post.*
+		FROM
+			posts AS post
+			INNER JOIN users ON users.id = post.user_id
+		WHERE
+			post.user_id = sqlc.arg(user_id)
+			AND post.parent_id = sqlc.narg(parent_id)
+			AND post.deleted_at IS NULL
+			AND post.created_at < sqlc.arg(created_at)
+	)
+	UNION
+	(
+		SELECT
+			post.*
+		FROM
+			posts AS post
+			INNER JOIN connections ON connections.follower_id = sqlc.arg(user_id)
+			INNER JOIN users ON users.id = connections.following_id
+		WHERE
+			(
+				connections.status = 2
+				OR users.is_private = FALSE
+			)
+			AND post.user_id = users.id
+			AND post.parent_id = sqlc.narg(parent_id)
+			AND connections.deleted_at IS NULL
+			AND post.deleted_at IS NULL
+			AND post.created_at < sqlc.arg(created_at)
+		ORDER BY
+			post.created_at DESC
+	)
+)
+SELECT
+	count(*)
+FROM
+	_posts;
+
+-- name: GetPostsByParentIDAndPageInfo :many
+WITH _posts AS (
+	(
+		SELECT
+			post.*
+		FROM
+			posts AS post
+			INNER JOIN users ON users.id = post.user_id
+		WHERE
+			post.parent_id = sqlc.narg(parent_id)
+			AND post.deleted_at IS NULL
+			AND post.created_at < sqlc.arg(created_at)
+	)
+	UNION
+	(
+		SELECT
+			post.*
+		FROM
+			posts AS post
+			INNER JOIN users ON users.id = connections.following_id
+		WHERE
+			users.is_private = FALSE
 			AND post.user_id = users.id
 			AND post.parent_id = sqlc.narg(parent_id)
 			AND connections.deleted_at IS NULL
@@ -289,8 +368,7 @@ WITH _posts AS (
 			posts AS post
 			INNER JOIN users ON users.id = post.user_id
 		WHERE
-			post.user_id = sqlc.narg(user_id)
-			AND post.parent_id = sqlc.narg(parent_id)
+			post.parent_id = sqlc.narg(parent_id)
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
 	)
@@ -300,13 +378,9 @@ WITH _posts AS (
 			post.*
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = sqlc.narg(user_id)
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
-			(
-				connections.status = 2
-				OR users.is_private = FALSE
-			)
+			users.is_private = FALSE
 			AND post.user_id = users.id
 			AND post.parent_id = sqlc.narg(parent_id)
 			AND connections.deleted_at IS NULL

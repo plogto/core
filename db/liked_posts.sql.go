@@ -13,6 +13,46 @@ import (
 	"github.com/google/uuid"
 )
 
+const countLikedPostsByPageInfo = `-- name: CountLikedPostsByPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		count(*)
+	FROM
+		liked_posts AS liked_post
+		INNER JOIN posts ON posts.id = liked_post.post_id
+		INNER JOIN users ON users.id = posts.user_id
+	WHERE
+		liked_post.user_id = $1
+		AND liked_post.deleted_at IS NULL
+		AND posts.deleted_at IS NULL
+		AND (
+			users.id = $1
+			OR users.is_private = FALSE
+		)
+		AND liked_post.created_at < $2
+	GROUP BY
+		liked_post.id,
+		posts.id,
+		users.id
+)
+SELECT
+	count(*)
+FROM
+	_count_wrapper
+`
+
+type CountLikedPostsByPageInfoParams struct {
+	UserID    uuid.UUID
+	CreatedAt time.Time
+}
+
+func (q *Queries) CountLikedPostsByPageInfo(ctx context.Context, arg CountLikedPostsByPageInfoParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countLikedPostsByPageInfo, arg.UserID, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countLikedPostsByPostIDAndPageInfo = `-- name: CountLikedPostsByPostIDAndPageInfo :one
 WITH _count_wrapper AS (
 	SELECT
@@ -54,7 +94,7 @@ WITH _count_wrapper AS (
 		liked_posts AS liked_post
 		INNER JOIN posts ON posts.id = liked_post.post_id
 		INNER JOIN users ON users.id = posts.user_id
-		INNER JOIN connections ON connections.following_id = posts.user_id
+		FULL OUTER JOIN connections ON connections.following_id = posts.user_id
 	WHERE
 		liked_post.user_id = $1
 		AND liked_post.deleted_at IS NULL
@@ -199,6 +239,127 @@ func (q *Queries) GetLikedPostByUserIDAndPostID(ctx context.Context, arg GetLike
 	return &i, err
 }
 
+const getLikedPostsByPageInfo = `-- name: GetLikedPostsByPageInfo :many
+SELECT
+	liked_post.id, liked_post.user_id, post_id, liked_post.created_at, liked_post.updated_at, liked_post.deleted_at, posts.id, posts.user_id, parent_id, child_id, status, content, url, posts.created_at, posts.updated_at, posts.deleted_at, users.id, username, email, full_name, bio, role, is_private, avatar, background, primary_color, background_color, is_verified, invitation_code, users.created_at, users.updated_at, users.deleted_at
+FROM
+	liked_posts AS liked_post
+	INNER JOIN posts ON posts.id = liked_post.post_id
+	INNER JOIN users ON users.id = posts.user_id
+WHERE
+	liked_post.user_id = $1
+	AND (liked_post.deleted_at IS NULL)
+	AND (posts.deleted_at IS NULL)
+	AND (
+		users.id = $1
+		OR users.is_private = FALSE
+	)
+	AND liked_post.created_at < $2
+GROUP BY
+	liked_post.id,
+	posts.id,
+	users.id
+LIMIT
+	$3
+`
+
+type GetLikedPostsByPageInfoParams struct {
+	UserID    uuid.UUID
+	CreatedAt time.Time
+	Limit     int32
+}
+
+type GetLikedPostsByPageInfoRow struct {
+	ID              uuid.UUID
+	UserID          uuid.UUID
+	PostID          uuid.UUID
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
+	DeletedAt       sql.NullTime
+	ID_2            uuid.UUID
+	UserID_2        uuid.UUID
+	ParentID        uuid.NullUUID
+	ChildID         uuid.NullUUID
+	Status          PostStatus
+	Content         sql.NullString
+	Url             string
+	CreatedAt_2     time.Time
+	UpdatedAt_2     time.Time
+	DeletedAt_2     sql.NullTime
+	ID_3            uuid.UUID
+	Username        string
+	Email           string
+	FullName        string
+	Bio             sql.NullString
+	Role            UserRole
+	IsPrivate       bool
+	Avatar          uuid.NullUUID
+	Background      uuid.NullUUID
+	PrimaryColor    PrimaryColor
+	BackgroundColor BackgroundColor
+	IsVerified      bool
+	InvitationCode  string
+	CreatedAt_3     time.Time
+	UpdatedAt_3     time.Time
+	DeletedAt_3     sql.NullTime
+}
+
+func (q *Queries) GetLikedPostsByPageInfo(ctx context.Context, arg GetLikedPostsByPageInfoParams) ([]*GetLikedPostsByPageInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, getLikedPostsByPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetLikedPostsByPageInfoRow{}
+	for rows.Next() {
+		var i GetLikedPostsByPageInfoRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.PostID,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.ID_2,
+			&i.UserID_2,
+			&i.ParentID,
+			&i.ChildID,
+			&i.Status,
+			&i.Content,
+			&i.Url,
+			&i.CreatedAt_2,
+			&i.UpdatedAt_2,
+			&i.DeletedAt_2,
+			&i.ID_3,
+			&i.Username,
+			&i.Email,
+			&i.FullName,
+			&i.Bio,
+			&i.Role,
+			&i.IsPrivate,
+			&i.Avatar,
+			&i.Background,
+			&i.PrimaryColor,
+			&i.BackgroundColor,
+			&i.IsVerified,
+			&i.InvitationCode,
+			&i.CreatedAt_3,
+			&i.UpdatedAt_3,
+			&i.DeletedAt_3,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getLikedPostsByPostIDAndPageInfo = `-- name: GetLikedPostsByPostIDAndPageInfo :many
 SELECT
 	id, user_id, post_id, created_at, updated_at, deleted_at
@@ -260,31 +421,31 @@ FROM
 	liked_posts AS liked_post
 	INNER JOIN posts ON posts.id = liked_post.post_id
 	INNER JOIN users ON users.id = posts.user_id
-	INNER JOIN connections ON connections.following_id = posts.user_id
+	FULL OUTER JOIN connections ON connections.following_id = posts.user_id
 WHERE
-	(liked_post.user_id = $1)
-	AND (liked_post.deleted_at IS NULL)
-	AND (posts.deleted_at IS NULL)
+	liked_post.user_id = $2
+	AND liked_post.deleted_at IS NULL
+	AND posts.deleted_at IS NULL
 	AND (
-		(users.id = $1)
-		OR (connections.status = 2)
-		OR (users.is_private = FALSE)
+		users.id = $2
+		OR connections.status = 2
+		OR users.is_private = FALSE
 	)
-	AND (connections.deleted_at IS NULL)
-	AND liked_post.created_at < $2
+	AND connections.deleted_at IS NULL
+	AND liked_post.created_at < $3
 GROUP BY
 	connections.id,
 	liked_post.id,
 	posts.id,
 	users.id
 LIMIT
-	$3
+	$1
 `
 
 type GetLikedPostsByUserIDAndPageInfoParams struct {
+	Limit     int32
 	UserID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 type GetLikedPostsByUserIDAndPageInfoRow struct {
@@ -320,17 +481,17 @@ type GetLikedPostsByUserIDAndPageInfoRow struct {
 	CreatedAt_3     time.Time
 	UpdatedAt_3     time.Time
 	DeletedAt_3     sql.NullTime
-	ID_4            uuid.UUID
-	FollowerID      uuid.UUID
-	FollowingID     uuid.UUID
-	Status_2        int32
-	CreatedAt_4     time.Time
-	UpdatedAt_4     time.Time
+	ID_4            uuid.NullUUID
+	FollowerID      uuid.NullUUID
+	FollowingID     uuid.NullUUID
+	Status_2        sql.NullInt32
+	CreatedAt_4     sql.NullTime
+	UpdatedAt_4     sql.NullTime
 	DeletedAt_4     sql.NullTime
 }
 
 func (q *Queries) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, arg GetLikedPostsByUserIDAndPageInfoParams) ([]*GetLikedPostsByUserIDAndPageInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, getLikedPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getLikedPostsByUserIDAndPageInfo, arg.Limit, arg.UserID, arg.CreatedAt)
 	if err != nil {
 		return nil, err
 	}

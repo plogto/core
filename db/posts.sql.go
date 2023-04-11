@@ -88,10 +88,9 @@ WITH _posts AS (
 			posts AS post
 			INNER JOIN users ON users.id = post.user_id
 		WHERE
-			post.user_id = $1
-			AND post.parent_id = $2
+			post.parent_id = $1
 			AND post.deleted_at IS NULL
-			AND post.created_at < $3
+			AND post.created_at < $2
 	)
 	UNION
 	(
@@ -99,18 +98,14 @@ WITH _posts AS (
 			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = $1
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
-			(
-				connections.status = 2
-				OR users.is_private = FALSE
-			)
+			users.is_private = FALSE
 			AND post.user_id = users.id
-			AND post.parent_id = $2
+			AND post.parent_id = $1
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
-			AND post.created_at < $3
+			AND post.created_at < $2
 		ORDER BY
 			post.created_at DESC
 	)
@@ -122,13 +117,12 @@ FROM
 `
 
 type CountPostsByParentIDAndPageInfoParams struct {
-	UserID    uuid.NullUUID
 	ParentID  uuid.NullUUID
 	CreatedAt time.Time
 }
 
 func (q *Queries) CountPostsByParentIDAndPageInfo(ctx context.Context, arg CountPostsByParentIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countPostsByParentIDAndPageInfo, arg.UserID, arg.ParentID, arg.CreatedAt)
+	row := q.db.QueryRowContext(ctx, countPostsByParentIDAndPageInfo, arg.ParentID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -213,6 +207,61 @@ type CountPostsByUserIDAndPageInfoParams struct {
 
 func (q *Queries) CountPostsByUserIDAndPageInfo(ctx context.Context, arg CountPostsByUserIDAndPageInfoParams) (int64, error) {
 	row := q.db.QueryRowContext(ctx, countPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countPostsByUserIDAndParentIDAndPageInfo = `-- name: CountPostsByUserIDAndParentIDAndPageInfo :one
+WITH _posts AS (
+	(
+		SELECT
+			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+		FROM
+			posts AS post
+			INNER JOIN users ON users.id = post.user_id
+		WHERE
+			post.user_id = $1
+			AND post.parent_id = $2
+			AND post.deleted_at IS NULL
+			AND post.created_at < $3
+	)
+	UNION
+	(
+		SELECT
+			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+		FROM
+			posts AS post
+			INNER JOIN connections ON connections.follower_id = $1
+			INNER JOIN users ON users.id = connections.following_id
+		WHERE
+			(
+				connections.status = 2
+				OR users.is_private = FALSE
+			)
+			AND post.user_id = users.id
+			AND post.parent_id = $2
+			AND connections.deleted_at IS NULL
+			AND post.deleted_at IS NULL
+			AND post.created_at < $3
+		ORDER BY
+			post.created_at DESC
+	)
+)
+SELECT
+	count(*)
+FROM
+	_posts
+`
+
+type CountPostsByUserIDAndParentIDAndPageInfoParams struct {
+	UserID    uuid.UUID
+	ParentID  uuid.NullUUID
+	CreatedAt time.Time
+}
+
+func (q *Queries) CountPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, arg CountPostsByUserIDAndParentIDAndPageInfoParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPostsByUserIDAndParentIDAndPageInfo, arg.UserID, arg.ParentID, arg.CreatedAt)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -605,10 +654,9 @@ WITH _posts AS (
 			posts AS post
 			INNER JOIN users ON users.id = post.user_id
 		WHERE
-			post.user_id = $2
-			AND post.parent_id = $3
+			post.parent_id = $2
 			AND post.deleted_at IS NULL
-			AND post.created_at < $4
+			AND post.created_at < $3
 	)
 	UNION
 	(
@@ -616,18 +664,14 @@ WITH _posts AS (
 			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
 		FROM
 			posts AS post
-			INNER JOIN connections ON connections.follower_id = $2
 			INNER JOIN users ON users.id = connections.following_id
 		WHERE
-			(
-				connections.status = 2
-				OR users.is_private = FALSE
-			)
+			users.is_private = FALSE
 			AND post.user_id = users.id
-			AND post.parent_id = $3
+			AND post.parent_id = $2
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
-			AND post.created_at < $4
+			AND post.created_at < $3
 		ORDER BY
 			post.created_at DESC
 	)
@@ -642,7 +686,6 @@ LIMIT
 
 type GetPostsByParentIDAndPageInfoParams struct {
 	Limit     int32
-	UserID    uuid.NullUUID
 	ParentID  uuid.NullUUID
 	CreatedAt time.Time
 }
@@ -661,12 +704,7 @@ type GetPostsByParentIDAndPageInfoRow struct {
 }
 
 func (q *Queries) GetPostsByParentIDAndPageInfo(ctx context.Context, arg GetPostsByParentIDAndPageInfoParams) ([]*GetPostsByParentIDAndPageInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPostsByParentIDAndPageInfo,
-		arg.Limit,
-		arg.UserID,
-		arg.ParentID,
-		arg.CreatedAt,
-	)
+	rows, err := q.db.QueryContext(ctx, getPostsByParentIDAndPageInfo, arg.Limit, arg.ParentID, arg.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -845,6 +883,109 @@ func (q *Queries) GetPostsByUserIDAndPageInfo(ctx context.Context, arg GetPostsB
 	items := []*Post{}
 	for rows.Next() {
 		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ParentID,
+			&i.ChildID,
+			&i.Status,
+			&i.Content,
+			&i.Url,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPostsByUserIDAndParentIDAndPageInfo = `-- name: GetPostsByUserIDAndParentIDAndPageInfo :many
+WITH _posts AS (
+	(
+		SELECT
+			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+		FROM
+			posts AS post
+			INNER JOIN users ON users.id = post.user_id
+		WHERE
+			post.user_id = $2
+			AND post.parent_id = $3
+			AND post.deleted_at IS NULL
+			AND post.created_at < $4
+	)
+	UNION
+	(
+		SELECT
+			post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at
+		FROM
+			posts AS post
+			INNER JOIN connections ON connections.follower_id = $2
+			INNER JOIN users ON users.id = connections.following_id
+		WHERE
+			(
+				connections.status = 2
+				OR users.is_private = FALSE
+			)
+			AND post.user_id = users.id
+			AND post.parent_id = $3
+			AND connections.deleted_at IS NULL
+			AND post.deleted_at IS NULL
+			AND post.created_at < $4
+		ORDER BY
+			post.created_at DESC
+	)
+)
+SELECT
+	id, user_id, parent_id, child_id, status, content, url, created_at, updated_at, deleted_at
+FROM
+	_posts
+LIMIT
+	$1
+`
+
+type GetPostsByUserIDAndParentIDAndPageInfoParams struct {
+	Limit     int32
+	UserID    uuid.UUID
+	ParentID  uuid.NullUUID
+	CreatedAt time.Time
+}
+
+type GetPostsByUserIDAndParentIDAndPageInfoRow struct {
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	ParentID  uuid.NullUUID
+	ChildID   uuid.NullUUID
+	Status    PostStatus
+	Content   sql.NullString
+	Url       string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+}
+
+func (q *Queries) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, arg GetPostsByUserIDAndParentIDAndPageInfoParams) ([]*GetPostsByUserIDAndParentIDAndPageInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsByUserIDAndParentIDAndPageInfo,
+		arg.Limit,
+		arg.UserID,
+		arg.ParentID,
+		arg.CreatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetPostsByUserIDAndParentIDAndPageInfoRow{}
+	for rows.Next() {
+		var i GetPostsByUserIDAndParentIDAndPageInfoRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.UserID,
