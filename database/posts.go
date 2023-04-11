@@ -107,19 +107,54 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 	}, nil
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, userID uuid.NullUUID, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, userID uuid.UUID, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsByUserIDAndParentIDAndPageInfo(ctx, db.GetPostsByUserIDAndParentIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		ParentID:  uuid.NullUUID{parentID, true},
 		CreatedAt: after,
 	})
 
-	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
+	totalCount, _ := p.Queries.CountPostsByUserIDAndParentIDAndPageInfo(ctx, db.CountPostsByUserIDAndParentIDAndPageInfoParams{
 		UserID:    userID,
+		ParentID:  uuid.NullUUID{parentID, true},
+		CreatedAt: after,
+	})
+
+	for _, value := range posts {
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+			ID:        value.ID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	return &model.Posts{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor: endCursor,
+		},
+	}, nil
+}
+
+func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+	var edges []*model.PostsEdge
+	var endCursor string
+
+	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
+		Limit:     limit,
+		ParentID:  uuid.NullUUID{parentID, true},
+		CreatedAt: after,
+	})
+
+	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
 		ParentID:  uuid.NullUUID{parentID, true},
 		CreatedAt: after,
 	})

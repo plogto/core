@@ -235,9 +235,9 @@ func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*
 	} else {
 		// TODO: add inputPageInfo
 		if validation.IsUserExists(user) {
-			return s.Posts.GetPostsByParentIDAndPageInfo(ctx, uuid.NullUUID{user.ID, true}, parentPost.ID, 50, after)
+			return s.Posts.GetPostsByUserIDAndParentIDAndPageInfo(ctx, user.ID, parentPost.ID, 50, after)
 		} else {
-			return s.Posts.GetPostsByParentIDAndPageInfo(ctx, uuid.NullUUID{}, parentPost.ID, 50, after)
+			return s.Posts.GetPostsByParentIDAndPageInfo(ctx, parentPost.ID, 50, after)
 		}
 	}
 }
