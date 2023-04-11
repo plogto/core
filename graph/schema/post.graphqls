@@ -53,7 +53,7 @@ extend type Query {
   getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
   getTimelinePosts(pageInfo: PageInfoInput): Posts
-  getExplorePosts(input: GetExplorePostsInput!, pageInfo: PageInfoInput): Posts
+  getExplorePosts(input: GetExplorePostsInput, pageInfo: PageInfoInput): Posts
 }
 
 extend type Mutation {
