@@ -2,7 +2,7 @@ package constants
 
 type key string
 
-const POSTS_PAGE_LIMIT int32 = 10
+const POSTS_PAGE_LIMIT int32 = 9
 const TRENDS_PAGE_LIMIT int32 = 8
 const USERS_PAGE_LIMIT int32 = 20
 const TAGS_PAGE_LIMIT int32 = 20
