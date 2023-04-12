@@ -311,6 +311,11 @@ WITH _posts AS (
 			AND post.parent_id IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < $2
+		GROUP BY
+			post.id,
+			post.created_at
+		ORDER BY
+			post.created_at DESC
 	)
 	UNION
 	(
@@ -330,12 +335,15 @@ WITH _posts AS (
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < $2
+		GROUP BY
+			post.id,
+			post.created_at
 		ORDER BY
 			post.created_at DESC
 	)
 )
 SELECT
-	count(*)
+	count(id)
 FROM
 	_posts
 `
@@ -1079,6 +1087,11 @@ WITH _posts AS (
 			AND post.parent_id IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < $3
+		GROUP BY
+			post.id,
+			post.created_at
+		ORDER BY
+			post.created_at DESC
 	)
 	UNION
 	(
@@ -1098,6 +1111,9 @@ WITH _posts AS (
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < $3
+		GROUP BY
+			post.id,
+			post.created_at
 		ORDER BY
 			post.created_at DESC
 	)
@@ -1106,6 +1122,8 @@ SELECT
 	id, user_id, parent_id, child_id, status, content, url, created_at, updated_at, deleted_at
 FROM
 	_posts
+ORDER BY
+	created_at DESC
 LIMIT
 	$1
 `
