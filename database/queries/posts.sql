@@ -407,6 +407,11 @@ WITH _posts AS (
 			AND post.parent_id IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
+		GROUP BY
+			post.id,
+			post.created_at
+		ORDER BY
+			post.created_at DESC
 	)
 	UNION
 	(
@@ -426,6 +431,9 @@ WITH _posts AS (
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
+		GROUP BY
+			post.id,
+			post.created_at
 		ORDER BY
 			post.created_at DESC
 	)
@@ -434,6 +442,8 @@ SELECT
 	*
 FROM
 	_posts
+ORDER BY
+	created_at DESC
 LIMIT
 	$1;
 
@@ -449,6 +459,11 @@ WITH _posts AS (
 			AND post.parent_id IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
+		GROUP BY
+			post.id,
+			post.created_at
+		ORDER BY
+			post.created_at DESC
 	)
 	UNION
 	(
@@ -468,12 +483,15 @@ WITH _posts AS (
 			AND connections.deleted_at IS NULL
 			AND post.deleted_at IS NULL
 			AND post.created_at < sqlc.arg(created_at)
+		GROUP BY
+			post.id,
+			post.created_at
 		ORDER BY
 			post.created_at DESC
 	)
 )
 SELECT
-	count(*)
+	count(id)
 FROM
 	_posts;
 
