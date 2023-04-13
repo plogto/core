@@ -267,6 +267,43 @@ func (q *Queries) CountPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, 
 	return count, err
 }
 
+const countPostsWithAttachmentByUserIDAndPageInfo = `-- name: CountPostsWithAttachmentByUserIDAndPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		DISTINCT ON (post.created_at) post.id,
+		post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at,
+		post_attachments.id, post_attachments.post_id, post_attachments.file_id, post_attachments.created_at, post_attachments.deleted_at
+	FROM
+		posts AS post
+		INNER JOIN post_attachments ON post_attachments.post_id = post.id
+	WHERE
+		post.user_id = $1
+		AND post.deleted_at IS NULL
+		AND post.created_at < $2
+	GROUP BY
+		post_attachments.id,
+		post.id
+	ORDER BY
+		post.created_at DESC
+)
+SELECT
+	count(*)
+FROM
+	_count_wrapper
+`
+
+type CountPostsWithAttachmentByUserIDAndPageInfoParams struct {
+	UserID    uuid.UUID
+	CreatedAt time.Time
+}
+
+func (q *Queries) CountPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, arg CountPostsWithAttachmentByUserIDAndPageInfoParams) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countPostsWithAttachmentByUserIDAndPageInfo, arg.UserID, arg.CreatedAt)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countPostsWithParentIDByUserIDAndPageInfo = `-- name: CountPostsWithParentIDByUserIDAndPageInfo :one
 WITH _count_wrapper AS (
 	SELECT
@@ -1005,6 +1042,92 @@ func (q *Queries) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, ar
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getPostsWithAttachmentByUserIDAndPageInfo = `-- name: GetPostsWithAttachmentByUserIDAndPageInfo :many
+SELECT
+	DISTINCT ON (post.created_at) post.id,
+	post.id, post.user_id, post.parent_id, post.child_id, post.status, post.content, post.url, post.created_at, post.updated_at, post.deleted_at,
+	post_attachments.id, post_attachments.post_id, post_attachments.file_id, post_attachments.created_at, post_attachments.deleted_at
+FROM
+	posts AS post
+	INNER JOIN post_attachments ON post_attachments.post_id = post.id
+WHERE
+	post.user_id = $2
+	AND post.deleted_at IS NULL
+	AND post.created_at < $3
+GROUP BY
+	post_attachments.id,
+	post.id
+ORDER BY
+	post.created_at DESC
+LIMIT
+	$1
+`
+
+type GetPostsWithAttachmentByUserIDAndPageInfoParams struct {
+	Limit     int32
+	UserID    uuid.UUID
+	CreatedAt time.Time
+}
+
+type GetPostsWithAttachmentByUserIDAndPageInfoRow struct {
+	ID          uuid.UUID
+	ID_2        uuid.UUID
+	UserID      uuid.UUID
+	ParentID    uuid.NullUUID
+	ChildID     uuid.NullUUID
+	Status      PostStatus
+	Content     sql.NullString
+	Url         string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	DeletedAt   sql.NullTime
+	ID_3        uuid.UUID
+	PostID      uuid.UUID
+	FileID      uuid.UUID
+	CreatedAt_2 time.Time
+	DeletedAt_2 sql.NullTime
+}
+
+func (q *Queries) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, arg GetPostsWithAttachmentByUserIDAndPageInfoParams) ([]*GetPostsWithAttachmentByUserIDAndPageInfoRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPostsWithAttachmentByUserIDAndPageInfo, arg.Limit, arg.UserID, arg.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetPostsWithAttachmentByUserIDAndPageInfoRow{}
+	for rows.Next() {
+		var i GetPostsWithAttachmentByUserIDAndPageInfoRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ID_2,
+			&i.UserID,
+			&i.ParentID,
+			&i.ChildID,
+			&i.Status,
+			&i.Content,
+			&i.Url,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.ID_3,
+			&i.PostID,
+			&i.FileID,
+			&i.CreatedAt_2,
+			&i.DeletedAt_2,
 		); err != nil {
 			return nil, err
 		}

@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -34,6 +35,50 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 	})
 
 	totalCount, _ := p.Queries.CountPostsByUserIDAndPageInfo(ctx, db.CountPostsByUserIDAndPageInfoParams{
+		UserID:    userID,
+		CreatedAt: after,
+	})
+
+	for _, value := range posts {
+		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+			ID:        value.ID,
+			ParentID:  value.ParentID,
+			CreatedAt: value.CreatedAt,
+		}})
+	}
+
+	if len(edges) > 0 {
+		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
+	}
+
+	hasNextPage := false
+	if totalCount > int64(limit) {
+		hasNextPage = true
+	}
+
+	return &model.Posts{
+		TotalCount: totalCount,
+		Edges:      edges,
+		PageInfo: &model.PageInfo{
+			EndCursor:   endCursor,
+			HasNextPage: hasNextPage,
+		},
+	}, nil
+}
+
+func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+	var edges []*model.PostsEdge
+	var endCursor string
+
+	posts, err := p.Queries.GetPostsWithAttachmentByUserIDAndPageInfo(ctx, db.GetPostsWithAttachmentByUserIDAndPageInfoParams{
+		Limit:     limit,
+		UserID:    userID,
+		CreatedAt: after,
+	})
+
+	fmt.Println(err)
+
+	totalCount, _ := p.Queries.CountPostsWithAttachmentByUserIDAndPageInfo(ctx, db.CountPostsWithAttachmentByUserIDAndPageInfoParams{
 		UserID:    userID,
 		CreatedAt: after,
 	})

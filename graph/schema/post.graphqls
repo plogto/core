@@ -49,6 +49,10 @@ input GetExplorePostsInput {
 
 extend type Query {
   getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getPostsWithAttachmentByUsername(
+    username: String!
+    pageInfo: PageInfoInput
+  ): Posts
   getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
