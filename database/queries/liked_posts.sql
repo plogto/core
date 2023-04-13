@@ -61,29 +61,59 @@ FROM
 	_count_wrapper;
 
 -- name: GetLikedPostsByUserIDAndPageInfo :many
+WITH _count_wrapper AS (
+	SELECT
+		liked_post.id AS liked_post_id,
+		liked_post.post_id AS liked_post_post_id,
+		liked_post.user_id AS liked_post_user_id,
+		liked_post.created_at,
+		liked_post.deleted_at AS liked_post_deleted_at,
+		connections.id AS connection_id,
+		connections.status,
+		connections.deleted_at AS connection_deleted_at,
+		posts.id AS post_id,
+		posts.user_id AS post_user_id,
+		posts.deleted_at AS post_deleted_at,
+		users.id AS user_id,
+		users.is_private
+	FROM
+		liked_posts AS liked_post
+		INNER JOIN posts ON posts.id = liked_post.post_id
+		INNER JOIN users ON users.id = posts.user_id
+		FULL OUTER JOIN connections ON connections.following_id = posts.user_id
+	WHERE
+		liked_post.user_id = sqlc.arg(user_id)
+		AND liked_post.deleted_at IS NULL
+		AND posts.deleted_at IS NULL
+		AND (
+			connections.status = 2
+			OR users.is_private = FALSE
+		)
+		AND (
+			users.id = sqlc.arg(user_id)
+			OR connections.deleted_at IS NULL
+		)
+		AND liked_post.created_at < sqlc.arg(created_at)
+	GROUP BY
+		connections.id,
+		liked_post.id,
+		posts.id,
+		users.id
+)
 SELECT
-	*
+	liked_post_id AS id,
+	user_id,
+	post_id,
+	created_at
 FROM
-	liked_posts AS liked_post
-	INNER JOIN posts ON posts.id = liked_post.post_id
-	INNER JOIN users ON users.id = posts.user_id
-	FULL OUTER JOIN connections ON connections.following_id = posts.user_id
-WHERE
-	liked_post.user_id = sqlc.arg(user_id)
-	AND liked_post.deleted_at IS NULL
-	AND posts.deleted_at IS NULL
-	AND (
-		users.id = sqlc.arg(user_id)
-		OR connections.status = 2
-		OR users.is_private = FALSE
-	)
-	AND connections.deleted_at IS NULL
-	AND liked_post.created_at < sqlc.arg(created_at)
+	_count_wrapper
 GROUP BY
-	connections.id,
-	liked_post.id,
-	posts.id,
-	users.id
+	id,
+	user_id,
+	post_id,
+	created_at
+ORDER BY
+	created_at DESC
 LIMIT
 	$1;
 
@@ -101,63 +131,14 @@ WITH _count_wrapper AS (
 		AND liked_post.deleted_at IS NULL
 		AND posts.deleted_at IS NULL
 		AND (
-			users.id = sqlc.arg(user_id)
-			OR connections.status = 2
+			connections.status = 2
 			OR users.is_private = FALSE
 		)
-		AND connections.deleted_at IS NULL
-		AND liked_post.created_at < sqlc.arg(created_at)
-	GROUP BY
-		connections.id,
-		liked_post.id,
-		posts.id,
-		users.id
-)
-SELECT
-	count(*)
-FROM
-	_count_wrapper;
-
--- name: GetLikedPostsByPageInfo :many
-SELECT
-	*
-FROM
-	liked_posts AS liked_post
-	INNER JOIN posts ON posts.id = liked_post.post_id
-	INNER JOIN users ON users.id = posts.user_id
-WHERE
-	liked_post.user_id = $1
-	AND (liked_post.deleted_at IS NULL)
-	AND (posts.deleted_at IS NULL)
-	AND (
-		users.id = $1
-		OR users.is_private = FALSE
-	)
-	AND liked_post.created_at < $2
-GROUP BY
-	liked_post.id,
-	posts.id,
-	users.id
-LIMIT
-	$3;
-
--- name: CountLikedPostsByPageInfo :one
-WITH _count_wrapper AS (
-	SELECT
-		count(*)
-	FROM
-		liked_posts AS liked_post
-		INNER JOIN posts ON posts.id = liked_post.post_id
-		INNER JOIN users ON users.id = posts.user_id
-	WHERE
-		liked_post.user_id = $1
-		AND liked_post.deleted_at IS NULL
-		AND posts.deleted_at IS NULL
 		AND (
-			users.id = $1
-			OR users.is_private = FALSE
+			users.id = sqlc.arg(user_id)
+			OR connections.deleted_at IS NULL
 		)
-		AND liked_post.created_at < $2
+		AND liked_post.created_at < sqlc.arg(created_at)
 	GROUP BY
 		liked_post.id,
 		posts.id,

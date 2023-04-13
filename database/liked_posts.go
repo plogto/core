@@ -123,49 +123,6 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 	}, nil
 }
 
-func (l *LikedPosts) GetLikedPostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
-	var edges []*model.LikedPostsEdge
-	var endCursor string
-
-	likedPosts, _ := l.Queries.GetLikedPostsByPageInfo(ctx, db.GetLikedPostsByPageInfoParams{
-		UserID:    userID,
-		Limit:     limit,
-		CreatedAt: after,
-	})
-
-	totalCount, _ := l.Queries.CountLikedPostsByPageInfo(ctx, db.CountLikedPostsByPageInfoParams{
-		UserID:    userID,
-		CreatedAt: after,
-	})
-
-	for _, value := range likedPosts {
-		edges = append(edges, &model.LikedPostsEdge{Node: &db.LikedPost{
-			ID:        value.ID,
-			UserID:    value.UserID,
-			PostID:    value.PostID,
-			CreatedAt: value.CreatedAt,
-		}})
-	}
-
-	if len(edges) > 0 {
-		endCursor = util.ConvertCreateAtToCursor(edges[len(edges)-1].Node.CreatedAt)
-	}
-
-	hasNextPage := false
-	if totalCount > int64(limit) {
-		hasNextPage = true
-	}
-
-	return &model.LikedPosts{
-		TotalCount: totalCount,
-		Edges:      edges,
-		PageInfo: &model.PageInfo{
-			EndCursor:   endCursor,
-			HasNextPage: hasNextPage,
-		},
-	}, nil
-}
-
 func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
 	DeletedAt := sql.NullTime{time.Now(), true}
 
