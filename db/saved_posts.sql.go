@@ -13,37 +13,6 @@ import (
 	"github.com/google/uuid"
 )
 
-const countSavedPostsByPostIDAndPageInfo = `-- name: CountSavedPostsByPostIDAndPageInfo :one
-WITH _count_wrapper AS (
-	SELECT
-		count(*)
-	FROM
-		saved_posts
-	WHERE
-		post_id = $1
-		AND created_at < $2
-		AND deleted_at IS NULL
-	ORDER BY
-		created_at DESC
-)
-SELECT
-	count(*)
-FROM
-	_count_wrapper
-`
-
-type CountSavedPostsByPostIDAndPageInfoParams struct {
-	PostID    uuid.UUID
-	CreatedAt time.Time
-}
-
-func (q *Queries) CountSavedPostsByPostIDAndPageInfo(ctx context.Context, arg CountSavedPostsByPostIDAndPageInfoParams) (int64, error) {
-	row := q.db.QueryRowContext(ctx, countSavedPostsByPostIDAndPageInfo, arg.PostID, arg.CreatedAt)
-	var count int64
-	err := row.Scan(&count)
-	return count, err
-}
-
 const countSavedPostsByUserIDAndPageInfo = `-- name: CountSavedPostsByUserIDAndPageInfo :one
 WITH _count_wrapper AS (
 	SELECT
@@ -52,20 +21,21 @@ WITH _count_wrapper AS (
 		saved_posts AS saved_post
 		INNER JOIN posts ON posts.id = saved_post.post_id
 		INNER JOIN users ON users.id = posts.user_id
-		INNER JOIN connections ON connections.following_id = posts.user_id
+		FULL OUTER JOIN connections ON connections.following_id = posts.user_id
 	WHERE
 		saved_post.user_id = $1
 		AND saved_post.deleted_at IS NULL
 		AND posts.deleted_at IS NULL
 		AND (
-			users.id = $1
-			OR connections.status = 2
+			connections.status = 2
 			OR users.is_private = FALSE
 		)
-		AND connections.deleted_at IS NULL
+		AND (
+			users.id = $1
+			OR connections.deleted_at IS NULL
+		)
 		AND saved_post.created_at < $2
 	GROUP BY
-		connections.id,
 		saved_post.id,
 		posts.id,
 		users.id
@@ -197,135 +167,79 @@ func (q *Queries) GetSavedPostByUserIDAndPostID(ctx context.Context, arg GetSave
 	return &i, err
 }
 
-const getSavedPostsByPostIDAndPageInfo = `-- name: GetSavedPostsByPostIDAndPageInfo :many
+const getSavedPostsByUserIDAndPageInfo = `-- name: GetSavedPostsByUserIDAndPageInfo :many
+WITH _count_wrapper AS (
+	SELECT
+		saved_post.id AS saved_post_id,
+		saved_post.post_id AS saved_post_post_id,
+		saved_post.user_id AS saved_post_user_id,
+		saved_post.created_at,
+		saved_post.deleted_at AS saved_post_deleted_at,
+		connections.id AS connection_id,
+		connections.status,
+		connections.deleted_at AS connection_deleted_at,
+		posts.id AS post_id,
+		posts.user_id AS post_user_id,
+		posts.deleted_at AS post_deleted_at,
+		users.id AS user_id,
+		users.is_private
+	FROM
+		saved_posts AS saved_post
+		INNER JOIN posts ON posts.id = saved_post.post_id
+		INNER JOIN users ON users.id = posts.user_id
+		FULL OUTER JOIN connections ON connections.following_id = posts.user_id
+	WHERE
+		saved_post.user_id = $2
+		AND saved_post.deleted_at IS NULL
+		AND posts.deleted_at IS NULL
+		AND (
+			connections.status = 2
+			OR users.is_private = FALSE
+		)
+		AND (
+			users.id = $2
+			OR connections.deleted_at IS NULL
+		)
+		AND saved_post.created_at < $3
+	GROUP BY
+		connections.id,
+		saved_post.id,
+		posts.id,
+		users.id
+)
 SELECT
-	id, user_id, post_id, created_at, updated_at, deleted_at
+	saved_post_id AS id,
+	user_id,
+	post_id,
+	created_at
 FROM
-	saved_posts
-WHERE
-	post_id = $1
-	AND created_at < $2
-	AND deleted_at IS NULL
+	_count_wrapper
+GROUP BY
+	id,
+	user_id,
+	post_id,
+	created_at
 ORDER BY
 	created_at DESC
 LIMIT
-	$3
-`
-
-type GetSavedPostsByPostIDAndPageInfoParams struct {
-	PostID    uuid.UUID
-	CreatedAt time.Time
-	Limit     int32
-}
-
-func (q *Queries) GetSavedPostsByPostIDAndPageInfo(ctx context.Context, arg GetSavedPostsByPostIDAndPageInfoParams) ([]*SavedPost, error) {
-	rows, err := q.db.QueryContext(ctx, getSavedPostsByPostIDAndPageInfo, arg.PostID, arg.CreatedAt, arg.Limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []*SavedPost{}
-	for rows.Next() {
-		var i SavedPost
-		if err := rows.Scan(
-			&i.ID,
-			&i.UserID,
-			&i.PostID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, &i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getSavedPostsByUserIDAndPageInfo = `-- name: GetSavedPostsByUserIDAndPageInfo :many
-SELECT
-	saved_post.id, saved_post.user_id, post_id, saved_post.created_at, saved_post.updated_at, saved_post.deleted_at, posts.id, posts.user_id, parent_id, child_id, posts.status, content, url, posts.created_at, posts.updated_at, posts.deleted_at, users.id, username, email, full_name, bio, role, is_private, avatar, background, primary_color, background_color, is_verified, invitation_code, users.created_at, users.updated_at, users.deleted_at, connections.id, follower_id, following_id, connections.status, connections.created_at, connections.updated_at, connections.deleted_at
-FROM
-	saved_posts AS saved_post
-	INNER JOIN posts ON posts.id = saved_post.post_id
-	INNER JOIN users ON users.id = posts.user_id
-	INNER JOIN connections ON connections.following_id = posts.user_id
-WHERE
-	saved_post.user_id = $1
-	AND saved_post.deleted_at IS NULL
-	AND posts.deleted_at IS NULL
-	AND (
-		users.id = $1
-		OR connections.status = 2
-		OR users.is_private = FALSE
-	)
-	AND connections.deleted_at IS NULL
-	AND saved_post.created_at < $2
-GROUP BY
-	connections.id,
-	saved_post.id,
-	posts.id,
-	users.id
-LIMIT
-	$3
+	$1
 `
 
 type GetSavedPostsByUserIDAndPageInfoParams struct {
+	Limit     int32
 	UserID    uuid.UUID
 	CreatedAt time.Time
-	Limit     int32
 }
 
 type GetSavedPostsByUserIDAndPageInfoRow struct {
-	ID              uuid.UUID
-	UserID          uuid.UUID
-	PostID          uuid.UUID
-	CreatedAt       time.Time
-	UpdatedAt       time.Time
-	DeletedAt       sql.NullTime
-	ID_2            uuid.UUID
-	UserID_2        uuid.UUID
-	ParentID        uuid.NullUUID
-	ChildID         uuid.NullUUID
-	Status          PostStatus
-	Content         sql.NullString
-	Url             string
-	CreatedAt_2     time.Time
-	UpdatedAt_2     time.Time
-	DeletedAt_2     sql.NullTime
-	ID_3            uuid.UUID
-	Username        string
-	Email           string
-	FullName        string
-	Bio             sql.NullString
-	Role            UserRole
-	IsPrivate       bool
-	Avatar          uuid.NullUUID
-	Background      uuid.NullUUID
-	PrimaryColor    PrimaryColor
-	BackgroundColor BackgroundColor
-	IsVerified      bool
-	InvitationCode  string
-	CreatedAt_3     time.Time
-	UpdatedAt_3     time.Time
-	DeletedAt_3     sql.NullTime
-	ID_4            uuid.UUID
-	FollowerID      uuid.UUID
-	FollowingID     uuid.UUID
-	Status_2        int32
-	CreatedAt_4     time.Time
-	UpdatedAt_4     time.Time
-	DeletedAt_4     sql.NullTime
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	PostID    uuid.UUID
+	CreatedAt time.Time
 }
 
 func (q *Queries) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, arg GetSavedPostsByUserIDAndPageInfoParams) ([]*GetSavedPostsByUserIDAndPageInfoRow, error) {
-	rows, err := q.db.QueryContext(ctx, getSavedPostsByUserIDAndPageInfo, arg.UserID, arg.CreatedAt, arg.Limit)
+	rows, err := q.db.QueryContext(ctx, getSavedPostsByUserIDAndPageInfo, arg.Limit, arg.UserID, arg.CreatedAt)
 	if err != nil {
 		return nil, err
 	}
@@ -338,41 +252,6 @@ func (q *Queries) GetSavedPostsByUserIDAndPageInfo(ctx context.Context, arg GetS
 			&i.UserID,
 			&i.PostID,
 			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.DeletedAt,
-			&i.ID_2,
-			&i.UserID_2,
-			&i.ParentID,
-			&i.ChildID,
-			&i.Status,
-			&i.Content,
-			&i.Url,
-			&i.CreatedAt_2,
-			&i.UpdatedAt_2,
-			&i.DeletedAt_2,
-			&i.ID_3,
-			&i.Username,
-			&i.Email,
-			&i.FullName,
-			&i.Bio,
-			&i.Role,
-			&i.IsPrivate,
-			&i.Avatar,
-			&i.Background,
-			&i.PrimaryColor,
-			&i.BackgroundColor,
-			&i.IsVerified,
-			&i.InvitationCode,
-			&i.CreatedAt_3,
-			&i.UpdatedAt_3,
-			&i.DeletedAt_3,
-			&i.ID_4,
-			&i.FollowerID,
-			&i.FollowingID,
-			&i.Status_2,
-			&i.CreatedAt_4,
-			&i.UpdatedAt_4,
-			&i.DeletedAt_4,
 		); err != nil {
 			return nil, err
 		}
