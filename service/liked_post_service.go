@@ -92,7 +92,7 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 		pagination := util.ExtractPageInfo(pageInfo)
 
 		if !validation.IsUserExists(user) {
-			return s.LikedPosts.GetLikedPostsByPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
+			return nil, nil
 		} else {
 			return s.LikedPosts.GetLikedPostsByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 		}
