@@ -41,7 +41,7 @@ func (s *Service) GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInp
 		return nil, errors.New(err.Error())
 	}
 
-	if user == nil {
+	if !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
