@@ -282,33 +282,34 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		CheckEmail                   func(childComplexity int, email string) int
-		CheckUsername                func(childComplexity int, username string) int
-		GetCreditTransactions        func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetExplorePosts              func(childComplexity int, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) int
-		GetFollowRequests            func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetFollowersByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetFollowingByUsername       func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetInvitedUsers              func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetLikedPostsByPostID        func(childComplexity int, postID uuid.UUID, pageInfo *model.PageInfoInput) int
-		GetLikedPostsByUsername      func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetNotifications             func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetPostByURL                 func(childComplexity int, url string) int
-		GetPostsByTagName            func(childComplexity int, tagName string, pageInfo *model.PageInfoInput) int
-		GetPostsByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetRepliesByUsername         func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
-		GetSavedPosts                func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetTagByTagName              func(childComplexity int, tagName string) int
-		GetTicketMessagesByTicketURL func(childComplexity int, ticketURL string, pageInfo *model.PageInfoInput) int
-		GetTickets                   func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetTimelinePosts             func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetTrends                    func(childComplexity int, first *int) int
-		GetUserByInvitationCode      func(childComplexity int, invitationCode string) int
-		GetUserByUsername            func(childComplexity int, username string) int
-		GetUserInfo                  func(childComplexity int) int
-		Login                        func(childComplexity int, input model.LoginInput) int
-		Search                       func(childComplexity int, expression string) int
-		Test                         func(childComplexity int, input model.TestInput) int
+		CheckEmail                       func(childComplexity int, email string) int
+		CheckUsername                    func(childComplexity int, username string) int
+		GetCreditTransactions            func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetExplorePosts                  func(childComplexity int, input *model.GetExplorePostsInput, pageInfo *model.PageInfoInput) int
+		GetFollowRequests                func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetFollowersByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetFollowingByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetInvitedUsers                  func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetLikedPostsByPostID            func(childComplexity int, postID uuid.UUID, pageInfo *model.PageInfoInput) int
+		GetLikedPostsByUsername          func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetNotifications                 func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetPostByURL                     func(childComplexity int, url string) int
+		GetPostsByTagName                func(childComplexity int, tagName string, pageInfo *model.PageInfoInput) int
+		GetPostsByUsername               func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetPostsWithAttachmentByUsername func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetRepliesByUsername             func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
+		GetSavedPosts                    func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetTagByTagName                  func(childComplexity int, tagName string) int
+		GetTicketMessagesByTicketURL     func(childComplexity int, ticketURL string, pageInfo *model.PageInfoInput) int
+		GetTickets                       func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetTimelinePosts                 func(childComplexity int, pageInfo *model.PageInfoInput) int
+		GetTrends                        func(childComplexity int, first *int) int
+		GetUserByInvitationCode          func(childComplexity int, invitationCode string) int
+		GetUserByUsername                func(childComplexity int, username string) int
+		GetUserInfo                      func(childComplexity int) int
+		Login                            func(childComplexity int, input model.LoginInput) int
+		Search                           func(childComplexity int, expression string) int
+		Test                             func(childComplexity int, input model.TestInput) int
 	}
 
 	SavedPost struct {
@@ -544,6 +545,7 @@ type QueryResolver interface {
 	GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
+	GetPostsWithAttachmentByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetRepliesByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetPostsByTagName(ctx context.Context, tagName string, pageInfo *model.PageInfoInput) (*model.Posts, error)
 	GetPostByURL(ctx context.Context, url string) (*db.Post, error)
@@ -1795,6 +1797,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.GetPostsByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
+	case "Query.getPostsWithAttachmentByUsername":
+		if e.complexity.Query.GetPostsWithAttachmentByUsername == nil {
+			break
+		}
+
+		args, err := ec.field_Query_getPostsWithAttachmentByUsername_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.GetPostsWithAttachmentByUsername(childComplexity, args["username"].(string), args["pageInfo"].(*model.PageInfoInput)), true
+
 	case "Query.getRepliesByUsername":
 		if e.complexity.Query.GetRepliesByUsername == nil {
 			break
@@ -2878,6 +2892,10 @@ input GetExplorePostsInput {
 
 extend type Query {
   getPostsByUsername(username: String!, pageInfo: PageInfoInput): Posts
+  getPostsWithAttachmentByUsername(
+    username: String!
+    pageInfo: PageInfoInput
+  ): Posts
   getRepliesByUsername(username: String!, pageInfo: PageInfoInput): Posts
   getPostsByTagName(tagName: String!, pageInfo: PageInfoInput): Posts
   getPostByUrl(url: String!): Post
@@ -3709,6 +3727,30 @@ func (ec *executionContext) field_Query_getPostsByTagName_args(ctx context.Conte
 }
 
 func (ec *executionContext) field_Query_getPostsByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["username"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["username"] = arg0
+	var arg1 *model.PageInfoInput
+	if tmp, ok := rawArgs["pageInfo"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("pageInfo"))
+		arg1, err = ec.unmarshalOPageInfoInput2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPageInfoInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["pageInfo"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_getPostsWithAttachmentByUsername_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 string
@@ -11520,6 +11562,66 @@ func (ec *executionContext) fieldContext_Query_getPostsByUsername(ctx context.Co
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_getPostsByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_getPostsWithAttachmentByUsername(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_getPostsWithAttachmentByUsername(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().GetPostsWithAttachmentByUsername(rctx, fc.Args["username"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Posts)
+	fc.Result = res
+	return ec.marshalOPosts2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPosts(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_getPostsWithAttachmentByUsername(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "totalCount":
+				return ec.fieldContext_Posts_totalCount(ctx, field)
+			case "edges":
+				return ec.fieldContext_Posts_edges(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_Posts_pageInfo(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Posts", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_getPostsWithAttachmentByUsername_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -20715,6 +20817,26 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_getPostsByUsername(ctx, field)
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "getPostsWithAttachmentByUsername":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_getPostsWithAttachmentByUsername(ctx, field)
 				return res
 			}
 

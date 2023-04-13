@@ -65,6 +65,50 @@ SELECT
 FROM
 	_count_wrapper;
 
+-- name: GetPostsWithAttachmentByUserIDAndPageInfo :many
+SELECT
+	DISTINCT ON (post.created_at) post.id,
+	post.*,
+	post_attachments.*
+FROM
+	posts AS post
+	INNER JOIN post_attachments ON post_attachments.post_id = post.id
+WHERE
+	post.user_id = sqlc.arg(user_id)
+	AND post.deleted_at IS NULL
+	AND post.created_at < sqlc.arg(created_at)
+GROUP BY
+	post_attachments.id,
+	post.id
+ORDER BY
+	post.created_at DESC
+LIMIT
+	$1;
+
+-- name: CountPostsWithAttachmentByUserIDAndPageInfo :one
+WITH _count_wrapper AS (
+	SELECT
+		DISTINCT ON (post.created_at) post.id,
+		post.*,
+		post_attachments.*
+	FROM
+		posts AS post
+		INNER JOIN post_attachments ON post_attachments.post_id = post.id
+	WHERE
+		post.user_id = sqlc.arg(user_id)
+		AND post.deleted_at IS NULL
+		AND post.created_at < sqlc.arg(created_at)
+	GROUP BY
+		post_attachments.id,
+		post.id
+	ORDER BY
+		post.created_at DESC
+)
+SELECT
+	count(*)
+FROM
+	_count_wrapper;
+
 -- name: GetPostsWithParentIDByUserIDAndPageInfo :many
 SELECT
 	*

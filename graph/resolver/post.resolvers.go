@@ -100,6 +100,11 @@ func (r *queryResolver) GetPostsByUsername(ctx context.Context, username string,
 	return r.Service.GetPostsByUsername(ctx, username, pageInfo)
 }
 
+// GetPostsWithAttachmentByUsername is the resolver for the getPostsWithAttachmentByUsername field.
+func (r *queryResolver) GetPostsWithAttachmentByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
+	return r.Service.GetPostsWithAttachmentByUsername(ctx, username, pageInfo)
+}
+
 // GetRepliesByUsername is the resolver for the getRepliesByUsername field.
 func (r *queryResolver) GetRepliesByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error) {
 	return r.Service.GetRepliesByUsername(ctx, username, pageInfo)
