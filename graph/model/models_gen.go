@@ -157,8 +157,8 @@ type Posts struct {
 }
 
 type PostsEdge struct {
-	Cursor string   `json:"cursor"`
-	Node   *db.Post `json:"node,omitempty"`
+	Cursor string `json:"cursor"`
+	Node   *Post  `json:"node,omitempty"`
 }
 
 type RegisterInput struct {

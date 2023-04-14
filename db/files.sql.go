@@ -7,8 +7,11 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 const createFile = `-- name: CreateFile :one
@@ -156,6 +159,67 @@ func (q *Queries) GetFilesByPostID(ctx context.Context, postID uuid.UUID) ([]*Fi
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getFilesByPostIDs = `-- name: GetFilesByPostIDs :many
+SELECT
+	file.id, file.hash, file.name, file.width, file.height, file.created_at, file.updated_at, file.deleted_at,
+	post_attachments.post_id
+FROM
+	files AS file
+	INNER JOIN post_attachments ON post_attachments.file_id = file.id
+WHERE
+	post_attachments.post_id = ANY($1 :: uuid [ ])
+	AND file.deleted_at IS NULL
+	AND post_attachments.deleted_at IS NULL
+GROUP BY
+	file.id,
+	post_attachments.post_id
+`
+
+type GetFilesByPostIDsRow struct {
+	ID        uuid.UUID
+	Hash      string
+	Name      string
+	Width     int32
+	Height    int32
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt sql.NullTime
+	PostID    uuid.UUID
+}
+
+func (q *Queries) GetFilesByPostIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*GetFilesByPostIDsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getFilesByPostIDs, pq.Array(dollar_1))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*GetFilesByPostIDsRow{}
+	for rows.Next() {
+		var i GetFilesByPostIDsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Hash,
+			&i.Name,
+			&i.Width,
+			&i.Height,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.PostID,
 		); err != nil {
 			return nil, err
 		}

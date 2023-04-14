@@ -2,13 +2,19 @@ package validation
 
 import (
 	"github.com/plogto/core/db"
-	"github.com/samber/lo"
+	"github.com/plogto/core/graph/model"
 )
 
-func IsPostExists(post *db.Post) bool {
-	return post != nil && lo.IsNotEmpty(post.ID)
+type PostType interface {
+	db.Post | model.Post
 }
 
-func IsParentPostExists(post *db.Post) bool {
-	return IsPostExists(post) && lo.IsNotEmpty(post.ParentID)
+// TODO: fix validation
+func IsPostExists[T PostType](post *T) bool {
+	return post != nil
+}
+
+// TODO: fix validation
+func IsParentPostExists(post *model.Post) bool {
+	return IsPostExists(post) && post.ParentID.Valid
 }

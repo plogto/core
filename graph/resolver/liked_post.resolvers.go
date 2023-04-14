@@ -20,7 +20,7 @@ func (r *likedPostResolver) User(ctx context.Context, obj *db.LikedPost) (*db.Us
 }
 
 // Post is the resolver for the post field.
-func (r *likedPostResolver) Post(ctx context.Context, obj *db.LikedPost) (*db.Post, error) {
+func (r *likedPostResolver) Post(ctx context.Context, obj *db.LikedPost) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, uuid.NullUUID{obj.PostID, true})
 }
 
