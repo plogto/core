@@ -141,7 +141,7 @@ models:
   PostTag:
     model: github.com/plogto/core/db.PostTag
   Post:
-    model: github.com/plogto/core/db.Post
+    model: github.com/plogto/core/graph/model.Post
     fields:
       user:
         resolver: true

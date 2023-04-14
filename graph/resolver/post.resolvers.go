@@ -6,7 +6,6 @@ package graph
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/db"
@@ -16,27 +15,22 @@ import (
 )
 
 // AddPost is the resolver for the addPost field.
-func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error) {
+func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
 	return r.Service.AddPost(ctx, input)
 }
 
 // EditPost is the resolver for the editPost field.
-func (r *mutationResolver) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error) {
+func (r *mutationResolver) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*model.Post, error) {
 	return r.Service.EditPost(ctx, postID, input)
 }
 
 // DeletePost is the resolver for the deletePost field.
-func (r *mutationResolver) DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error) {
+func (r *mutationResolver) DeletePost(ctx context.Context, postID uuid.UUID) (*model.Post, error) {
 	return r.Service.DeletePost(ctx, postID)
 }
 
-// Status is the resolver for the status field.
-func (r *postResolver) Status(ctx context.Context, obj *db.Post) (model.PostStatus, error) {
-	return model.PostStatus(obj.Status), nil
-}
-
 // Parent is the resolver for the parent field.
-func (r *postResolver) Parent(ctx context.Context, obj *db.Post) (*db.Post, error) {
+func (r *postResolver) Parent(ctx context.Context, obj *model.Post) (*model.Post, error) {
 	if !obj.ParentID.Valid {
 		return nil, nil
 	} else {
@@ -44,43 +38,38 @@ func (r *postResolver) Parent(ctx context.Context, obj *db.Post) (*db.Post, erro
 	}
 }
 
-// Child is the resolver for the child field.
-func (r *postResolver) Child(ctx context.Context, obj *db.Post) (*db.Post, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 // User is the resolver for the user field.
-func (r *postResolver) User(ctx context.Context, obj *db.Post) (*db.User, error) {
+func (r *postResolver) User(ctx context.Context, obj *model.Post) (*db.User, error) {
 	return r.Service.GetUserByID(ctx, obj.UserID)
 }
 
 // Content is the resolver for the content field.
-func (r *postResolver) Content(ctx context.Context, obj *db.Post) (*string, error) {
+func (r *postResolver) Content(ctx context.Context, obj *model.Post) (*string, error) {
 	return r.Service.GetPostContentByPostID(ctx, uuid.NullUUID{obj.ID, true})
 }
 
 // Attachment is the resolver for the attachment field.
-func (r *postResolver) Attachment(ctx context.Context, obj *db.Post) ([]*db.File, error) {
-	return r.Service.GetPostAttachmentsByPostID(ctx, obj.ID)
+func (r *postResolver) Attachment(ctx context.Context, obj *model.Post) ([]*db.File, error) {
+	return obj.Attachment, nil
 }
 
 // Likes is the resolver for the likes field.
-func (r *postResolver) Likes(ctx context.Context, obj *db.Post) (*model.LikedPosts, error) {
+func (r *postResolver) Likes(ctx context.Context, obj *model.Post) (*model.LikedPosts, error) {
 	return r.Service.GetLikedPostsByPostID(ctx, obj.ID)
 }
 
 // Replies is the resolver for the replies field.
-func (r *postResolver) Replies(ctx context.Context, obj *db.Post) (*model.Posts, error) {
+func (r *postResolver) Replies(ctx context.Context, obj *model.Post) (*model.Posts, error) {
 	return r.Service.GetPostsByParentID(ctx, obj.ID)
 }
 
 // IsLiked is the resolver for the isLiked field.
-func (r *postResolver) IsLiked(ctx context.Context, obj *db.Post) (*db.LikedPost, error) {
+func (r *postResolver) IsLiked(ctx context.Context, obj *model.Post) (*db.LikedPost, error) {
 	return r.Service.IsPostLiked(ctx, obj.ID)
 }
 
 // IsSaved is the resolver for the isSaved field.
-func (r *postResolver) IsSaved(ctx context.Context, obj *db.Post) (*db.SavedPost, error) {
+func (r *postResolver) IsSaved(ctx context.Context, obj *model.Post) (*db.SavedPost, error) {
 	return r.Service.IsPostSaved(ctx, obj.ID)
 }
 
@@ -90,7 +79,7 @@ func (r *postsEdgeResolver) Cursor(ctx context.Context, obj *model.PostsEdge) (s
 }
 
 // Node is the resolver for the node field.
-func (r *postsEdgeResolver) Node(ctx context.Context, obj *model.PostsEdge) (*db.Post, error) {
+func (r *postsEdgeResolver) Node(ctx context.Context, obj *model.PostsEdge) (*model.Post, error) {
 	postID := obj.Node.ID.String()
 	return r.Service.GetPostByID(ctx, uuid.NullUUID{uuid.MustParse(postID), true})
 }
@@ -116,7 +105,7 @@ func (r *queryResolver) GetPostsByTagName(ctx context.Context, tagName string, p
 }
 
 // GetPostByURL is the resolver for the getPostByUrl field.
-func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
+func (r *queryResolver) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
 	return r.Service.GetPostByURL(ctx, url)
 }
 

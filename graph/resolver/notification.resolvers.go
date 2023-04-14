@@ -34,12 +34,12 @@ func (r *notificationResolver) Receiver(ctx context.Context, obj *db.Notificatio
 }
 
 // Post is the resolver for the post field.
-func (r *notificationResolver) Post(ctx context.Context, obj *db.Notification) (*db.Post, error) {
+func (r *notificationResolver) Post(ctx context.Context, obj *db.Notification) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.PostID)
 }
 
 // Reply is the resolver for the reply field.
-func (r *notificationResolver) Reply(ctx context.Context, obj *db.Notification) (*db.Post, error) {
+func (r *notificationResolver) Reply(ctx context.Context, obj *db.Notification) (*model.Post, error) {
 	return r.Service.GetPostByID(ctx, obj.ReplyID)
 }
 

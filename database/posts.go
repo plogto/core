@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -40,7 +39,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
@@ -70,13 +69,11 @@ func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, u
 	var edges []*model.PostsEdge
 	var endCursor string
 
-	posts, err := p.Queries.GetPostsWithAttachmentByUserIDAndPageInfo(ctx, db.GetPostsWithAttachmentByUserIDAndPageInfoParams{
+	posts, _ := p.Queries.GetPostsWithAttachmentByUserIDAndPageInfo(ctx, db.GetPostsWithAttachmentByUserIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
 		CreatedAt: after,
 	})
-
-	fmt.Println(err)
 
 	totalCount, _ := p.Queries.CountPostsWithAttachmentByUserIDAndPageInfo(ctx, db.CountPostsWithAttachmentByUserIDAndPageInfoParams{
 		UserID:    userID,
@@ -84,7 +81,7 @@ func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, u
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
@@ -126,7 +123,7 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			ParentID:  value.ParentID,
 			CreatedAt: value.CreatedAt,
@@ -170,7 +167,7 @@ func (p *Posts) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, user
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -205,7 +202,7 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, parentID uuid
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -240,7 +237,7 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -281,7 +278,7 @@ func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID
 	})
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -318,7 +315,7 @@ func (p *Posts) GetExplorePostsByPageInfo(ctx context.Context, limit int32, afte
 	totalCount, _ := p.Queries.CountExplorePostsByPageInfo(ctx, after)
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -355,7 +352,7 @@ func (p *Posts) GetExplorePostsWithAttachmentByPageInfo(ctx context.Context, lim
 	totalCount, _ := p.Queries.CountExplorePostsWithAttachmentByPageInfo(ctx, after)
 
 	for _, value := range posts {
-		edges = append(edges, &model.PostsEdge{Node: &db.Post{
+		edges = append(edges, &model.PostsEdge{Node: &model.Post{
 			ID:        value.ID,
 			CreatedAt: value.CreatedAt,
 		}})
@@ -387,13 +384,11 @@ func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64
 }
 
 func (p *Posts) UpdatePost(ctx context.Context, post *db.Post) (*db.Post, error) {
-	updatedPost, _ := p.Queries.UpdatePost(ctx, db.UpdatePostParams{
+	return util.HandleDBResponse(p.Queries.UpdatePost(ctx, db.UpdatePostParams{
 		ID:      post.ID,
 		Content: post.Content,
 		Status:  post.Status,
-	})
-
-	return updatedPost, nil
+	}))
 }
 
 func (p *Posts) DeletePostByID(ctx context.Context, id uuid.UUID) (*db.Post, error) {

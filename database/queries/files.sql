@@ -44,6 +44,21 @@ WHERE
 GROUP BY
 	file.id;
 
+-- name: GetFilesByPostIDs :many
+SELECT
+	file.*,
+	post_attachments.post_id
+FROM
+	files AS file
+	INNER JOIN post_attachments ON post_attachments.file_id = file.id
+WHERE
+	post_attachments.post_id = ANY($1 :: uuid [ ])
+	AND file.deleted_at IS NULL
+	AND post_attachments.deleted_at IS NULL
+GROUP BY
+	file.id,
+	post_attachments.post_id;
+
 -- name: GetFilesByTicketMessageID :many
 SELECT
 	file.*

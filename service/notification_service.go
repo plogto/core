@@ -28,7 +28,7 @@ type RemovePostNotificationsArgs struct {
 
 type CreatePostMentionNotificationsArgs struct {
 	UserIDs  []uuid.UUID
-	Post     db.Post
+	Post     model.Post
 	SenderID uuid.UUID
 }
 

@@ -20,7 +20,7 @@ import (
 	"github.com/samber/lo"
 )
 
-func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Post, error) {
+func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error) {
 	// authentication
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
@@ -28,7 +28,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 	}
 
 	// check parent post
-	var parentPost *db.Post
+	var parentPost *model.Post
 	if input.ParentID != nil {
 		parentPost, _ = graph.GetPostLoader(ctx).Load(input.ParentID.String())
 
@@ -92,7 +92,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 			s.CreatePostMentionNotifications(ctx, CreatePostMentionNotificationsArgs{
 				UserIDs:  userIDs,
 				SenderID: user.ID,
-				Post:     *post,
+				Post:     *convertor.DBPostToModel(post),
 			})
 		}
 		// notification for reply
@@ -109,10 +109,10 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*db.Po
 		}
 	}
 
-	return post, nil
+	return convertor.DBPostToModel(post), nil
 }
 
-func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*db.Post, error) {
+func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -171,8 +171,8 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 		}
 	}
 
-	if input.Status != nil && post.Status != db.PostStatus(input.Status.String()) {
-		post.Status = db.PostStatus(input.Status.String())
+	if input.Status != nil && post.Status != *input.Status {
+		post.Status = *input.Status
 		didUpdate = true
 	}
 
@@ -180,10 +180,12 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 		return nil, nil
 	}
 
-	return s.Posts.UpdatePost(ctx, post)
+	updatedPost, _ := s.Posts.UpdatePost(ctx, convertor.ModelPostToDB(post))
+
+	return convertor.DBPostToModel(updatedPost), nil
 }
 
-func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, error) {
+func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -221,7 +223,7 @@ func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*db.Post, e
 		s.PostTags.DeletePostTagsByPostID(ctx, postID)
 	}
 
-	return deletedPost, nil
+	return convertor.DBPostToModel(deletedPost), nil
 }
 
 func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*model.Posts, error) {
@@ -309,7 +311,7 @@ func (s *Service) GetPostsCount(ctx context.Context, userID uuid.UUID) (int64, e
 	return s.Posts.CountPostsByUserID(ctx, userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id uuid.NullUUID) (*db.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id uuid.NullUUID) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if !id.Valid {
@@ -343,7 +345,7 @@ func (s *Service) GetPostContentByPostID(ctx context.Context, id uuid.NullUUID) 
 	return &content, err
 }
 
-func (s *Service) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
+func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	post, err := s.Posts.GetPostByURL(ctx, url)
@@ -352,7 +354,9 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*db.Post, error
 		return nil, err
 	}
 
-	return post, err
+	loadedPost, _ := graph.GetPostLoader(ctx).Load(post.ID.String())
+
+	return loadedPost, err
 }
 
 func (s *Service) GetTimelinePosts(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Posts, error) {
