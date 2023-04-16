@@ -7,6 +7,7 @@ import (
 
 type Data interface {
 	model.Tag |
+		db.InvitedUser |
 		db.Password |
 		db.Connection |
 		db.Tag |
