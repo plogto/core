@@ -51,11 +51,11 @@ func (s *Service) Register(ctx context.Context, input model.RegisterInput, isOAu
 
 		hashedPassword, err := util.HashPassword(input.Password)
 		if err != nil {
-			password.Password = *hashedPassword
 			log.Printf("error while hashing password: %v", err)
 			return nil, errors.New("something went wrong")
 		}
 
+		password.Password = *hashedPassword
 		if _, err := s.Passwords.AddPassword(ctx, password); err != nil {
 			log.Printf("error white adding password: %v", err)
 			return nil, err
