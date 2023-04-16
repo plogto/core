@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/plogto/core/db"
+	"github.com/plogto/core/util"
 )
 
 type InvitedUsers struct {
@@ -11,7 +12,5 @@ type InvitedUsers struct {
 }
 
 func (i *InvitedUsers) CreateInvitedUser(ctx context.Context, arg db.CreateInvitedUserParams) (*db.InvitedUser, error) {
-	invitedUser, _ := i.Queries.CreateInvitedUser(ctx, arg)
-
-	return invitedUser, nil
+	return util.HandleDBResponse(i.Queries.CreateInvitedUser(ctx, arg))
 }

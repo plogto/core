@@ -7,6 +7,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -18,7 +19,7 @@ type CreateCreditTransactionParams struct {
 	SenderID                    uuid.UUID
 	ReceiverID                  uuid.UUID
 	Amount                      sql.NullFloat64
-	Description                 *string
+	Description                 sql.NullString
 	Status                      model.CreditTransactionStatus
 	Type                        db.CreditTransactionType
 	TemplateName                db.CreditTransactionTemplateName
@@ -78,9 +79,9 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 	}
 
 	creditTransactionInfo, err := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
-		Description:                 sql.NullString{*creditTransactionParams.Description, true},
+		Description:                 creditTransactionParams.Description,
 		CreditTransactionTemplateID: uuid.NullUUID{creditTransactionTemplateID, true},
-		Status:                      db.CreditTransactionStatus(creditTransactionParams.Status),
+		Status:                      convertor.ModelCreditTransactionStatusToDB(creditTransactionParams.Status),
 	})
 
 	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
