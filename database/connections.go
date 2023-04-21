@@ -2,10 +2,9 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -22,10 +21,10 @@ type ConnectionFilter struct {
 }
 
 func (c *Connections) CreateConnection(ctx context.Context, arg db.CreateConnectionParams) (*db.Connection, error) {
-	return util.HandleDBResponse(c.Queries.CreateConnection(ctx, arg))
+	return c.Queries.CreateConnection(ctx, arg)
 }
 
-func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, followerID uuid.UUID, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, followerID pgtype.UUID, filter ConnectionFilter) (*model.Connections, error) {
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
@@ -71,7 +70,7 @@ func (c *Connections) GetFollowersByUserIDAndPageInfo(ctx context.Context, follo
 	}, nil
 }
 
-func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID uuid.UUID, filter ConnectionFilter) (*model.Connections, error) {
+func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, followingID pgtype.UUID, filter ConnectionFilter) (*model.Connections, error) {
 	var edges []*model.ConnectionsEdge
 	var endCursor string
 
@@ -117,19 +116,19 @@ func (c *Connections) GetFollowingByUserIDAndPageInfo(ctx context.Context, follo
 	}, nil
 }
 
-func (c *Connections) GetConnectionByID(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
+func (c *Connections) GetConnectionByID(ctx context.Context, id pgtype.UUID) (*db.Connection, error) {
 	// TODO: use dataloader
-	return util.HandleDBResponse(c.Queries.GetConnectionByID(ctx, id))
+	return c.Queries.GetConnectionByID(ctx, id)
 }
 
-func (c *Connections) GetConnection(ctx context.Context, followingID, followerID uuid.UUID) (*db.Connection, error) {
-	return util.HandleDBResponse(c.Queries.GetConnection(ctx, db.GetConnectionParams{
+func (c *Connections) GetConnection(ctx context.Context, followingID, followerID pgtype.UUID) (*db.Connection, error) {
+	return c.Queries.GetConnection(ctx, db.GetConnectionParams{
 		FollowerID:  followerID,
 		FollowingID: followingID,
-	}))
+	})
 }
 
-func (c *Connections) CountFollowingConnectionByUserID(ctx context.Context, userID uuid.UUID, status int32) (int64, error) {
+func (c *Connections) CountFollowingConnectionByUserID(ctx context.Context, userID pgtype.UUID, status int32) (int64, error) {
 	createdAt := time.Now()
 
 	totalCount, _ := c.Queries.CountFollowingByUserIDAndPageInfo(ctx, db.CountFollowingByUserIDAndPageInfoParams{
@@ -141,7 +140,7 @@ func (c *Connections) CountFollowingConnectionByUserID(ctx context.Context, user
 	return totalCount, nil
 }
 
-func (c *Connections) CountFollowersConnectionByUserID(ctx context.Context, userID uuid.UUID, status int32) (int64, error) {
+func (c *Connections) CountFollowersConnectionByUserID(ctx context.Context, userID pgtype.UUID, status int32) (int64, error) {
 	createdAt := time.Now()
 
 	totalCount, _ := c.Queries.CountFollowersByUserIDAndPageInfo(ctx, db.CountFollowersByUserIDAndPageInfoParams{
@@ -154,15 +153,15 @@ func (c *Connections) CountFollowersConnectionByUserID(ctx context.Context, user
 }
 
 func (c *Connections) UpdateConnection(ctx context.Context, arg db.UpdateConnectionParams) (*db.Connection, error) {
-	return util.HandleDBResponse(c.Queries.UpdateConnection(ctx, arg))
+	return c.Queries.UpdateConnection(ctx, arg)
 }
 
 // TODO: fix this name or functionality
-func (c *Connections) DeleteConnection(ctx context.Context, id uuid.UUID) (*db.Connection, error) {
-	DeletedAt := sql.NullTime{time.Now(), true}
+func (c *Connections) DeleteConnection(ctx context.Context, id pgtype.UUID) (*db.Connection, error) {
+	DeletedAt := time.Now()
 
-	return util.HandleDBResponse(c.Queries.DeleteConnection(ctx, db.DeleteConnectionParams{
+	return c.Queries.DeleteConnection(ctx, db.DeleteConnectionParams{
 		ID:        id,
-		DeletedAt: DeletedAt,
-	}))
+		DeletedAt: &DeletedAt,
+	})
 }

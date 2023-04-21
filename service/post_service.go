@@ -2,13 +2,12 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
@@ -30,13 +29,13 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check parent post
 	var parentPost *model.Post
 	if input.ParentID != nil {
-		parentPost, _ = graph.GetPostLoader(ctx).Load(input.ParentID.String())
+		parentPost, _ = graph.GetPostLoader(ctx).Load(convertor.UUIDToString(*input.ParentID))
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
 		}
 
-		followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
+		followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(parentPost.UserID))
 		if !s.CheckUserAccess(ctx, user, followingUser) {
 			return nil, errors.New("access denied")
 		}
@@ -49,7 +48,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	}
 
 	for _, id := range input.Attachment {
-		file, _ := s.Files.GetFileByID(ctx, uuid.MustParse(id))
+		file, _ := s.Files.GetFileByID(ctx, convertor.StringToUUID(id))
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -57,9 +56,9 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	content, userIDs := s.FormatPostContent(ctx, *input.Content)
 
-	var parentID uuid.NullUUID
+	var parentID pgtype.UUID
 	if input.ParentID != nil {
-		parentID = uuid.NullUUID{uuid.MustParse(input.ParentID.String()), true}
+		parentID = *input.ParentID
 	}
 
 	var status = db.PostStatusPublic
@@ -70,7 +69,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	post, _ := s.Posts.CreatePost(ctx, db.CreatePostParams{
 		ParentID: parentID,
 		UserID:   user.ID,
-		Content:  sql.NullString{content, true},
+		Content:  pgtype.Text{content, true},
 		Status:   status,
 		Url:      util.RandomString(20),
 	})
@@ -82,7 +81,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check attachment
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			s.PostAttachments.CreatePostAttachment(ctx, post.ID, uuid.MustParse(v))
+			s.PostAttachments.CreatePostAttachment(ctx, post.ID, convertor.StringToUUID(v))
 		}
 	}
 
@@ -97,14 +96,13 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		}
 		// notification for reply
 		if lo.IsNotEmpty(input.ParentID) {
-			postID, _ := uuid.Parse(input.ParentID.String())
 			s.CreateNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameReplyPost,
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
-				Url:        "/p/" + post.Url + "#" + post.ID.String(),
-				PostID:     uuid.NullUUID{postID, true},
-				ReplyID:    uuid.NullUUID{post.ID, true},
+				Url:        "/p/" + post.Url + "#" + convertor.UUIDToString(post.ID),
+				PostID:     *input.ParentID,
+				ReplyID:    post.ID,
 			})
 		}
 	}
@@ -112,13 +110,13 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	return convertor.DBPostToModel(post), nil
 }
 
-func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.EditPostInput) (*model.Post, error) {
+func (s *Service) EditPost(ctx context.Context, postID pgtype.UUID, input model.EditPostInput) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
@@ -130,13 +128,13 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 		if post.Content.String != content {
 			oldUserIDs := s.ExtractUserIDsFromPostContent(post.Content.String)
 
-			oldUserIDs = lo.Reject(oldUserIDs, func(oldUser uuid.UUID, _ int) bool {
-				_, ok := lo.Find(userIDs, func(user uuid.UUID) bool {
+			oldUserIDs = lo.Reject(oldUserIDs, func(oldUser pgtype.UUID, _ int) bool {
+				_, ok := lo.Find(userIDs, func(user pgtype.UUID) bool {
 					return oldUser == user
 				})
 
 				if ok {
-					userIDs = lo.Reject(userIDs, func(userID uuid.UUID, _ int) bool {
+					userIDs = lo.Reject(userIDs, func(userID pgtype.UUID, _ int) bool {
 						return userID == oldUser
 					})
 				}
@@ -152,7 +150,7 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 					SenderID:   user.ID,
 					ReceiverID: oldUser,
 					Url:        "/p/" + post.Url,
-					PostID:     uuid.NullUUID{postID, true},
+					PostID:     postID,
 				})
 			}
 			// added users
@@ -166,7 +164,7 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 			s.PostTags.DeletePostTagsByPostID(ctx, post.ID)
 			s.SaveTagsPost(ctx, post.ID, content)
 
-			post.Content = sql.NullString{content, true}
+			post.Content = pgtype.Text{content, true}
 			didUpdate = true
 		}
 	}
@@ -185,29 +183,29 @@ func (s *Service) EditPost(ctx context.Context, postID uuid.UUID, input model.Ed
 	return convertor.DBPostToModel(updatedPost), nil
 }
 
-func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*model.Post, error) {
+func (s *Service) DeletePost(ctx context.Context, postID pgtype.UUID) (*model.Post, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
 	if post == nil || post.UserID != user.ID {
 		return nil, errors.New("access denied")
 	}
 
 	if validation.IsParentPostExists(post) {
-		parentPost, _ := graph.GetPostLoader(ctx).Load(post.ParentID.UUID.String())
+		parentPost, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(post.ParentID))
 
-		if parentPost != nil && len(parentPost.ID) > 0 {
+		if parentPost != nil && parentPost.ID.Valid {
 			// remove notification for reply
 			s.RemoveNotification(ctx, CreateNotificationArgs{
 				Name:       db.NotificationTypeNameReplyPost,
 				SenderID:   user.ID,
 				ReceiverID: parentPost.UserID,
-				Url:        "/p/" + parentPost.Url + "#" + post.ID.String(),
-				PostID:     uuid.NullUUID{parentPost.ID, true},
-				ReplyID:    uuid.NullUUID{post.ID, true},
+				Url:        "/p/" + parentPost.Url + "#" + convertor.UUIDToString(post.ID),
+				PostID:     parentPost.ID,
+				ReplyID:    post.ID,
 			})
 		}
 	}
@@ -226,10 +224,10 @@ func (s *Service) DeletePost(ctx context.Context, postID uuid.UUID) (*model.Post
 	return convertor.DBPostToModel(deletedPost), nil
 }
 
-func (s *Service) GetPostsByParentID(ctx context.Context, parentID uuid.UUID) (*model.Posts, error) {
+func (s *Service) GetPostsByParentID(ctx context.Context, parentID pgtype.UUID) (*model.Posts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
-	parentPost, _ := graph.GetPostLoader(ctx).Load(parentID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(parentPost.UserID.String())
+	parentPost, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(parentID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(parentPost.UserID))
 	after := time.Now()
 
 	if !s.CheckUserAccess(ctx, user, followingUser) {
@@ -307,36 +305,36 @@ func (s *Service) GetPostsByTagName(ctx context.Context, tagName string, pageInf
 
 }
 
-func (s *Service) GetPostsCount(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (s *Service) GetPostsCount(ctx context.Context, userID pgtype.UUID) (int64, error) {
 	return s.Posts.CountPostsByUserID(ctx, userID)
 }
 
-func (s *Service) GetPostByID(ctx context.Context, id uuid.NullUUID) (*model.Post, error) {
+func (s *Service) GetPostByID(ctx context.Context, id pgtype.UUID) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if !id.Valid {
 		return nil, nil
 	}
 
-	post, err := graph.GetPostLoader(ctx).Load(id.UUID.String())
+	post, err := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(id))
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
 	return post, err
 }
 
-func (s *Service) GetPostContentByPostID(ctx context.Context, id uuid.NullUUID) (*string, error) {
+func (s *Service) GetPostContentByPostID(ctx context.Context, id pgtype.UUID) (*string, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if !id.Valid {
 		return nil, nil
 	}
 
-	post, err := graph.GetPostLoader(ctx).Load(id.UUID.String())
+	post, err := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(id))
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
@@ -350,11 +348,11 @@ func (s *Service) GetPostByURL(ctx context.Context, url string) (*model.Post, er
 
 	post, err := s.Posts.GetPostByURL(ctx, url)
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
-	loadedPost, _ := graph.GetPostLoader(ctx).Load(post.ID.String())
+	loadedPost, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(post.ID))
 
 	return loadedPost, err
 }
@@ -376,8 +374,8 @@ func (s *Service) GetExplorePosts(ctx context.Context, input *model.GetExplorePo
 	}
 }
 
-func (s *Service) FormatPostContent(ctx context.Context, content string) (string, []uuid.UUID) {
-	var userIDs []uuid.UUID
+func (s *Service) FormatPostContent(ctx context.Context, content string) (string, []pgtype.UUID) {
+	var userIDs []pgtype.UUID
 	r := regexp.MustCompile(constants.MENTION_PATTERN)
 	mentions := r.FindAllString(content, -1)
 	for _, mention := range mentions {
@@ -392,11 +390,11 @@ func (s *Service) FormatPostContent(ctx context.Context, content string) (string
 	return content, userIDs
 }
 
-func (s *Service) ExtractUserIDsFromPostContent(content string) []uuid.UUID {
+func (s *Service) ExtractUserIDsFromPostContent(content string) []pgtype.UUID {
 	r := regexp.MustCompile(constants.KEY_PATTERN)
 	userIDs := convertor.StringsToUUIDs(r.FindAllString(content, -1))
 	for i, userID := range userIDs {
-		userIDs[i] = uuid.MustParse(strings.Trim(userID.String(), "$_"))
+		userIDs[i] = convertor.StringToUUID(strings.Trim(convertor.UUIDToString(userID), "$_"))
 	}
 
 	return userIDs

@@ -8,15 +8,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 )
 
 type AddPostInput struct {
-	ParentID   *uuid.UUID  `json:"parentId,omitempty"`
-	Content    *string     `json:"content,omitempty"`
-	Status     *PostStatus `json:"status,omitempty"`
-	Attachment []string    `json:"attachment,omitempty"`
+	ParentID   *pgtype.UUID `json:"parentId,omitempty"`
+	Content    *string      `json:"content,omitempty"`
+	Status     *PostStatus  `json:"status,omitempty"`
+	Attachment []string     `json:"attachment,omitempty"`
 }
 
 type AddTicketMessageInput struct {
@@ -84,16 +84,22 @@ type EditUserInput struct {
 	IsPrivate       *bool            `json:"isPrivate,omitempty"`
 }
 
+type EditUserSettingsInput struct {
+	IsRepliesVisible *UserSettingValue `json:"isRepliesVisible,omitempty"`
+	IsMediaVisible   *UserSettingValue `json:"isMediaVisible,omitempty"`
+	IsLikesVisible   *UserSettingValue `json:"isLikesVisible,omitempty"`
+}
+
 type GetExplorePostsInput struct {
 	IsAttachment *bool `json:"isAttachment,omitempty"`
 }
 
 type InvitedUser struct {
-	ID        uuid.UUID  `json:"id"`
-	Inviter   *db.User   `json:"inviter"`
-	Invitee   *db.User   `json:"invitee"`
-	CreatedAt *time.Time `json:"createdAt,omitempty"`
-	UpdatedAt *time.Time `json:"updatedAt,omitempty"`
+	ID        pgtype.UUID `json:"id"`
+	Inviter   *db.User    `json:"inviter"`
+	Invitee   *db.User    `json:"invitee"`
+	CreatedAt *time.Time  `json:"createdAt,omitempty"`
+	UpdatedAt *time.Time  `json:"updatedAt,omitempty"`
 }
 
 type InvitedUsers struct {
@@ -234,9 +240,9 @@ type UsersEdge struct {
 type BackgroundColor string
 
 const (
-	BackgroundColorLight BackgroundColor = "LIGHT"
-	BackgroundColorDim   BackgroundColor = "DIM"
-	BackgroundColorDark  BackgroundColor = "DARK"
+	BackgroundColorLight BackgroundColor = "light"
+	BackgroundColorDim   BackgroundColor = "dim"
+	BackgroundColorDark  BackgroundColor = "dark"
 )
 
 var AllBackgroundColor = []BackgroundColor{
@@ -363,10 +369,10 @@ func (e CreditTransactionDescriptionVariableType) MarshalGQL(w io.Writer) {
 type CreditTransactionStatus string
 
 const (
-	CreditTransactionStatusApproved CreditTransactionStatus = "APPROVED"
-	CreditTransactionStatusPending  CreditTransactionStatus = "PENDING"
-	CreditTransactionStatusFailed   CreditTransactionStatus = "FAILED"
-	CreditTransactionStatusCanceled CreditTransactionStatus = "CANCELED"
+	CreditTransactionStatusApproved CreditTransactionStatus = "approved"
+	CreditTransactionStatusPending  CreditTransactionStatus = "pending"
+	CreditTransactionStatusFailed   CreditTransactionStatus = "failed"
+	CreditTransactionStatusCanceled CreditTransactionStatus = "canceled"
 )
 
 var AllCreditTransactionStatus = []CreditTransactionStatus{
@@ -408,9 +414,9 @@ func (e CreditTransactionStatus) MarshalGQL(w io.Writer) {
 type CreditTransactionTemplateName string
 
 const (
-	CreditTransactionTemplateNameInviteUser               CreditTransactionTemplateName = "INVITE_USER"
-	CreditTransactionTemplateNameRegisterByInvitationCode CreditTransactionTemplateName = "REGISTER_BY_INVITATION_CODE"
-	CreditTransactionTemplateNameApproveTicket            CreditTransactionTemplateName = "APPROVE_TICKET"
+	CreditTransactionTemplateNameInviteUser               CreditTransactionTemplateName = "invite_user"
+	CreditTransactionTemplateNameRegisterByInvitationCode CreditTransactionTemplateName = "register_by_invitation_code"
+	CreditTransactionTemplateNameApproveTicket            CreditTransactionTemplateName = "approve_ticket"
 )
 
 var AllCreditTransactionTemplateName = []CreditTransactionTemplateName{
@@ -451,10 +457,10 @@ func (e CreditTransactionTemplateName) MarshalGQL(w io.Writer) {
 type CreditTransactionType string
 
 const (
-	CreditTransactionTypeOrder      CreditTransactionType = "ORDER"
-	CreditTransactionTypeTransfer   CreditTransactionType = "TRANSFER"
-	CreditTransactionTypeCommission CreditTransactionType = "COMMISSION"
-	CreditTransactionTypeFund       CreditTransactionType = "FUND"
+	CreditTransactionTypeOrder      CreditTransactionType = "order"
+	CreditTransactionTypeTransfer   CreditTransactionType = "transfer"
+	CreditTransactionTypeCommission CreditTransactionType = "commission"
+	CreditTransactionTypeFund       CreditTransactionType = "fund"
 )
 
 var AllCreditTransactionType = []CreditTransactionType{
@@ -496,13 +502,13 @@ func (e CreditTransactionType) MarshalGQL(w io.Writer) {
 type NotificationTypeName string
 
 const (
-	NotificationTypeNameWelcome       NotificationTypeName = "WELCOME"
-	NotificationTypeNameLikePost      NotificationTypeName = "LIKE_POST"
-	NotificationTypeNameReplyPost     NotificationTypeName = "REPLY_POST"
-	NotificationTypeNameLikeReply     NotificationTypeName = "LIKE_REPLY"
-	NotificationTypeNameFollowUser    NotificationTypeName = "FOLLOW_USER"
-	NotificationTypeNameAcceptUser    NotificationTypeName = "ACCEPT_USER"
-	NotificationTypeNameMentionInPost NotificationTypeName = "MENTION_IN_POST"
+	NotificationTypeNameWelcome       NotificationTypeName = "welcome"
+	NotificationTypeNameLikePost      NotificationTypeName = "like_post"
+	NotificationTypeNameReplyPost     NotificationTypeName = "reply_post"
+	NotificationTypeNameLikeReply     NotificationTypeName = "like_reply"
+	NotificationTypeNameFollowUser    NotificationTypeName = "follow_user"
+	NotificationTypeNameAcceptUser    NotificationTypeName = "accept_user"
+	NotificationTypeNameMentionInPost NotificationTypeName = "mention_in_post"
 )
 
 var AllNotificationTypeName = []NotificationTypeName{
@@ -588,12 +594,12 @@ func (e PostStatus) MarshalGQL(w io.Writer) {
 type PrimaryColor string
 
 const (
-	PrimaryColorBlue   PrimaryColor = "BLUE"
-	PrimaryColorGreen  PrimaryColor = "GREEN"
-	PrimaryColorRed    PrimaryColor = "RED"
-	PrimaryColorPurple PrimaryColor = "PURPLE"
-	PrimaryColorOrange PrimaryColor = "ORANGE"
-	PrimaryColorYellow PrimaryColor = "YELLOW"
+	PrimaryColorBlue   PrimaryColor = "blue"
+	PrimaryColorGreen  PrimaryColor = "green"
+	PrimaryColorRed    PrimaryColor = "red"
+	PrimaryColorPurple PrimaryColor = "purple"
+	PrimaryColorOrange PrimaryColor = "orange"
+	PrimaryColorYellow PrimaryColor = "yellow"
 )
 
 var AllPrimaryColor = []PrimaryColor{
@@ -637,13 +643,13 @@ func (e PrimaryColor) MarshalGQL(w io.Writer) {
 type TicketPermission string
 
 const (
-	TicketPermissionOpen       TicketPermission = "OPEN"
-	TicketPermissionClose      TicketPermission = "CLOSE"
-	TicketPermissionAccept     TicketPermission = "ACCEPT"
-	TicketPermissionApprove    TicketPermission = "APPROVE"
-	TicketPermissionReject     TicketPermission = "REJECT"
-	TicketPermissionSolve      TicketPermission = "SOLVE"
-	TicketPermissionNewMessage TicketPermission = "NEW_MESSAGE"
+	TicketPermissionOpen       TicketPermission = "open"
+	TicketPermissionClose      TicketPermission = "close"
+	TicketPermissionAccept     TicketPermission = "accept"
+	TicketPermissionApprove    TicketPermission = "approve"
+	TicketPermissionReject     TicketPermission = "reject"
+	TicketPermissionSolve      TicketPermission = "solve"
+	TicketPermissionNewMessage TicketPermission = "new_message"
 )
 
 var AllTicketPermission = []TicketPermission{
@@ -688,12 +694,12 @@ func (e TicketPermission) MarshalGQL(w io.Writer) {
 type TicketStatus string
 
 const (
-	TicketStatusOpen     TicketStatus = "OPEN"
-	TicketStatusClosed   TicketStatus = "CLOSED"
-	TicketStatusAccepted TicketStatus = "ACCEPTED"
-	TicketStatusApproved TicketStatus = "APPROVED"
-	TicketStatusRejected TicketStatus = "REJECTED"
-	TicketStatusSolved   TicketStatus = "SOLVED"
+	TicketStatusOpen     TicketStatus = "open"
+	TicketStatusClosed   TicketStatus = "closed"
+	TicketStatusAccepted TicketStatus = "accepted"
+	TicketStatusApproved TicketStatus = "approved"
+	TicketStatusRejected TicketStatus = "rejected"
+	TicketStatusSolved   TicketStatus = "solved"
 )
 
 var AllTicketStatus = []TicketStatus{
@@ -737,9 +743,9 @@ func (e TicketStatus) MarshalGQL(w io.Writer) {
 type UserRole string
 
 const (
-	UserRoleSuperAdmin UserRole = "SUPER_ADMIN"
-	UserRoleAdmin      UserRole = "ADMIN"
-	UserRoleUser       UserRole = "USER"
+	UserRoleSuperAdmin UserRole = "super_admin"
+	UserRoleAdmin      UserRole = "admin"
+	UserRoleUser       UserRole = "user"
 )
 
 var AllUserRole = []UserRole{
@@ -774,5 +780,46 @@ func (e *UserRole) UnmarshalGQL(v interface{}) error {
 }
 
 func (e UserRole) MarshalGQL(w io.Writer) {
+	fmt.Fprint(w, strconv.Quote(e.String()))
+}
+
+type UserSettingValue string
+
+const (
+	UserSettingValueOff UserSettingValue = "off"
+	UserSettingValueOn  UserSettingValue = "on"
+)
+
+var AllUserSettingValue = []UserSettingValue{
+	UserSettingValueOff,
+	UserSettingValueOn,
+}
+
+func (e UserSettingValue) IsValid() bool {
+	switch e {
+	case UserSettingValueOff, UserSettingValueOn:
+		return true
+	}
+	return false
+}
+
+func (e UserSettingValue) String() string {
+	return string(e)
+}
+
+func (e *UserSettingValue) UnmarshalGQL(v interface{}) error {
+	str, ok := v.(string)
+	if !ok {
+		return fmt.Errorf("enums must be strings")
+	}
+
+	*e = UserSettingValue(str)
+	if !e.IsValid() {
+		return fmt.Errorf("%s is not a valid UserSettingValue", str)
+	}
+	return nil
+}
+
+func (e UserSettingValue) MarshalGQL(w io.Writer) {
 	fmt.Fprint(w, strconv.Quote(e.String()))
 }

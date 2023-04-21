@@ -1,5 +1,5 @@
 package constants
 
-import "database/sql"
+import "github.com/jackc/pgx/v5/pgtype"
 
-var GENERATE_CREDITS_AMOUNT sql.NullFloat64 = sql.NullFloat64{100, true}
+var GENERATE_CREDITS_AMOUNT = pgtype.Float4{Float32: 100}

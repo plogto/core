@@ -8,9 +8,9 @@ import (
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/dgrijalva/jwt-go/request"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/validation"
@@ -41,7 +41,7 @@ func AuthMiddleware(users database.Users) func(http.Handler) http.Handler {
 				return
 			}
 
-			user, err := users.GetUserByID(r.Context(), uuid.MustParse(claims["jti"].(string)))
+			user, err := users.GetUserByID(r.Context(), convertor.StringToUUID(claims["jti"].(string)))
 			if err != nil {
 				next.ServeHTTP(w, r)
 				return

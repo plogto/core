@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/database"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
@@ -15,7 +16,7 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) FollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
+func (s *Service) FollowUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -25,7 +26,7 @@ func (s *Service) FollowUser(ctx context.Context, userID uuid.UUID) (*db.Connect
 		return nil, errors.New("can not follow yourself")
 	}
 
-	followingUser, _ := graph.GetUserLoader(ctx).Load(userID.String())
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(userID))
 	connection, _ := s.Connections.GetConnection(ctx, userID, user.ID)
 	if validation.IsConnectionExists(connection) {
 		return connection, nil
@@ -54,7 +55,7 @@ func (s *Service) FollowUser(ctx context.Context, userID uuid.UUID) (*db.Connect
 	return newConnection, nil
 }
 
-func (s *Service) UnfollowUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
+func (s *Service) UnfollowUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -90,7 +91,7 @@ func (s *Service) UnfollowUser(ctx context.Context, userID uuid.UUID) (*db.Conne
 	}, nil
 }
 
-func (s *Service) AcceptUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
+func (s *Service) AcceptUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -128,7 +129,7 @@ func (s *Service) AcceptUser(ctx context.Context, userID uuid.UUID) (*db.Connect
 	return updatedConnection, nil
 }
 
-func (s *Service) RejectUser(ctx context.Context, userID uuid.UUID) (*db.Connection, error) {
+func (s *Service) RejectUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
@@ -199,7 +200,7 @@ func (s *Service) GetFollowRequests(ctx context.Context, pageInfo *model.PageInf
 	return s.GetConnectionsByUsername(ctx, user.Username, pageInfo, constants.Requests)
 }
 
-func (s *Service) GetConnectionStatus(ctx context.Context, userID uuid.UUID) (*int, error) {
+func (s *Service) GetConnectionStatus(ctx context.Context, userID pgtype.UUID) (*int, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	if user == nil {
 		return nil, nil
@@ -217,7 +218,7 @@ func (s *Service) GetConnectionStatus(ctx context.Context, userID uuid.UUID) (*i
 	return &status, err
 }
 
-func (s *Service) GetConnectionCount(ctx context.Context, userID uuid.UUID, resultType constants.ConnectionResult) (int64, error) {
+func (s *Service) GetConnectionCount(ctx context.Context, userID pgtype.UUID, resultType constants.ConnectionResult) (int64, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	switch resultType {

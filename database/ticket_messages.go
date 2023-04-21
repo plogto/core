@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -15,18 +15,18 @@ type TicketMessages struct {
 }
 
 func (t *TicketMessages) CreateTicketMessage(ctx context.Context, arg db.CreateTicketMessageParams) (*db.TicketMessage, error) {
-	return util.HandleDBResponse(t.Queries.CreateTicketMessage(ctx, arg))
+	return t.Queries.CreateTicketMessage(ctx, arg)
 }
 
-func (t *TicketMessages) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.TicketMessage, error) {
-	return util.HandleDBResponse(t.Queries.GetTicketMessageByID(ctx, id))
+func (t *TicketMessages) GetTicketMessageByID(ctx context.Context, id pgtype.UUID) (*db.TicketMessage, error) {
+	return t.Queries.GetTicketMessageByID(ctx, id)
 }
 
-func (t *TicketMessages) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
-	return util.HandleDBResponse(t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID))
+func (t *TicketMessages) GetLastTicketMessageByTicketID(ctx context.Context, ticketID pgtype.UUID) (*db.TicketMessage, error) {
+	return t.Queries.GetLastTicketMessageByTicketID(ctx, ticketID)
 }
 
-func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Context, ticketID uuid.UUID, limit int32, after time.Time) (*model.TicketMessages, error) {
+func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Context, ticketID pgtype.UUID, limit int32, after time.Time) (*model.TicketMessages, error) {
 	var edges []*model.TicketMessagesEdge
 	var endCursor string
 
@@ -68,7 +68,7 @@ func (t *TicketMessages) GetTicketMessagesByTicketIDAndPageInfo(ctx context.Cont
 	}, nil
 }
 
-func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID uuid.UUID, ticketID uuid.UUID) (bool, error) {
+func (t *TicketMessages) UpdateReadTicketMessagesByUserIDAndTicketID(ctx context.Context, userID pgtype.UUID, ticketID pgtype.UUID) (bool, error) {
 	_, err := t.Queries.UpdateReadTicketMessagesByUserIDAndTicketID(ctx, db.UpdateReadTicketMessagesByUserIDAndTicketIDParams{
 		SenderID: userID,
 		TicketID: ticketID,

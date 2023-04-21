@@ -590,6 +590,7 @@ CREATE TABLE users (
 	background_color background_color DEFAULT 'light' :: background_color NOT NULL,
 	is_verified BOOLEAN DEFAULT FALSE NOT NULL,
 	invitation_code CHARACTER VARYING(7) NOT NULL,
+	settings jsonb,
 	created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
 	updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT now() NOT NULL,
 	deleted_at TIMESTAMP WITHOUT TIME ZONE

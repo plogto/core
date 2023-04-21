@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -21,27 +21,28 @@ func (u *Users) CreateUser(ctx context.Context, email, fullName string) (*db.Use
 		InvitationCode: util.RandomString(7),
 	}
 
-	return util.HandleDBResponse(u.Queries.CreateUser(ctx, newUser))
+	return u.Queries.CreateUser(ctx, newUser)
 }
 
-func (u *Users) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
-	return util.HandleDBResponse(u.Queries.GetUserByID(ctx, id))
+func (u *Users) GetUserByID(ctx context.Context, id pgtype.UUID) (*db.User, error) {
+	user, err := u.Queries.GetUserByID(ctx, id)
+	return user, err
 }
 
 func (u *Users) GetUserByInvitationCode(ctx context.Context, invitationCode string) (*db.User, error) {
-	return util.HandleDBResponse(u.Queries.GetUserByInvitationCode(ctx, invitationCode))
+	return u.Queries.GetUserByInvitationCode(ctx, invitationCode)
 }
 
 func (u *Users) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
-	return util.HandleDBResponse(u.Queries.GetUserByEmail(ctx, email))
+	return u.Queries.GetUserByEmail(ctx, email)
 }
 
 func (u *Users) GetUserByUsername(ctx context.Context, username string) (*db.User, error) {
-	return util.HandleDBResponse(u.Queries.GetUserByUsername(ctx, username))
+	return u.Queries.GetUserByUsername(ctx, username)
 }
 
 func (u *Users) GetUserByUsernameOrEmail(ctx context.Context, value string) (*db.User, error) {
-	return util.HandleDBResponse(u.Queries.GetUserByUsernameOrEmail(ctx, value))
+	return u.Queries.GetUserByUsernameOrEmail(ctx, value)
 }
 
 func (u *Users) GetUsersByUsernameOrFullNameAndPageInfo(ctx context.Context, value string, limit int32) (*model.Users, error) {

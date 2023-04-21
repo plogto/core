@@ -5,8 +5,9 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
+	"github.com/plogto/core/convertor"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -30,15 +31,15 @@ func (s *Service) GetTrends(ctx context.Context, first *int) (*model.Tags, error
 	return s.PostTags.GetTagsOrderByCountTags(ctx, limit)
 }
 
-func (s *Service) GetTagByID(ctx context.Context, id uuid.UUID) (*model.Tag, error) {
-	return graph.GetTagLoader(ctx).Load(id.String())
+func (s *Service) GetTagByID(ctx context.Context, id pgtype.UUID) (*model.Tag, error) {
+	return graph.GetTagLoader(ctx).Load(convertor.UUIDToString(id))
 }
 
 func (s *Service) GetTagByName(ctx context.Context, tagName string) (*model.Tag, error) {
 	return s.Tags.GetTagByName(ctx, tagName)
 }
 
-func (s *Service) SaveTagsPost(ctx context.Context, postID uuid.UUID, content string) {
+func (s *Service) SaveTagsPost(ctx context.Context, postID pgtype.UUID, content string) {
 	r := regexp.MustCompile("#(\\w|_)+")
 	tags := r.FindAllString(content, -1)
 	for i, tag := range tags {

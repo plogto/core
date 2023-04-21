@@ -2,10 +2,9 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -16,27 +15,27 @@ type Notifications struct {
 }
 
 func (n *Notifications) CreateNotification(ctx context.Context, arg db.CreateNotificationParams) (*db.Notification, error) {
-	notification, _ := util.HandleDBResponse(n.Queries.GetNotification(ctx, db.GetNotificationParams{
+	notification, _ := n.Queries.GetNotification(ctx, db.GetNotificationParams{
 		NotificationTypeID: arg.NotificationTypeID,
 		SenderID:           arg.SenderID,
 		ReceiverID:         arg.ReceiverID,
 		PostID:             arg.PostID,
 		ReplyID:            arg.ReplyID,
 		Url:                arg.Url,
-	}))
+	})
 
 	if notification != nil {
 		return notification, nil
 	}
 
-	return util.HandleDBResponse(n.Queries.CreateNotification(ctx, arg))
+	return n.Queries.CreateNotification(ctx, arg)
 }
 
-func (n *Notifications) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
-	return util.HandleDBResponse(n.Queries.GetNotificationByID(ctx, id))
+func (n *Notifications) GetNotificationByID(ctx context.Context, id pgtype.UUID) (*db.Notification, error) {
+	return n.Queries.GetNotificationByID(ctx, id)
 }
 
-func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID uuid.UUID, limit int32, after time.Time) (*model.Notifications, error) {
+func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Context, receiverID pgtype.UUID, limit int32, after time.Time) (*model.Notifications, error) {
 	var edges []*model.NotificationsEdge
 	var endCursor string
 
@@ -80,13 +79,13 @@ func (n *Notifications) GetNotificationsByReceiverIDAndPageInfo(ctx context.Cont
 	}, nil
 }
 
-func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID uuid.UUID) (int64, error) {
+func (n *Notifications) CountUnreadNotificationsByReceiverID(ctx context.Context, receiverID pgtype.UUID) (int64, error) {
 	count, _ := n.Queries.CountUnreadNotificationsByReceiverID(ctx, receiverID)
 
 	return count, nil
 }
 
-func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID uuid.UUID) (bool, error) {
+func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID pgtype.UUID) (bool, error) {
 	_, err := n.Queries.UpdateReadNotifications(ctx, receiverID)
 
 	if err != nil {
@@ -97,16 +96,15 @@ func (n *Notifications) UpdateReadNotifications(ctx context.Context, receiverID 
 }
 
 func (n *Notifications) RemoveNotification(ctx context.Context, arg db.RemoveNotificationParams) (*db.Notification, error) {
-	return util.HandleDBResponse(n.Queries.RemoveNotification(ctx, arg))
+	return n.Queries.RemoveNotification(ctx, arg)
 }
 
-func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID uuid.UUID) ([]*db.Notification, error) {
-	PostID := uuid.NullUUID{postID, true}
-	DeletedAt := sql.NullTime{time.Now(), true}
+func (n *Notifications) RemovePostNotificationsByPostID(ctx context.Context, postID pgtype.UUID) ([]*db.Notification, error) {
+	DeletedAt := time.Now()
 
 	notifications, _ := n.Queries.RemovePostNotificationsByPostID(ctx, db.RemovePostNotificationsByPostIDParams{
-		PostID:    PostID,
-		DeletedAt: DeletedAt,
+		PostID:    postID,
+		DeletedAt: &DeletedAt,
 	})
 
 	return notifications, nil

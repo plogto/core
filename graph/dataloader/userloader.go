@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 )
@@ -20,7 +20,7 @@ func PrepareUserLoader(ctx context.Context, queries *db.Queries) UserLoader {
 				return nil, []error{err}
 			}
 
-			u := make(map[uuid.UUID]*db.User, len(users))
+			u := make(map[pgtype.UUID]*db.User, len(users))
 
 			for _, user := range users {
 				u[user.ID] = user
@@ -29,7 +29,7 @@ func PrepareUserLoader(ctx context.Context, queries *db.Queries) UserLoader {
 			result := make([]*db.User, len(ids))
 
 			for i, id := range ids {
-				result[i] = u[uuid.MustParse(id)]
+				result[i] = u[convertor.StringToUUID(id)]
 			}
 
 			return result, nil

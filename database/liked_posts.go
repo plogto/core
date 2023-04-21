@@ -2,10 +2,9 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -15,27 +14,27 @@ type LikedPosts struct {
 	Queries *db.Queries
 }
 
-func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
-	likedPost, _ := util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID pgtype.UUID) (*db.LikedPost, error) {
+	likedPost, _ := l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	}))
+	})
 
 	if likedPost != nil {
 		return likedPost, nil
 	}
 
-	return util.HandleDBResponse(l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
+	return l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
 		UserID: userID,
 		PostID: postID,
-	}))
+	})
 }
 
-func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
-	return util.HandleDBResponse(l.Queries.GetLikedPostByID(ctx, id))
+func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id pgtype.UUID) (*db.LikedPost, error) {
+	return l.Queries.GetLikedPostByID(ctx, id)
 }
 
-func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postID pgtype.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
@@ -72,15 +71,15 @@ func (l *LikedPosts) GetLikedPostsByPostIDAndPageInfo(ctx context.Context, postI
 	}, nil
 }
 
-func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID uuid.UUID) (*db.LikedPost, error) {
-	return util.HandleDBResponse(l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
+func (l *LikedPosts) GetLikedPostByUserIDAndPostID(ctx context.Context, userID, postID pgtype.UUID) (*db.LikedPost, error) {
+	return l.Queries.GetLikedPostByUserIDAndPostID(ctx, db.GetLikedPostByUserIDAndPostIDParams{
 		UserID: userID,
 		PostID: postID,
-	}))
+	})
 
 }
 
-func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
+func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userID pgtype.UUID, limit int32, after time.Time) (*model.LikedPosts, error) {
 	var edges []*model.LikedPostsEdge
 	var endCursor string
 
@@ -123,12 +122,12 @@ func (l *LikedPosts) GetLikedPostsByUserIDAndPageInfo(ctx context.Context, userI
 	}, nil
 }
 
-func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id uuid.UUID) (*db.LikedPost, error) {
-	DeletedAt := sql.NullTime{time.Now(), true}
+func (l *LikedPosts) DeleteLikedPostByID(ctx context.Context, id pgtype.UUID) (*db.LikedPost, error) {
+	DeletedAt := time.Now()
 
 	likedPost, _ := l.Queries.DeleteLikedPostByID(ctx, db.DeleteLikedPostByIDParams{
 		ID:        id,
-		DeletedAt: DeletedAt,
+		DeletedAt: &DeletedAt,
 	})
 
 	return likedPost, nil

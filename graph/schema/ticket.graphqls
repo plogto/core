@@ -1,20 +1,20 @@
 enum TicketStatus {
-  OPEN
-  CLOSED
-  ACCEPTED
-  APPROVED
-  REJECTED
-  SOLVED
+  open
+  closed
+  accepted
+  approved
+  rejected
+  solved
 }
 
 enum TicketPermission {
-  OPEN
-  CLOSE
-  ACCEPT
-  APPROVE
-  REJECT
-  SOLVE
-  NEW_MESSAGE
+  open
+  close
+  accept
+  approve
+  reject
+  solve
+  new_message
 }
 
 type Ticket {

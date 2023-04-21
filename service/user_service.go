@@ -2,12 +2,11 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"log"
 	"os"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
@@ -23,8 +22,8 @@ func (s *Service) GetUserInfo(ctx context.Context) (*db.User, error) {
 	return s.PrepareUser(user), nil
 }
 
-func (s *Service) GetUserByID(ctx context.Context, id uuid.UUID) (*db.User, error) {
-	user, _ := graph.GetUserLoader(ctx).Load(id.String())
+func (s *Service) GetUserByID(ctx context.Context, id pgtype.UUID) (*db.User, error) {
+	user, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(id))
 
 	return s.PrepareUser(user), nil
 }
@@ -54,7 +53,7 @@ func (s *Service) CheckUserAccess(ctx context.Context, user *db.User, followingU
 			connection, _ := s.Connections.GetConnection(ctx, followingUser.ID, user.ID)
 
 			if followingUser.ID != user.ID {
-				if len(connection.ID) < 1 || connection.Status < int32(2) {
+				if !connection.ID.Valid || connection.Status < int32(2) {
 					return false
 				}
 			}
@@ -92,18 +91,18 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*db.
 
 	if input.Avatar != nil {
 		if len(*input.Avatar) == 0 {
-			user.Avatar = uuid.NullUUID{}
+			user.Avatar = pgtype.UUID{}
 		} else {
-			user.Avatar = uuid.NullUUID{uuid.MustParse(*input.Avatar), true}
+			user.Avatar = convertor.StringToUUID(*input.Avatar)
 		}
 		didUpdate = true
 	}
 
 	if input.Background != nil {
 		if len(*input.Background) == 0 {
-			user.Background = uuid.NullUUID{}
+			user.Background = pgtype.UUID{}
 		} else {
-			user.Background = uuid.NullUUID{uuid.MustParse(*input.Background), true}
+			user.Background = convertor.StringToUUID(*input.Background)
 		}
 		didUpdate = true
 	}
@@ -114,7 +113,7 @@ func (s *Service) EditUser(ctx context.Context, input model.EditUserInput) (*db.
 	}
 
 	if input.Bio != nil {
-		user.Bio = sql.NullString{*input.Bio, true}
+		user.Bio = pgtype.Text{*input.Bio, true}
 		didUpdate = true
 	}
 
@@ -203,7 +202,7 @@ func (s *Service) CheckEmail(ctx context.Context, email string) (*db.User, error
 }
 
 func (s *Service) PrepareUser(user *db.User) *db.User {
-	if user == nil || len(user.ID) == 0 {
+	if user == nil || !user.ID.Valid {
 		return nil
 	}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
@@ -21,7 +21,7 @@ func PrepareTagLoader(ctx context.Context, queries *db.Queries) TagLoader {
 				return nil, []error{err}
 			}
 
-			t := make(map[uuid.UUID]*model.Tag, len(tags))
+			t := make(map[pgtype.UUID]*model.Tag, len(tags))
 
 			for _, tag := range tags {
 				t[tag.ID] = convertor.DBTagToModel(tag)
@@ -30,7 +30,7 @@ func PrepareTagLoader(ctx context.Context, queries *db.Queries) TagLoader {
 			result := make([]*model.Tag, len(ids))
 
 			for i, id := range ids {
-				result[i] = t[uuid.MustParse(id)]
+				result[i] = t[convertor.StringToUUID(id)]
 			}
 
 			return result, nil

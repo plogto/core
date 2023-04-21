@@ -1,11 +1,11 @@
 package fixtures
 
 import (
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 )
 
-var PostID, _ = uuid.NewUUID()
+var PostID = pgtype.UUID{}
 var EmptyPost = &db.Post{}
 var PostWithID = &db.Post{ID: PostID}
-var PostWithParentID = &db.Post{ID: PostID, ParentID: uuid.NullUUID{PostID, true}}
+var PostWithParentID = &db.Post{ID: PostID, ParentID: PostID}

@@ -1,8 +1,8 @@
 enum CreditTransactionStatus {
-  APPROVED
-  PENDING
-  FAILED
-  CANCELED
+  approved
+  pending
+  failed
+  canceled
 }
 
 enum CreditTransactionDescriptionVariableType {
@@ -18,16 +18,16 @@ enum CreditTransactionDescriptionVariableKey {
 }
 
 enum CreditTransactionTemplateName {
-  INVITE_USER
-  REGISTER_BY_INVITATION_CODE
-  APPROVE_TICKET
+  invite_user
+  register_by_invitation_code
+  approve_ticket
 }
 
 enum CreditTransactionType {
-  ORDER
-  TRANSFER
-  COMMISSION
-  FUND
+  order
+  transfer
+  commission
+  fund
 }
 
 type CreditTransactionDescriptionVariable {

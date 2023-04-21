@@ -1,22 +1,22 @@
 enum UserRole {
-  SUPER_ADMIN
-  ADMIN
-  USER
+  super_admin
+  admin
+  user
 }
 
 enum BackgroundColor {
-  LIGHT
-  DIM
-  DARK
+  light
+  dim
+  dark
 }
 
 enum PrimaryColor {
-  BLUE
-  GREEN
-  RED
-  PURPLE
-  ORANGE
-  YELLOW
+  blue
+  green
+  red
+  purple
+  orange
+  yellow
 }
 
 type User {
@@ -34,6 +34,7 @@ type User {
   credits: Float!
   isPrivate: Boolean!
   isVerified: Boolean!
+  settings: UserSettings!
   connectionStatus: Int
   followingCount: TotalCount!
   followersCount: TotalCount!

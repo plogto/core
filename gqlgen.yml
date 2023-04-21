@@ -221,6 +221,8 @@ models:
         resolver: true
       node:
         resolver: true
+  UserSettings:
+    model: github.com/plogto/core/db.UserSettings
   User:
     model: github.com/plogto/core/db.User
     fields:
