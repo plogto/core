@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/middleware"
 )
 
-func (s *Service) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID uuid.UUID) ([]*db.CreditTransactionDescriptionVariable, error) {
+func (s *Service) GetCreditTransactionDescriptionVariablesByCreditTransactionInfoID(ctx context.Context, creditTransactionInfoID pgtype.UUID) ([]*db.CreditTransactionDescriptionVariable, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {

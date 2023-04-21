@@ -5,7 +5,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -14,15 +15,15 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error) {
+func (s *Service) LikePost(ctx context.Context, postID pgtype.UUID) (*db.LikedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID))
 	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
@@ -43,7 +44,7 @@ func (s *Service) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url,
-				PostID:     uuid.NullUUID{post.ID, true},
+				PostID:     post.ID,
 			})
 		}
 
@@ -56,18 +57,18 @@ func (s *Service) LikePost(ctx context.Context, postID uuid.UUID) (*db.LikedPost
 			SenderID:   user.ID,
 			ReceiverID: post.UserID,
 			Url:        "/p/" + post.Url,
-			PostID:     uuid.NullUUID{post.ID, true},
+			PostID:     post.ID,
 		})
 
 		return unlikedPost, err
 	}
 }
 
-func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID uuid.UUID) (*model.LikedPosts, error) {
+func (s *Service) GetLikedPostsByPostID(ctx context.Context, postID pgtype.UUID) (*model.LikedPosts, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID))
 
 	if !s.CheckUserAccess(ctx, user, followingUser) || !validation.IsUserExists(user) {
 		return nil, nil
@@ -99,15 +100,15 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 	}
 }
 
-func (s *Service) IsPostLiked(ctx context.Context, postID uuid.UUID) (*db.LikedPost, error) {
+func (s *Service) IsPostLiked(ctx context.Context, postID pgtype.UUID) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID))
 
 	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, nil
@@ -122,17 +123,17 @@ func (s *Service) IsPostLiked(ctx context.Context, postID uuid.UUID) (*db.LikedP
 	}
 }
 
-func (s *Service) GetLikedPostByID(ctx context.Context, id uuid.NullUUID) (*db.LikedPost, error) {
+func (s *Service) GetLikedPostByID(ctx context.Context, id pgtype.UUID) (*db.LikedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if !id.Valid || !validation.IsUserExists(user) {
 		return nil, nil
 	}
 
-	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, id.UUID)
-	post, _ := graph.GetPostLoader(ctx).Load(likedPost.PostID.String())
+	likedPost, err := s.LikedPosts.GetLikedPostByID(ctx, id)
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(likedPost.PostID))
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 

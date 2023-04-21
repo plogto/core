@@ -6,6 +6,22 @@ sql:
   gen:
     go:
       package: "db"
+      sql_package: "pgx/v5"
       out: "db"
       emit_result_struct_pointers: true
       emit_empty_slices: true
+      overrides:
+        - column: "users.settings"
+          go_type:
+            type: "UserSettings"
+        - column: "*.created_at"
+          go_type:
+            type: "time.Time"
+        - column: "*.updated_at"
+          go_type:
+            type: "time.Time"
+        - column: "*.deleted_at"
+          go_type:
+            type: "time.Time"
+            pointer: true
+

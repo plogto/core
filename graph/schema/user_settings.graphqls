@@ -1,0 +1,20 @@
+enum UserSettingValue {
+  off
+  on
+}
+
+type UserSettings {
+  isRepliesVisible: UserSettingValue!
+  isMediaVisible: UserSettingValue!
+  isLikesVisible: UserSettingValue!
+}
+
+input EditUserSettingsInput {
+  isRepliesVisible: UserSettingValue
+  isMediaVisible: UserSettingValue
+  isLikesVisible: UserSettingValue
+}
+
+extend type Mutation {
+  editUserSettings(input: EditUserSettingsInput!): UserSettings
+}

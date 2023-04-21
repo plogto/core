@@ -5,7 +5,8 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/graph/model"
 )
 
@@ -15,12 +16,12 @@ func ParseJWTWithClaims(token string, claims *jwt.MapClaims) {
 	})
 }
 
-func GenToken(userID uuid.UUID) (*model.AuthToken, error) {
+func GenToken(userID pgtype.UUID) (*model.AuthToken, error) {
 	expiredAt := time.Now().Add(time.Hour * 24 * 7) // a week
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
 		ExpiresAt: expiredAt.Unix(),
-		Id:        userID.String(),
+		Id:        convertor.UUIDToString(userID),
 		IssuedAt:  time.Now().Unix(),
 		Issuer:    "plog",
 	})

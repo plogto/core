@@ -1,11 +1,11 @@
 package fixtures
 
 import (
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 )
 
-var UserID, _ = uuid.NewUUID()
+var UserID = pgtype.UUID{}
 var EmptyUser = &db.User{}
 var UserWithID = &db.User{ID: UserID}
 var UserWithSuperAdminRole = &db.User{ID: UserID, Role: db.UserRoleSuperAdmin}

@@ -1,7 +1,10 @@
 package util
 
-import "github.com/google/uuid"
+import (
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
+)
 
-func PrepareKeyPattern(value uuid.UUID) string {
-	return "$$$___" + value.String() + "___$$$"
+func PrepareKeyPattern(value pgtype.UUID) string {
+	return "$$$___" + convertor.UUIDToString(value) + "___$$$"
 }

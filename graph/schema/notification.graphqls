@@ -1,11 +1,11 @@
 enum NotificationTypeName {
-  WELCOME
-  LIKE_POST
-  REPLY_POST
-  LIKE_REPLY
-  FOLLOW_USER
-  ACCEPT_USER
-  MENTION_IN_POST
+  welcome
+  like_post
+  reply_post
+  like_reply
+  follow_user
+  accept_user
+  mention_in_post
 }
 
 type NotificationType {

@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -14,11 +13,11 @@ import (
 
 type CreateNotificationArgs struct {
 	Name       db.NotificationTypeName
-	SenderID   uuid.UUID
-	ReceiverID uuid.UUID
+	SenderID   pgtype.UUID
+	ReceiverID pgtype.UUID
 	Url        string
-	PostID     uuid.NullUUID
-	ReplyID    uuid.NullUUID
+	PostID     pgtype.UUID
+	ReplyID    pgtype.UUID
 }
 
 type RemovePostNotificationsArgs struct {
@@ -27,9 +26,9 @@ type RemovePostNotificationsArgs struct {
 }
 
 type CreatePostMentionNotificationsArgs struct {
-	UserIDs  []uuid.UUID
+	UserIDs  []pgtype.UUID
 	Post     model.Post
-	SenderID uuid.UUID
+	SenderID pgtype.UUID
 }
 
 func (s *Service) GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error) {
@@ -44,7 +43,7 @@ func (s *Service) GetNotifications(ctx context.Context, pageInfo *model.PageInfo
 	return s.Notifications.GetNotificationsByReceiverIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
-func (s *Service) GetNotificationByID(ctx context.Context, id uuid.UUID) (*db.Notification, error) {
+func (s *Service) GetNotificationByID(ctx context.Context, id pgtype.UUID) (*db.Notification, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -63,7 +62,7 @@ func (s *Service) GetNotification(ctx context.Context) (*model.NotificationsEdge
 func (s *Service) CreateNotification(ctx context.Context, args CreateNotificationArgs) error {
 
 	if args.SenderID != args.ReceiverID {
-		notificationType, _ := util.HandleDBResponse(s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name))
+		notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
 
 		if notificationType != nil {
 			s.Notifications.CreateNotification(ctx, db.CreateNotificationParams{
@@ -85,14 +84,14 @@ func (s *Service) CreateNotification(ctx context.Context, args CreateNotificatio
 
 func (s *Service) RemoveNotification(ctx context.Context, args CreateNotificationArgs) error {
 	notificationType, _ := s.NotificationTypes.GetNotificationTypeByName(ctx, args.Name)
-	DeletedAt := sql.NullTime{time.Now(), true}
+	DeletedAt := time.Now()
 	s.Notifications.RemoveNotification(ctx, db.RemoveNotificationParams{
 		NotificationTypeID: notificationType.ID,
 		SenderID:           args.SenderID,
 		ReceiverID:         args.ReceiverID,
 		PostID:             args.PostID,
 		ReplyID:            args.ReplyID,
-		DeletedAt:          DeletedAt,
+		DeletedAt:          &DeletedAt,
 	})
 
 	// TODO: add removed type for Notification
@@ -127,7 +126,7 @@ func (s *Service) CreatePostMentionNotifications(ctx context.Context, args Creat
 				SenderID:   args.SenderID,
 				ReceiverID: receiverID,
 				Url:        "/p/" + args.Post.Url,
-				PostID:     uuid.NullUUID{args.Post.ID, true},
+				PostID:     args.Post.ID,
 			})
 		}
 	}

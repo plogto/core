@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/constants/e"
 	"github.com/plogto/core/db"
@@ -29,7 +29,7 @@ func (s *Service) CreateTicket(ctx context.Context, input model.CreateTicketInpu
 	return ticket, nil
 }
 
-func (s *Service) GetTicketByID(ctx context.Context, id uuid.UUID) (*db.Ticket, error) {
+func (s *Service) GetTicketByID(ctx context.Context, id pgtype.UUID) (*db.Ticket, error) {
 	return s.Tickets.GetTicketByID(ctx, id)
 }
 
@@ -39,14 +39,14 @@ func (s *Service) GetTickets(ctx context.Context, pageInfo *model.PageInfoInput)
 	pagination := util.ExtractPageInfo(pageInfo)
 
 	if validation.IsUser(user) {
-		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, uuid.NullUUID{user.ID, true}, pagination.First, pagination.After)
+		return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 	}
 
-	var nullUUID uuid.NullUUID
+	var nullUUID pgtype.UUID
 	return s.Tickets.GetTicketsByUserIDAndPageInfo(ctx, nullUUID, pagination.First, pagination.After)
 }
 
-func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID uuid.UUID) ([]*model.TicketPermission, error) {
+func (s *Service) GetTicketPermissionsByTicketID(ctx context.Context, ticketID pgtype.UUID) ([]*model.TicketPermission, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	ticket, _ := s.Tickets.GetTicketByID(ctx, ticketID)
 	var permissions []*model.TicketPermission
@@ -243,7 +243,7 @@ func (s *Service) SolveTicket(ctx context.Context, user db.User, ticket db.Ticke
 	return solvedTicket, nil
 }
 
-func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID uuid.UUID, status db.TicketStatusType) (*db.Ticket, error) {
+func (s *Service) UpdateTicketStatus(ctx context.Context, ticketID pgtype.UUID, status db.TicketStatusType) (*db.Ticket, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	ticket, _ := s.Tickets.GetTicketByID(ctx, ticketID)
 

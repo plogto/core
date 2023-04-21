@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	graph "github.com/plogto/core/graph/dataloader"
 	"github.com/plogto/core/graph/model"
@@ -13,14 +14,14 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) SavePost(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error) {
+func (s *Service) SavePost(ctx context.Context, postID pgtype.UUID) (*db.SavedPost, error) {
 	user, err := middleware.GetCurrentUserFromCTX(ctx)
 	if err != nil {
 		return nil, errors.New(err.Error())
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID))
 	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, errors.New("access denied")
 	}
@@ -49,27 +50,27 @@ func (s *Service) GetSavedPosts(ctx context.Context, pageInfo *model.PageInfoInp
 	return s.SavedPosts.GetSavedPostsByUserIDAndPageInfo(ctx, user.ID, pagination.First, pagination.After)
 }
 
-func (s *Service) GetSavedPostByID(ctx context.Context, id uuid.UUID) (*db.SavedPost, error) {
+func (s *Service) GetSavedPostByID(ctx context.Context, id pgtype.UUID) (*db.SavedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	savedPost, _ := s.SavedPosts.GetSavedPostByID(ctx, id)
-	post, err := graph.GetPostLoader(ctx).Load(savedPost.PostID.String())
+	post, err := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(savedPost.PostID))
 
-	if followingUser, err := graph.GetUserLoader(ctx).Load(post.UserID.String()); !s.CheckUserAccess(ctx, user, followingUser) {
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err
 	}
 
 	return savedPost, err
 }
 
-func (s *Service) IsPostSaved(ctx context.Context, postID uuid.UUID) (*db.SavedPost, error) {
+func (s *Service) IsPostSaved(ctx context.Context, postID pgtype.UUID) (*db.SavedPost, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 	if user == nil {
 		return nil, nil
 	}
 
-	post, _ := graph.GetPostLoader(ctx).Load(postID.String())
-	followingUser, _ := graph.GetUserLoader(ctx).Load(post.UserID.String())
+	post, _ := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(postID))
+	followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID))
 	if !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, nil
 	} else {

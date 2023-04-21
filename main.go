@@ -16,6 +16,7 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/rs/cors"
 
@@ -38,9 +39,11 @@ func init() {
 }
 
 func main() {
-	DB, err := db.Open(os.Getenv("DATABASE_URL"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 
-	queries := db.New(DB)
+	defer conn.Close()
+
+	queries := db.New(conn)
 
 	if err != nil {
 		fmt.Println(err)

@@ -2,10 +2,9 @@ package service
 
 import (
 	"context"
-	"database/sql"
 	"os"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/constants"
 	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
@@ -16,10 +15,10 @@ import (
 )
 
 type CreateCreditTransactionParams struct {
-	SenderID                    uuid.UUID
-	ReceiverID                  uuid.UUID
-	Amount                      sql.NullFloat64
-	Description                 sql.NullString
+	SenderID                    pgtype.UUID
+	ReceiverID                  pgtype.UUID
+	Amount                      pgtype.Float4
+	Description                 pgtype.Text
 	Status                      model.CreditTransactionStatus
 	Type                        db.CreditTransactionType
 	TemplateName                db.CreditTransactionTemplateName
@@ -27,14 +26,14 @@ type CreateCreditTransactionParams struct {
 }
 
 type TransferCreditFromAdminParams struct {
-	ReceiverID   uuid.UUID
+	ReceiverID   pgtype.UUID
 	Amount       *float64
 	Status       model.CreditTransactionStatus
 	Type         model.CreditTransactionType
 	TemplateName db.CreditTransactionTemplateName
 }
 
-func (s *Service) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (float64, error) {
+func (s *Service) GetCreditsByUserID(ctx context.Context, userID pgtype.UUID) (float64, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -44,7 +43,7 @@ func (s *Service) GetCreditsByUserID(ctx context.Context, userID uuid.UUID) (flo
 	return s.CreditTransactions.GetCreditsByUserID(ctx, userID)
 }
 
-func (s *Service) GetCreditTransactionByID(ctx context.Context, id uuid.UUID) (*db.CreditTransaction, error) {
+func (s *Service) GetCreditTransactionByID(ctx context.Context, id pgtype.UUID) (*db.CreditTransaction, error) {
 	_, err := middleware.GetCurrentUserFromCTX(ctx)
 
 	if err != nil {
@@ -67,8 +66,8 @@ func (s *Service) GetCreditTransactions(ctx context.Context, pageInfo *model.Pag
 }
 
 func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransactionParams CreateCreditTransactionParams) (*db.CreditTransactionInfo, error) {
-	var amount sql.NullFloat64
-	var creditTransactionTemplateID uuid.UUID
+	var amount pgtype.Float4
+	var creditTransactionTemplateID pgtype.UUID
 
 	creditTransactionTemplate, _ := s.CreditTransactionTemplates.GetCreditTransactionTemplateByName(ctx, creditTransactionParams.TemplateName)
 	creditTransactionTemplateID = creditTransactionTemplate.ID
@@ -80,14 +79,14 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 
 	creditTransactionInfo, err := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
 		Description:                 creditTransactionParams.Description,
-		CreditTransactionTemplateID: uuid.NullUUID{creditTransactionTemplateID, true},
+		CreditTransactionTemplateID: creditTransactionTemplateID,
 		Status:                      convertor.ModelCreditTransactionStatusToDB(creditTransactionParams.Status),
 	})
 
 	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
 		UserID:                  creditTransactionParams.SenderID,
 		RecipientID:             creditTransactionParams.ReceiverID,
-		Amount:                  float32(-amount.Float64),
+		Amount:                  -amount.Float32,
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    creditTransactionParams.Type,
 		Url:                     util.RandomString(24),
@@ -96,7 +95,7 @@ func (s *Service) CreateCreditTransaction(ctx context.Context, creditTransaction
 	s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
 		UserID:                  creditTransactionParams.ReceiverID,
 		RecipientID:             creditTransactionParams.SenderID,
-		Amount:                  float32(amount.Float64),
+		Amount:                  amount.Float32,
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    creditTransactionParams.Type,
 		Url:                     util.RandomString(24),
@@ -110,7 +109,7 @@ func (s *Service) GetBankAccount(ctx context.Context) (*db.User, error) {
 	return s.Users.GetUserByUsername(ctx, username)
 }
 
-func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (*db.CreditTransaction, error) {
+func (s *Service) GenerateCredits(ctx context.Context, amount pgtype.Float4) (*db.CreditTransaction, error) {
 	bankUser, _ := s.GetBankAccount(ctx)
 
 	creditTransactionInfo, _ := s.CreditTransactionInfos.CreateCreditTransactionInfo(ctx, db.CreateCreditTransactionInfoParams{
@@ -120,7 +119,7 @@ func (s *Service) GenerateCredits(ctx context.Context, amount sql.NullFloat64) (
 	return s.CreditTransactions.CreateCreditTransaction(ctx, db.CreateCreditTransactionParams{
 		UserID:                  bankUser.ID,
 		RecipientID:             bankUser.ID,
-		Amount:                  float32(amount.Float64),
+		Amount:                  amount.Float32,
 		CreditTransactionInfoID: creditTransactionInfo.ID,
 		Type:                    db.CreditTransactionTypeFund,
 		Url:                     util.RandomString(24),
@@ -145,18 +144,18 @@ func (s *Service) TransferCreditFromAdmin(ctx context.Context, transferCreditFro
 	})
 }
 
-func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType db.CreditTransactionDescriptionVariableType, contentID uuid.UUID) (DescriptionVariable, error) {
+func (s *Service) GetDescriptionVariableContentByTypeAndContentID(ctx context.Context, creditTransactionDescriptionVariableType db.CreditTransactionDescriptionVariableType, contentID pgtype.UUID) (DescriptionVariable, error) {
 	var descriptionVariable DescriptionVariable
 	switch creditTransactionDescriptionVariableType {
 	case db.CreditTransactionDescriptionVariableTypeUser:
-		user, _ := graph.GetUserLoader(ctx).Load(contentID.String())
+		user, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(contentID))
 		descriptionVariable = DescriptionVariable{
 			Content: user.FullName,
 			Url:     &user.Username,
 			// Image: // implement GetFileLoader,
 		}
 	case db.CreditTransactionDescriptionVariableTypeTag:
-		tag, _ := graph.GetTagLoader(ctx).Load(contentID.String())
+		tag, _ := graph.GetTagLoader(ctx).Load(convertor.UUIDToString(contentID))
 		descriptionVariable = DescriptionVariable{
 			Content: tag.Name,
 			Url:     &tag.Name,

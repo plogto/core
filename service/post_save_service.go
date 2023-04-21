@@ -3,9 +3,9 @@ package service
 import (
 	"context"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-func (s *Service) CountPostTagsByTagID(ctx context.Context, id uuid.UUID) (int64, error) {
+func (s *Service) CountPostTagsByTagID(ctx context.Context, id pgtype.UUID) (int64, error) {
 	return s.PostTags.CountPostTagsByTagID(ctx, id)
 }

@@ -91,3 +91,12 @@ SET
 WHERE
 	id = $1
 	AND deleted_at IS NULL RETURNING *;
+
+-- name: UpdateUserSettings :one
+UPDATE
+	users
+SET
+	settings = sqlc.arg(settings)
+WHERE
+	id = $1
+	AND deleted_at IS NULL RETURNING *;

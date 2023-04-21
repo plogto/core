@@ -12,8 +12,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/google/uuid"
 	guuid "github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/util"
 )
@@ -32,7 +32,7 @@ func (s *Service) SingleUploadFile(ctx context.Context, file graphql.Upload) (*d
 		// calculate hash
 		hash := util.CalculateHash(file.File, fileName)
 		isFile, _ := s.Files.GetFileByHash(ctx, hash)
-		if isFile != nil && len(isFile.ID) > 0 {
+		if isFile != nil && isFile.ID.Valid {
 			_ = os.Remove(fileName)
 
 			return isFile, nil
@@ -105,6 +105,6 @@ func (s *Service) UploadImage(fileName string, fileSize int64) {
 	}
 }
 
-func (s *Service) GetFileByFileId(ctx context.Context, fileID uuid.UUID) (*db.File, error) {
+func (s *Service) GetFileByFileId(ctx context.Context, fileID pgtype.UUID) (*db.File, error) {
 	return s.Files.GetFileByID(ctx, fileID)
 }

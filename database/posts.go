@@ -2,10 +2,9 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -16,14 +15,14 @@ type Posts struct {
 }
 
 func (p *Posts) CreatePost(ctx context.Context, arg db.CreatePostParams) (*db.Post, error) {
-	return util.HandleDBResponse(p.Queries.CreatePost(ctx, arg))
+	return p.Queries.CreatePost(ctx, arg)
 }
 
 func (p *Posts) GetPostByURL(ctx context.Context, url string) (*db.Post, error) {
-	return util.HandleDBResponse(p.Queries.GetPostByURL(ctx, url))
+	return p.Queries.GetPostByURL(ctx, url)
 }
 
-func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
@@ -65,7 +64,7 @@ func (p *Posts) GetPostsByUserIDAndPageInfo(ctx context.Context, userID uuid.UUI
 	}, nil
 }
 
-func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, userID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
@@ -107,7 +106,7 @@ func (p *Posts) GetPostsWithAttachmentByUserIDAndPageInfo(ctx context.Context, u
 	}, nil
 }
 
-func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, userID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
@@ -149,20 +148,20 @@ func (p *Posts) GetPostsWithParentIDByUserIDAndPageInfo(ctx context.Context, use
 	}, nil
 }
 
-func (p *Posts) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, userID uuid.UUID, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, userID pgtype.UUID, parentID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	posts, _ := p.Queries.GetPostsByUserIDAndParentIDAndPageInfo(ctx, db.GetPostsByUserIDAndParentIDAndPageInfoParams{
 		Limit:     limit,
 		UserID:    userID,
-		ParentID:  uuid.NullUUID{parentID, true},
+		ParentID:  parentID,
 		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByUserIDAndParentIDAndPageInfo(ctx, db.CountPostsByUserIDAndParentIDAndPageInfoParams{
 		UserID:    userID,
-		ParentID:  uuid.NullUUID{parentID, true},
+		ParentID:  parentID,
 		CreatedAt: after,
 	})
 
@@ -186,18 +185,18 @@ func (p *Posts) GetPostsByUserIDAndParentIDAndPageInfo(ctx context.Context, user
 	}, nil
 }
 
-func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, parentID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, parentID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
 	posts, _ := p.Queries.GetPostsByParentIDAndPageInfo(ctx, db.GetPostsByParentIDAndPageInfoParams{
 		Limit:     limit,
-		ParentID:  uuid.NullUUID{parentID, true},
+		ParentID:  parentID,
 		CreatedAt: after,
 	})
 
 	totalCount, _ := p.Queries.CountPostsByParentIDAndPageInfo(ctx, db.CountPostsByParentIDAndPageInfoParams{
-		ParentID:  uuid.NullUUID{parentID, true},
+		ParentID:  parentID,
 		CreatedAt: after,
 	})
 
@@ -221,7 +220,7 @@ func (p *Posts) GetPostsByParentIDAndPageInfo(ctx context.Context, parentID uuid
 	}, nil
 }
 
-func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
@@ -262,7 +261,7 @@ func (p *Posts) GetPostsByTagIDAndPageInfo(ctx context.Context, tagID uuid.UUID,
 	}, nil
 }
 
-func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID uuid.UUID, limit int32, after time.Time) (*model.Posts, error) {
+func (p *Posts) GetTimelinePostsByPageInfo(ctx context.Context, userID pgtype.UUID, limit int32, after time.Time) (*model.Posts, error) {
 	var edges []*model.PostsEdge
 	var endCursor string
 
@@ -377,26 +376,26 @@ func (p *Posts) GetExplorePostsWithAttachmentByPageInfo(ctx context.Context, lim
 	}, nil
 }
 
-func (p *Posts) CountPostsByUserID(ctx context.Context, userID uuid.UUID) (int64, error) {
+func (p *Posts) CountPostsByUserID(ctx context.Context, userID pgtype.UUID) (int64, error) {
 	count, _ := p.Queries.CountPostsByUserID(ctx, userID)
 
 	return count, nil
 }
 
 func (p *Posts) UpdatePost(ctx context.Context, post *db.Post) (*db.Post, error) {
-	return util.HandleDBResponse(p.Queries.UpdatePost(ctx, db.UpdatePostParams{
+	return p.Queries.UpdatePost(ctx, db.UpdatePostParams{
 		ID:      post.ID,
 		Content: post.Content,
 		Status:  post.Status,
-	}))
+	})
 }
 
-func (p *Posts) DeletePostByID(ctx context.Context, id uuid.UUID) (*db.Post, error) {
-	DeletedAt := sql.NullTime{time.Now(), true}
+func (p *Posts) DeletePostByID(ctx context.Context, id pgtype.UUID) (*db.Post, error) {
+	DeletedAt := time.Now()
 
 	post, _ := p.Queries.DeletePostByID(ctx, db.DeletePostByIDParams{
 		ID:        id,
-		DeletedAt: DeletedAt,
+		DeletedAt: &DeletedAt,
 	})
 
 	return post, nil

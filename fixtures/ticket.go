@@ -1,11 +1,11 @@
 package fixtures
 
 import (
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/plogto/core/db"
 )
 
-var TicketID, _ = uuid.NewUUID()
+var TicketID = pgtype.UUID{}
 var EmptyTicket = &db.Ticket{}
 var TicketWithID = &db.Ticket{ID: TicketID}
 

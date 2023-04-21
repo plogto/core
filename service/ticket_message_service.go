@@ -4,7 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/middleware"
@@ -12,11 +13,11 @@ import (
 	"github.com/plogto/core/validation"
 )
 
-func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
+func (s *Service) AddTicketMessage(ctx context.Context, ticketID pgtype.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	for _, id := range input.Attachment {
-		file, _ := s.Files.GetFileByID(ctx, uuid.MustParse(*id))
+		file, _ := s.Files.GetFileByID(ctx, convertor.StringToUUID(*id))
 		if file == nil {
 			return nil, errors.New("attachment is not valid")
 		}
@@ -32,18 +33,18 @@ func (s *Service) AddTicketMessage(ctx context.Context, ticketID uuid.UUID, inpu
 
 	if len(input.Attachment) > 0 {
 		for _, v := range input.Attachment {
-			s.TicketMessageAttachments.CreateTicketMessageAttachment(ctx, ticketMessage.ID, uuid.MustParse(*v))
+			s.TicketMessageAttachments.CreateTicketMessageAttachment(ctx, ticketMessage.ID, convertor.StringToUUID(*v))
 		}
 	}
 
 	return ticketMessage, nil
 }
 
-func (s *Service) GetTicketMessageByID(ctx context.Context, id uuid.UUID) (*db.TicketMessage, error) {
+func (s *Service) GetTicketMessageByID(ctx context.Context, id pgtype.UUID) (*db.TicketMessage, error) {
 	return s.TicketMessages.GetTicketMessageByID(ctx, id)
 }
 
-func (s *Service) GetLastTicketMessageByTicketID(ctx context.Context, ticketID uuid.UUID) (*db.TicketMessage, error) {
+func (s *Service) GetLastTicketMessageByTicketID(ctx context.Context, ticketID pgtype.UUID) (*db.TicketMessage, error) {
 	return s.TicketMessages.GetLastTicketMessageByTicketID(ctx, ticketID)
 }
 
@@ -65,7 +66,7 @@ func (s *Service) GetTicketMessagesByTicketURL(ctx context.Context, ticketURL st
 	return s.TicketMessages.GetTicketMessagesByTicketIDAndPageInfo(ctx, ticket.ID, pagination.First, pagination.After)
 }
 
-func (s *Service) ReadTicketMessages(ctx context.Context, ticketID uuid.UUID) (*bool, error) {
+func (s *Service) ReadTicketMessages(ctx context.Context, ticketID pgtype.UUID) (*bool, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
 	if user == nil {
