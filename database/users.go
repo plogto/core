@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/constants"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -19,6 +20,7 @@ func (u *Users) CreateUser(ctx context.Context, email, fullName string) (*db.Use
 		FullName:       fullName,
 		Username:       util.RandomString(15),
 		InvitationCode: util.RandomString(7),
+		Settings:       constants.DEFAULT_USER_SETTINGS,
 	}
 
 	return u.Queries.CreateUser(ctx, newUser)
@@ -77,6 +79,15 @@ func (u *Users) UpdateUser(ctx context.Context, user *db.User) (*db.User, error)
 		BackgroundColor: user.BackgroundColor,
 		PrimaryColor:    user.PrimaryColor,
 		IsPrivate:       user.IsPrivate,
+	})
+
+	return updatedUser, nil
+}
+
+func (u *Users) UpdateUserSettings(ctx context.Context, userID pgtype.UUID, userSettings db.UserSettings) (*db.User, error) {
+	updatedUser, _ := u.Queries.UpdateUserSettings(ctx, db.UpdateUserSettingsParams{
+		ID:       userID,
+		Settings: userSettings,
 	})
 
 	return updatedUser, nil

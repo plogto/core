@@ -2,11 +2,9 @@ package database
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
@@ -43,7 +41,6 @@ func (s *SavedPosts) GetSavedPostByUserIDAndPostID(ctx context.Context, userID, 
 
 func (s *SavedPosts) GetSavedPostByID(ctx context.Context, id pgtype.UUID) (*db.SavedPost, error) {
 	savedPost, err := s.Queries.GetSavedPostByID(ctx, id)
-	fmt.Println(convertor.UUIDToString(id), err, savedPost.ID)
 	return savedPost, err
 }
 
