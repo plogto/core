@@ -1,8 +1,14 @@
 -- name: CreateUser :one
 INSERT INTO
-	users (email, username, invitation_code, full_name)
+	users (
+		email,
+		username,
+		invitation_code,
+		full_name,
+		settings
+	)
 VALUES
-	($1, $2, $3, $4) RETURNING *;
+	($1, $2, $3, $4, $5) RETURNING *;
 
 -- name: GetUsersByIDs :many
 SELECT

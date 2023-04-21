@@ -16,5 +16,5 @@ input EditUserSettingsInput {
 }
 
 extend type Mutation {
-  editUserSettings(input: EditUserSettingsInput!): UserSettings
+  editUserSettings(input: EditUserSettingsInput!): User
 }

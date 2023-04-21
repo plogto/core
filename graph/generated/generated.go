@@ -510,7 +510,7 @@ type MutationResolver interface {
 	UpdateTicketStatus(ctx context.Context, ticketID pgtype.UUID, status model.TicketStatus) (*db.Ticket, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*db.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
-	EditUserSettings(ctx context.Context, input model.EditUserSettingsInput) (*db.UserSettings, error)
+	EditUserSettings(ctx context.Context, input model.EditUserSettingsInput) (*db.User, error)
 }
 type NotificationResolver interface {
 	NotificationType(ctx context.Context, obj *db.Notification) (*db.NotificationType, error)
@@ -3217,7 +3217,7 @@ input EditUserSettingsInput {
 }
 
 extend type Mutation {
-  editUserSettings(input: EditUserSettingsInput!): UserSettings
+  editUserSettings(input: EditUserSettingsInput!): User
 }
 `, BuiltIn: false},
 }
@@ -8950,9 +8950,9 @@ func (ec *executionContext) _Mutation_editUserSettings(ctx context.Context, fiel
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*db.UserSettings)
+	res := resTmp.(*db.User)
 	fc.Result = res
-	return ec.marshalOUserSettings2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUserSettings(ctx, field.Selections, res)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUser(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Mutation_editUserSettings(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -8963,14 +8963,52 @@ func (ec *executionContext) fieldContext_Mutation_editUserSettings(ctx context.C
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "isRepliesVisible":
-				return ec.fieldContext_UserSettings_isRepliesVisible(ctx, field)
-			case "isMediaVisible":
-				return ec.fieldContext_UserSettings_isMediaVisible(ctx, field)
-			case "isLikesVisible":
-				return ec.fieldContext_UserSettings_isLikesVisible(ctx, field)
+			case "id":
+				return ec.fieldContext_User_id(ctx, field)
+			case "username":
+				return ec.fieldContext_User_username(ctx, field)
+			case "backgroundColor":
+				return ec.fieldContext_User_backgroundColor(ctx, field)
+			case "primaryColor":
+				return ec.fieldContext_User_primaryColor(ctx, field)
+			case "avatar":
+				return ec.fieldContext_User_avatar(ctx, field)
+			case "background":
+				return ec.fieldContext_User_background(ctx, field)
+			case "email":
+				return ec.fieldContext_User_email(ctx, field)
+			case "fullName":
+				return ec.fieldContext_User_fullName(ctx, field)
+			case "invitationCode":
+				return ec.fieldContext_User_invitationCode(ctx, field)
+			case "bio":
+				return ec.fieldContext_User_bio(ctx, field)
+			case "role":
+				return ec.fieldContext_User_role(ctx, field)
+			case "credits":
+				return ec.fieldContext_User_credits(ctx, field)
+			case "isPrivate":
+				return ec.fieldContext_User_isPrivate(ctx, field)
+			case "isVerified":
+				return ec.fieldContext_User_isVerified(ctx, field)
+			case "settings":
+				return ec.fieldContext_User_settings(ctx, field)
+			case "connectionStatus":
+				return ec.fieldContext_User_connectionStatus(ctx, field)
+			case "followingCount":
+				return ec.fieldContext_User_followingCount(ctx, field)
+			case "followersCount":
+				return ec.fieldContext_User_followersCount(ctx, field)
+			case "followRequestsCount":
+				return ec.fieldContext_User_followRequestsCount(ctx, field)
+			case "postsCount":
+				return ec.fieldContext_User_postsCount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_User_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_User_updatedAt(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type UserSettings", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type User", field.Name)
 		},
 	}
 	defer func() {
@@ -25032,13 +25070,6 @@ func (ec *executionContext) marshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋ
 		return graphql.Null
 	}
 	return v
-}
-
-func (ec *executionContext) marshalOUserSettings2ᚖgithubᚗcomᚋplogtoᚋcoreᚋdbᚐUserSettings(ctx context.Context, sel ast.SelectionSet, v *db.UserSettings) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	return ec._UserSettings(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalOUsers2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUsers(ctx context.Context, sel ast.SelectionSet, v *model.Users) graphql.Marshaler {
