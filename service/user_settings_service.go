@@ -41,3 +41,7 @@ func (s *Service) EditUserSettings(ctx context.Context, input model.EditUserSett
 
 	return updatedUser, nil
 }
+
+func (s *Service) IsSettingValueOff(settingValue db.UserSettingValue) bool {
+	return settingValue == db.UserSettingValueOff
+}
