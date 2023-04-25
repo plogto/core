@@ -68,7 +68,10 @@ func (e UserSettingValue) MarshalGQL(w io.Writer) {
 }
 
 type UserSettings struct {
-	IsRepliesVisible UserSettingValue `json:"is_replies_visible"`
-	IsMediaVisible   UserSettingValue `json:"is_media_visible"`
-	IsLikesVisible   UserSettingValue `json:"is_likes_visible"`
+	RepliesVisible               UserSettingValue `json:"replies_visible"`
+	MediaVisible                 UserSettingValue `json:"media_visible"`
+	LikesVisible                 UserSettingValue `json:"likes_visible"`
+	RepliesVisibleForCurrentUser UserSettingValue `json:"replies_visible_for_current_user"`
+	MediaVisibleForCurrentUser   UserSettingValue `json:"media_visible_for_current_user"`
+	LikesVisibleForCurrentUser   UserSettingValue `json:"likes_visible_for_current_user"`
 }

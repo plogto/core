@@ -18,18 +18,33 @@ func (s *Service) EditUserSettings(ctx context.Context, input model.EditUserSett
 
 	didUpdate := false
 
-	if input.IsRepliesVisible != nil {
-		user.Settings.IsRepliesVisible = db.UserSettingValue(*input.IsRepliesVisible)
+	if input.RepliesVisible != nil {
+		user.Settings.RepliesVisible = db.UserSettingValue(*input.RepliesVisible)
 		didUpdate = true
 	}
 
-	if input.IsMediaVisible != nil {
-		user.Settings.IsMediaVisible = db.UserSettingValue(*input.IsMediaVisible)
+	if input.MediaVisible != nil {
+		user.Settings.MediaVisible = db.UserSettingValue(*input.MediaVisible)
 		didUpdate = true
 	}
 
-	if input.IsLikesVisible != nil {
-		user.Settings.IsLikesVisible = db.UserSettingValue(*input.IsLikesVisible)
+	if input.LikesVisible != nil {
+		user.Settings.LikesVisible = db.UserSettingValue(*input.LikesVisible)
+		didUpdate = true
+	}
+
+	if input.RepliesVisibleForCurrentUser != nil {
+		user.Settings.RepliesVisibleForCurrentUser = db.UserSettingValue(*input.RepliesVisibleForCurrentUser)
+		didUpdate = true
+	}
+
+	if input.MediaVisibleForCurrentUser != nil {
+		user.Settings.MediaVisibleForCurrentUser = db.UserSettingValue(*input.MediaVisibleForCurrentUser)
+		didUpdate = true
+	}
+
+	if input.LikesVisibleForCurrentUser != nil {
+		user.Settings.LikesVisibleForCurrentUser = db.UserSettingValue(*input.LikesVisibleForCurrentUser)
 		didUpdate = true
 	}
 

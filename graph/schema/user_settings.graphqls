@@ -4,15 +4,21 @@ enum UserSettingValue {
 }
 
 type UserSettings {
-  isRepliesVisible: UserSettingValue!
-  isMediaVisible: UserSettingValue!
-  isLikesVisible: UserSettingValue!
+  repliesVisible: UserSettingValue!
+  mediaVisible: UserSettingValue!
+  likesVisible: UserSettingValue!
+  repliesVisibleForCurrentUser: UserSettingValue!
+  mediaVisibleForCurrentUser: UserSettingValue!
+  likesVisibleForCurrentUser: UserSettingValue!
 }
 
 input EditUserSettingsInput {
-  isRepliesVisible: UserSettingValue
-  isMediaVisible: UserSettingValue
-  isLikesVisible: UserSettingValue
+  repliesVisible: UserSettingValue
+  mediaVisible: UserSettingValue
+  likesVisible: UserSettingValue
+  repliesVisibleForCurrentUser: UserSettingValue
+  mediaVisibleForCurrentUser: UserSettingValue
+  likesVisibleForCurrentUser: UserSettingValue
 }
 
 extend type Mutation {

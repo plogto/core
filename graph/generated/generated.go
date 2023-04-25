@@ -430,9 +430,12 @@ type ComplexityRoot struct {
 	}
 
 	UserSettings struct {
-		IsLikesVisible   func(childComplexity int) int
-		IsMediaVisible   func(childComplexity int) int
-		IsRepliesVisible func(childComplexity int) int
+		LikesVisible                 func(childComplexity int) int
+		LikesVisibleForCurrentUser   func(childComplexity int) int
+		MediaVisible                 func(childComplexity int) int
+		MediaVisibleForCurrentUser   func(childComplexity int) int
+		RepliesVisible               func(childComplexity int) int
+		RepliesVisibleForCurrentUser func(childComplexity int) int
 	}
 
 	Users struct {
@@ -629,9 +632,12 @@ type UserResolver interface {
 	PostsCount(ctx context.Context, obj *db.User) (int64, error)
 }
 type UserSettingsResolver interface {
-	IsRepliesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
-	IsMediaVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
-	IsLikesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	RepliesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	MediaVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	LikesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	RepliesVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	MediaVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
+	LikesVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error)
 }
 type UsersEdgeResolver interface {
 	Node(ctx context.Context, obj *model.UsersEdge) (*db.User, error)
@@ -2476,26 +2482,47 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Username(childComplexity), true
 
-	case "UserSettings.isLikesVisible":
-		if e.complexity.UserSettings.IsLikesVisible == nil {
+	case "UserSettings.likesVisible":
+		if e.complexity.UserSettings.LikesVisible == nil {
 			break
 		}
 
-		return e.complexity.UserSettings.IsLikesVisible(childComplexity), true
+		return e.complexity.UserSettings.LikesVisible(childComplexity), true
 
-	case "UserSettings.isMediaVisible":
-		if e.complexity.UserSettings.IsMediaVisible == nil {
+	case "UserSettings.likesVisibleForCurrentUser":
+		if e.complexity.UserSettings.LikesVisibleForCurrentUser == nil {
 			break
 		}
 
-		return e.complexity.UserSettings.IsMediaVisible(childComplexity), true
+		return e.complexity.UserSettings.LikesVisibleForCurrentUser(childComplexity), true
 
-	case "UserSettings.isRepliesVisible":
-		if e.complexity.UserSettings.IsRepliesVisible == nil {
+	case "UserSettings.mediaVisible":
+		if e.complexity.UserSettings.MediaVisible == nil {
 			break
 		}
 
-		return e.complexity.UserSettings.IsRepliesVisible(childComplexity), true
+		return e.complexity.UserSettings.MediaVisible(childComplexity), true
+
+	case "UserSettings.mediaVisibleForCurrentUser":
+		if e.complexity.UserSettings.MediaVisibleForCurrentUser == nil {
+			break
+		}
+
+		return e.complexity.UserSettings.MediaVisibleForCurrentUser(childComplexity), true
+
+	case "UserSettings.repliesVisible":
+		if e.complexity.UserSettings.RepliesVisible == nil {
+			break
+		}
+
+		return e.complexity.UserSettings.RepliesVisible(childComplexity), true
+
+	case "UserSettings.repliesVisibleForCurrentUser":
+		if e.complexity.UserSettings.RepliesVisibleForCurrentUser == nil {
+			break
+		}
+
+		return e.complexity.UserSettings.RepliesVisibleForCurrentUser(childComplexity), true
 
 	case "Users.edges":
 		if e.complexity.Users.Edges == nil {
@@ -3205,15 +3232,21 @@ extend type Mutation {
 }
 
 type UserSettings {
-  isRepliesVisible: UserSettingValue!
-  isMediaVisible: UserSettingValue!
-  isLikesVisible: UserSettingValue!
+  repliesVisible: UserSettingValue!
+  mediaVisible: UserSettingValue!
+  likesVisible: UserSettingValue!
+  repliesVisibleForCurrentUser: UserSettingValue!
+  mediaVisibleForCurrentUser: UserSettingValue!
+  likesVisibleForCurrentUser: UserSettingValue!
 }
 
 input EditUserSettingsInput {
-  isRepliesVisible: UserSettingValue
-  isMediaVisible: UserSettingValue
-  isLikesVisible: UserSettingValue
+  repliesVisible: UserSettingValue
+  mediaVisible: UserSettingValue
+  likesVisible: UserSettingValue
+  repliesVisibleForCurrentUser: UserSettingValue
+  mediaVisibleForCurrentUser: UserSettingValue
+  likesVisibleForCurrentUser: UserSettingValue
 }
 
 extend type Mutation {
@@ -16199,12 +16232,18 @@ func (ec *executionContext) fieldContext_User_settings(ctx context.Context, fiel
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "isRepliesVisible":
-				return ec.fieldContext_UserSettings_isRepliesVisible(ctx, field)
-			case "isMediaVisible":
-				return ec.fieldContext_UserSettings_isMediaVisible(ctx, field)
-			case "isLikesVisible":
-				return ec.fieldContext_UserSettings_isLikesVisible(ctx, field)
+			case "repliesVisible":
+				return ec.fieldContext_UserSettings_repliesVisible(ctx, field)
+			case "mediaVisible":
+				return ec.fieldContext_UserSettings_mediaVisible(ctx, field)
+			case "likesVisible":
+				return ec.fieldContext_UserSettings_likesVisible(ctx, field)
+			case "repliesVisibleForCurrentUser":
+				return ec.fieldContext_UserSettings_repliesVisibleForCurrentUser(ctx, field)
+			case "mediaVisibleForCurrentUser":
+				return ec.fieldContext_UserSettings_mediaVisibleForCurrentUser(ctx, field)
+			case "likesVisibleForCurrentUser":
+				return ec.fieldContext_UserSettings_likesVisibleForCurrentUser(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type UserSettings", field.Name)
 		},
@@ -16511,8 +16550,8 @@ func (ec *executionContext) fieldContext_User_updatedAt(ctx context.Context, fie
 	return fc, nil
 }
 
-func (ec *executionContext) _UserSettings_isRepliesVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserSettings_isRepliesVisible(ctx, field)
+func (ec *executionContext) _UserSettings_repliesVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_repliesVisible(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16525,7 +16564,7 @@ func (ec *executionContext) _UserSettings_isRepliesVisible(ctx context.Context, 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.UserSettings().IsRepliesVisible(rctx, obj)
+		return ec.resolvers.UserSettings().RepliesVisible(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16542,7 +16581,7 @@ func (ec *executionContext) _UserSettings_isRepliesVisible(ctx context.Context, 
 	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserSettings_isRepliesVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserSettings_repliesVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserSettings",
 		Field:      field,
@@ -16555,8 +16594,8 @@ func (ec *executionContext) fieldContext_UserSettings_isRepliesVisible(ctx conte
 	return fc, nil
 }
 
-func (ec *executionContext) _UserSettings_isMediaVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserSettings_isMediaVisible(ctx, field)
+func (ec *executionContext) _UserSettings_mediaVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_mediaVisible(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16569,7 +16608,7 @@ func (ec *executionContext) _UserSettings_isMediaVisible(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.UserSettings().IsMediaVisible(rctx, obj)
+		return ec.resolvers.UserSettings().MediaVisible(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16586,7 +16625,7 @@ func (ec *executionContext) _UserSettings_isMediaVisible(ctx context.Context, fi
 	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserSettings_isMediaVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserSettings_mediaVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserSettings",
 		Field:      field,
@@ -16599,8 +16638,8 @@ func (ec *executionContext) fieldContext_UserSettings_isMediaVisible(ctx context
 	return fc, nil
 }
 
-func (ec *executionContext) _UserSettings_isLikesVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_UserSettings_isLikesVisible(ctx, field)
+func (ec *executionContext) _UserSettings_likesVisible(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_likesVisible(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -16613,7 +16652,7 @@ func (ec *executionContext) _UserSettings_isLikesVisible(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.UserSettings().IsLikesVisible(rctx, obj)
+		return ec.resolvers.UserSettings().LikesVisible(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -16630,7 +16669,139 @@ func (ec *executionContext) _UserSettings_isLikesVisible(ctx context.Context, fi
 	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_UserSettings_isLikesVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_UserSettings_likesVisible(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserSettings",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UserSettingValue does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserSettings_repliesVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_repliesVisibleForCurrentUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.UserSettings().RepliesVisibleForCurrentUser(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.UserSettingValue)
+	fc.Result = res
+	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserSettings_repliesVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserSettings",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UserSettingValue does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserSettings_mediaVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_mediaVisibleForCurrentUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.UserSettings().MediaVisibleForCurrentUser(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.UserSettingValue)
+	fc.Result = res
+	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserSettings_mediaVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "UserSettings",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type UserSettingValue does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _UserSettings_likesVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField, obj *db.UserSettings) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_UserSettings_likesVisibleForCurrentUser(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.UserSettings().LikesVisibleForCurrentUser(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(model.UserSettingValue)
+	fc.Result = res
+	return ec.marshalNUserSettingValue2githubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_UserSettings_likesVisibleForCurrentUser(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "UserSettings",
 		Field:      field,
@@ -18854,34 +19025,58 @@ func (ec *executionContext) unmarshalInputEditUserSettingsInput(ctx context.Cont
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"isRepliesVisible", "isMediaVisible", "isLikesVisible"}
+	fieldsInOrder := [...]string{"repliesVisible", "mediaVisible", "likesVisible", "repliesVisibleForCurrentUser", "mediaVisibleForCurrentUser", "likesVisibleForCurrentUser"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "isRepliesVisible":
+		case "repliesVisible":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isRepliesVisible"))
-			it.IsRepliesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repliesVisible"))
+			it.RepliesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "isMediaVisible":
+		case "mediaVisible":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isMediaVisible"))
-			it.IsMediaVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaVisible"))
+			it.MediaVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
-		case "isLikesVisible":
+		case "likesVisible":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isLikesVisible"))
-			it.IsLikesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("likesVisible"))
+			it.LikesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "repliesVisibleForCurrentUser":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repliesVisibleForCurrentUser"))
+			it.RepliesVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "mediaVisibleForCurrentUser":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaVisibleForCurrentUser"))
+			it.MediaVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "likesVisibleForCurrentUser":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("likesVisibleForCurrentUser"))
+			it.LikesVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -22760,7 +22955,7 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("UserSettings")
-		case "isRepliesVisible":
+		case "repliesVisible":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -22769,7 +22964,7 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._UserSettings_isRepliesVisible(ctx, field, obj)
+				res = ec._UserSettings_repliesVisible(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -22780,7 +22975,7 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 				return innerFunc(ctx)
 
 			})
-		case "isMediaVisible":
+		case "mediaVisible":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -22789,7 +22984,7 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._UserSettings_isMediaVisible(ctx, field, obj)
+				res = ec._UserSettings_mediaVisible(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -22800,7 +22995,7 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 				return innerFunc(ctx)
 
 			})
-		case "isLikesVisible":
+		case "likesVisible":
 			field := field
 
 			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
@@ -22809,7 +23004,67 @@ func (ec *executionContext) _UserSettings(ctx context.Context, sel ast.Selection
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._UserSettings_isLikesVisible(ctx, field, obj)
+				res = ec._UserSettings_likesVisible(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "repliesVisibleForCurrentUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserSettings_repliesVisibleForCurrentUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "mediaVisibleForCurrentUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserSettings_mediaVisibleForCurrentUser(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "likesVisibleForCurrentUser":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._UserSettings_likesVisibleForCurrentUser(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
