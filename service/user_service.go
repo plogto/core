@@ -213,3 +213,9 @@ func (s *Service) GetPlogAccount(ctx context.Context) (*db.User, error) {
 	username := os.Getenv("PLOG_ACCOUNT")
 	return s.Users.GetUserByUsername(ctx, username)
 }
+
+func (s *Service) IsCurrentUser(ctx context.Context, user *db.User) bool {
+	currentUser, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	return currentUser.ID == user.ID
+}

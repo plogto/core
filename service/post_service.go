@@ -266,7 +266,15 @@ func (s *Service) GetPostsWithAttachmentByUsername(ctx context.Context, username
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if !s.CheckUserAccess(ctx, user, followingUser) || s.IsSettingValueOff(followingUser.Settings.IsMediaVisible) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+
+		if !s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.MediaVisible) {
+			return nil, errors.New("access denied")
+		}
+
+		if s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.MediaVisibleForCurrentUser) {
 			return nil, errors.New("access denied")
 		}
 
@@ -283,12 +291,19 @@ func (s *Service) GetRepliesByUsername(ctx context.Context, username string, pag
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if !s.CheckUserAccess(ctx, user, followingUser) || s.IsSettingValueOff(followingUser.Settings.IsRepliesVisible) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+
+		if !s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.RepliesVisible) {
+			return nil, errors.New("access denied")
+		}
+
+		if s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.RepliesVisibleForCurrentUser) {
 			return nil, errors.New("access denied")
 		}
 
 		pagination := util.ExtractPageInfo(pageInfo)
-
 		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 	}
 }

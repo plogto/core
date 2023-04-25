@@ -85,9 +85,12 @@ type EditUserInput struct {
 }
 
 type EditUserSettingsInput struct {
-	IsRepliesVisible *UserSettingValue `json:"isRepliesVisible,omitempty"`
-	IsMediaVisible   *UserSettingValue `json:"isMediaVisible,omitempty"`
-	IsLikesVisible   *UserSettingValue `json:"isLikesVisible,omitempty"`
+	RepliesVisible               *UserSettingValue `json:"repliesVisible,omitempty"`
+	MediaVisible                 *UserSettingValue `json:"mediaVisible,omitempty"`
+	LikesVisible                 *UserSettingValue `json:"likesVisible,omitempty"`
+	RepliesVisibleForCurrentUser *UserSettingValue `json:"repliesVisibleForCurrentUser,omitempty"`
+	MediaVisibleForCurrentUser   *UserSettingValue `json:"mediaVisibleForCurrentUser,omitempty"`
+	LikesVisibleForCurrentUser   *UserSettingValue `json:"likesVisibleForCurrentUser,omitempty"`
 }
 
 type GetExplorePostsInput struct {

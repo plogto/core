@@ -17,19 +17,34 @@ func (r *mutationResolver) EditUserSettings(ctx context.Context, input model.Edi
 	return r.Service.EditUserSettings(ctx, input)
 }
 
-// IsRepliesVisible is the resolver for the isRepliesVisible field.
-func (r *userSettingsResolver) IsRepliesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
-	return model.UserSettingValue(obj.IsRepliesVisible), nil
+// RepliesVisible is the resolver for the repliesVisible field.
+func (r *userSettingsResolver) RepliesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.RepliesVisible), nil
 }
 
-// IsMediaVisible is the resolver for the isMediaVisible field.
-func (r *userSettingsResolver) IsMediaVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
-	return model.UserSettingValue(obj.IsMediaVisible), nil
+// MediaVisible is the resolver for the mediaVisible field.
+func (r *userSettingsResolver) MediaVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.MediaVisible), nil
 }
 
-// IsLikesVisible is the resolver for the isLikesVisible field.
-func (r *userSettingsResolver) IsLikesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
-	return model.UserSettingValue(obj.IsLikesVisible), nil
+// LikesVisible is the resolver for the likesVisible field.
+func (r *userSettingsResolver) LikesVisible(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.LikesVisible), nil
+}
+
+// RepliesVisibleForCurrentUser is the resolver for the repliesVisibleForCurrentUser field.
+func (r *userSettingsResolver) RepliesVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.RepliesVisibleForCurrentUser), nil
+}
+
+// MediaVisibleForCurrentUser is the resolver for the mediaVisibleForCurrentUser field.
+func (r *userSettingsResolver) MediaVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.MediaVisibleForCurrentUser), nil
+}
+
+// LikesVisibleForCurrentUser is the resolver for the likesVisibleForCurrentUser field.
+func (r *userSettingsResolver) LikesVisibleForCurrentUser(ctx context.Context, obj *db.UserSettings) (model.UserSettingValue, error) {
+	return model.UserSettingValue(obj.LikesVisibleForCurrentUser), nil
 }
 
 // UserSettings returns generated.UserSettingsResolver implementation.
