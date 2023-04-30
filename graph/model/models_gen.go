@@ -13,10 +13,10 @@ import (
 )
 
 type AddPostInput struct {
-	ParentID   *pgtype.UUID `json:"parentId,omitempty"`
-	Content    *string      `json:"content,omitempty"`
-	Status     *PostStatus  `json:"status,omitempty"`
-	Attachment []string     `json:"attachment,omitempty"`
+	ParentID   *string     `json:"parentId,omitempty"`
+	Content    *string     `json:"content,omitempty"`
+	Status     *PostStatus `json:"status,omitempty"`
+	Attachment []string    `json:"attachment,omitempty"`
 }
 
 type AddTicketMessageInput struct {

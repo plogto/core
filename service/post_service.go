@@ -29,7 +29,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check parent post
 	var parentPost *model.Post
 	if input.ParentID != nil {
-		parentPost, _ = graph.GetPostLoader(ctx).Load(convertor.UUIDToString(*input.ParentID))
+		parentPost, _ = graph.GetPostLoader(ctx).Load(*input.ParentID)
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
@@ -58,7 +58,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	var parentID pgtype.UUID
 	if input.ParentID != nil {
-		parentID = *input.ParentID
+		parentID = convertor.StringToUUID(*input.ParentID)
 	}
 
 	var status = db.PostStatusPublic
@@ -101,7 +101,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url + "#" + convertor.UUIDToString(post.ID),
-				PostID:     *input.ParentID,
+				PostID:     convertor.StringToUUID(*input.ParentID),
 				ReplyID:    post.ID,
 			})
 		}
@@ -266,7 +266,15 @@ func (s *Service) GetPostsWithAttachmentByUsername(ctx context.Context, username
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if !s.CheckUserAccess(ctx, user, followingUser) || s.IsSettingValueOff(followingUser.Settings.MediaVisible) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+
+		if !s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.MediaVisible) {
+			return nil, errors.New("access denied")
+		}
+
+		if s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.MediaVisibleForCurrentUser) {
 			return nil, errors.New("access denied")
 		}
 
@@ -283,12 +291,19 @@ func (s *Service) GetRepliesByUsername(ctx context.Context, username string, pag
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if !s.CheckUserAccess(ctx, user, followingUser) || s.IsSettingValueOff(followingUser.Settings.RepliesVisible) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+
+		if !s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.RepliesVisible) {
+			return nil, errors.New("access denied")
+		}
+
+		if s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.RepliesVisibleForCurrentUser) {
 			return nil, errors.New("access denied")
 		}
 
 		pagination := util.ExtractPageInfo(pageInfo)
-
 		return s.Posts.GetPostsWithParentIDByUserIDAndPageInfo(ctx, followingUser.ID, pagination.First, pagination.After)
 	}
 }

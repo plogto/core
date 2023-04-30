@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -35,13 +35,13 @@ func (r *likedPostsEdgeResolver) Node(ctx context.Context, obj *model.LikedPosts
 }
 
 // LikePost is the resolver for the likePost field.
-func (r *mutationResolver) LikePost(ctx context.Context, postID pgtype.UUID) (*db.LikedPost, error) {
-	return r.Service.LikePost(ctx, postID)
+func (r *mutationResolver) LikePost(ctx context.Context, postID string) (*db.LikedPost, error) {
+	return r.Service.LikePost(ctx, convertor.StringToUUID(postID))
 }
 
 // GetLikedPostsByPostID is the resolver for the getLikedPostsByPostId field.
-func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID pgtype.UUID, pageInfo *model.PageInfoInput) (*model.LikedPosts, error) {
-	return r.Service.GetLikedPostsByPostID(ctx, postID)
+func (r *queryResolver) GetLikedPostsByPostID(ctx context.Context, postID string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error) {
+	return r.Service.GetLikedPostsByPostID(ctx, convertor.StringToUUID(postID))
 }
 
 // GetLikedPostsByUsername is the resolver for the getLikedPostsByUsername field.

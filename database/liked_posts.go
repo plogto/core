@@ -8,6 +8,7 @@ import (
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 type LikedPosts struct {
@@ -20,14 +21,16 @@ func (l *LikedPosts) CreateLikedPost(ctx context.Context, userID, postID pgtype.
 		PostID: postID,
 	})
 
-	if likedPost != nil {
+	if validation.IsLikedPostExists(likedPost) {
 		return likedPost, nil
 	}
 
-	return l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
+	newLikedPost, _ := l.Queries.CreateLikedPost(ctx, db.CreateLikedPostParams{
 		UserID: userID,
 		PostID: postID,
 	})
+
+	return newLikedPost, nil
 }
 
 func (l *LikedPosts) GetLikedPostByID(ctx context.Context, id pgtype.UUID) (*db.LikedPost, error) {

@@ -86,7 +86,15 @@ func (s *Service) GetLikedPostsByUsername(ctx context.Context, username string, 
 	if err != nil {
 		return nil, errors.New("user not found")
 	} else {
-		if !s.CheckUserAccess(ctx, user, followingUser) || s.IsSettingValueOff(followingUser.Settings.LikesVisible) {
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+
+		if !s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.LikesVisible) {
+			return nil, errors.New("access denied")
+		}
+
+		if s.IsCurrentUser(ctx, followingUser) && s.IsSettingValueOff(followingUser.Settings.LikesVisibleForCurrentUser) {
 			return nil, errors.New("access denied")
 		}
 

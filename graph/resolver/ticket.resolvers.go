@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -20,18 +20,18 @@ func (r *mutationResolver) CreateTicket(ctx context.Context, input model.CreateT
 }
 
 // AddTicketMessage is the resolver for the addTicketMessage field.
-func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID pgtype.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
-	return r.Service.AddTicketMessage(ctx, ticketID, input)
+func (r *mutationResolver) AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error) {
+	return r.Service.AddTicketMessage(ctx, convertor.StringToUUID(ticketID), input)
 }
 
 // ReadTicketMessages is the resolver for the readTicketMessages field.
-func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID pgtype.UUID) (*bool, error) {
-	return r.Service.ReadTicketMessages(ctx, ticketID)
+func (r *mutationResolver) ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error) {
+	return r.Service.ReadTicketMessages(ctx, convertor.StringToUUID(ticketID))
 }
 
 // UpdateTicketStatus is the resolver for the updateTicketStatus field.
-func (r *mutationResolver) UpdateTicketStatus(ctx context.Context, ticketID pgtype.UUID, status model.TicketStatus) (*db.Ticket, error) {
-	return r.Service.UpdateTicketStatus(ctx, ticketID, db.TicketStatusType(status))
+func (r *mutationResolver) UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*db.Ticket, error) {
+	return r.Service.UpdateTicketStatus(ctx, convertor.StringToUUID(ticketID), db.TicketStatusType(status))
 }
 
 // GetTickets is the resolver for the getTickets field.
