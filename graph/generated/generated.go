@@ -196,26 +196,26 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		AcceptUser         func(childComplexity int, userID pgtype.UUID) int
+		AcceptUser         func(childComplexity int, userID string) int
 		AddPost            func(childComplexity int, input model.AddPostInput) int
-		AddTicketMessage   func(childComplexity int, ticketID pgtype.UUID, input model.AddTicketMessageInput) int
+		AddTicketMessage   func(childComplexity int, ticketID string, input model.AddTicketMessageInput) int
 		ChangePassword     func(childComplexity int, input model.ChangePasswordInput) int
 		CreateTicket       func(childComplexity int, input model.CreateTicketInput) int
-		DeletePost         func(childComplexity int, postID pgtype.UUID) int
-		EditPost           func(childComplexity int, postID pgtype.UUID, input model.EditPostInput) int
+		DeletePost         func(childComplexity int, postID string) int
+		EditPost           func(childComplexity int, postID string, input model.EditPostInput) int
 		EditUser           func(childComplexity int, input model.EditUserInput) int
 		EditUserSettings   func(childComplexity int, input model.EditUserSettingsInput) int
-		FollowUser         func(childComplexity int, userID pgtype.UUID) int
-		LikePost           func(childComplexity int, postID pgtype.UUID) int
+		FollowUser         func(childComplexity int, userID string) int
+		LikePost           func(childComplexity int, postID string) int
 		OAuthGoogle        func(childComplexity int, input model.OAuthGoogleInput) int
 		ReadNotifications  func(childComplexity int) int
-		ReadTicketMessages func(childComplexity int, ticketID pgtype.UUID) int
+		ReadTicketMessages func(childComplexity int, ticketID string) int
 		Register           func(childComplexity int, input model.RegisterInput) int
-		RejectUser         func(childComplexity int, userID pgtype.UUID) int
-		SavePost           func(childComplexity int, postID pgtype.UUID) int
+		RejectUser         func(childComplexity int, userID string) int
+		SavePost           func(childComplexity int, postID string) int
 		Test               func(childComplexity int, input model.TestInput) int
-		UnfollowUser       func(childComplexity int, userID pgtype.UUID) int
-		UpdateTicketStatus func(childComplexity int, ticketID pgtype.UUID, status model.TicketStatus) int
+		UnfollowUser       func(childComplexity int, userID string) int
+		UpdateTicketStatus func(childComplexity int, ticketID string, status model.TicketStatus) int
 		UploadFiles        func(childComplexity int, files []*graphql.Upload) int
 	}
 
@@ -292,7 +292,7 @@ type ComplexityRoot struct {
 		GetFollowersByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetFollowingByUsername           func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetInvitedUsers                  func(childComplexity int, pageInfo *model.PageInfoInput) int
-		GetLikedPostsByPostID            func(childComplexity int, postID pgtype.UUID, pageInfo *model.PageInfoInput) int
+		GetLikedPostsByPostID            func(childComplexity int, postID string, pageInfo *model.PageInfoInput) int
 		GetLikedPostsByUsername          func(childComplexity int, username string, pageInfo *model.PageInfoInput) int
 		GetNotifications                 func(childComplexity int, pageInfo *model.PageInfoInput) int
 		GetPostByURL                     func(childComplexity int, url string) int
@@ -496,21 +496,21 @@ type MutationResolver interface {
 	Test(ctx context.Context, input model.TestInput) (*model.Test, error)
 	Register(ctx context.Context, input model.RegisterInput) (*model.AuthResponse, error)
 	OAuthGoogle(ctx context.Context, input model.OAuthGoogleInput) (*model.AuthResponse, error)
-	FollowUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error)
-	UnfollowUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error)
-	AcceptUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error)
-	RejectUser(ctx context.Context, userID pgtype.UUID) (*db.Connection, error)
+	FollowUser(ctx context.Context, userID string) (*db.Connection, error)
+	UnfollowUser(ctx context.Context, userID string) (*db.Connection, error)
+	AcceptUser(ctx context.Context, userID string) (*db.Connection, error)
+	RejectUser(ctx context.Context, userID string) (*db.Connection, error)
 	UploadFiles(ctx context.Context, files []*graphql.Upload) ([]*db.File, error)
-	LikePost(ctx context.Context, postID pgtype.UUID) (*db.LikedPost, error)
+	LikePost(ctx context.Context, postID string) (*db.LikedPost, error)
 	ReadNotifications(ctx context.Context) (*bool, error)
 	AddPost(ctx context.Context, input model.AddPostInput) (*model.Post, error)
-	EditPost(ctx context.Context, postID pgtype.UUID, input model.EditPostInput) (*model.Post, error)
-	DeletePost(ctx context.Context, postID pgtype.UUID) (*model.Post, error)
-	SavePost(ctx context.Context, postID pgtype.UUID) (*db.SavedPost, error)
+	EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error)
+	DeletePost(ctx context.Context, postID string) (*model.Post, error)
+	SavePost(ctx context.Context, postID string) (*db.SavedPost, error)
 	CreateTicket(ctx context.Context, input model.CreateTicketInput) (*db.Ticket, error)
-	AddTicketMessage(ctx context.Context, ticketID pgtype.UUID, input model.AddTicketMessageInput) (*db.TicketMessage, error)
-	ReadTicketMessages(ctx context.Context, ticketID pgtype.UUID) (*bool, error)
-	UpdateTicketStatus(ctx context.Context, ticketID pgtype.UUID, status model.TicketStatus) (*db.Ticket, error)
+	AddTicketMessage(ctx context.Context, ticketID string, input model.AddTicketMessageInput) (*db.TicketMessage, error)
+	ReadTicketMessages(ctx context.Context, ticketID string) (*bool, error)
+	UpdateTicketStatus(ctx context.Context, ticketID string, status model.TicketStatus) (*db.Ticket, error)
 	EditUser(ctx context.Context, input model.EditUserInput) (*db.User, error)
 	ChangePassword(ctx context.Context, input model.ChangePasswordInput) (*model.AuthResponse, error)
 	EditUserSettings(ctx context.Context, input model.EditUserSettingsInput) (*db.User, error)
@@ -553,7 +553,7 @@ type QueryResolver interface {
 	GetFollowRequests(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Connections, error)
 	GetCreditTransactions(ctx context.Context, pageInfo *model.PageInfoInput) (*model.CreditTransactions, error)
 	GetInvitedUsers(ctx context.Context, pageInfo *model.PageInfoInput) (*model.InvitedUsers, error)
-	GetLikedPostsByPostID(ctx context.Context, postID pgtype.UUID, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
+	GetLikedPostsByPostID(ctx context.Context, postID string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetLikedPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.LikedPosts, error)
 	GetNotifications(ctx context.Context, pageInfo *model.PageInfoInput) (*model.Notifications, error)
 	GetPostsByUsername(ctx context.Context, username string, pageInfo *model.PageInfoInput) (*model.Posts, error)
@@ -1144,7 +1144,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AcceptUser(childComplexity, args["userId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.AcceptUser(childComplexity, args["userId"].(string)), true
 
 	case "Mutation.addPost":
 		if e.complexity.Mutation.AddPost == nil {
@@ -1168,7 +1168,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(pgtype.UUID), args["input"].(model.AddTicketMessageInput)), true
+		return e.complexity.Mutation.AddTicketMessage(childComplexity, args["ticketId"].(string), args["input"].(model.AddTicketMessageInput)), true
 
 	case "Mutation.changePassword":
 		if e.complexity.Mutation.ChangePassword == nil {
@@ -1204,7 +1204,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.DeletePost(childComplexity, args["postId"].(string)), true
 
 	case "Mutation.editPost":
 		if e.complexity.Mutation.EditPost == nil {
@@ -1216,7 +1216,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(pgtype.UUID), args["input"].(model.EditPostInput)), true
+		return e.complexity.Mutation.EditPost(childComplexity, args["postId"].(string), args["input"].(model.EditPostInput)), true
 
 	case "Mutation.editUser":
 		if e.complexity.Mutation.EditUser == nil {
@@ -1252,7 +1252,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.FollowUser(childComplexity, args["userId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.FollowUser(childComplexity, args["userId"].(string)), true
 
 	case "Mutation.likePost":
 		if e.complexity.Mutation.LikePost == nil {
@@ -1264,7 +1264,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.LikePost(childComplexity, args["postId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.LikePost(childComplexity, args["postId"].(string)), true
 
 	case "Mutation.oAuthGoogle":
 		if e.complexity.Mutation.OAuthGoogle == nil {
@@ -1295,7 +1295,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.ReadTicketMessages(childComplexity, args["ticketId"].(string)), true
 
 	case "Mutation.register":
 		if e.complexity.Mutation.Register == nil {
@@ -1319,7 +1319,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.RejectUser(childComplexity, args["userId"].(string)), true
 
 	case "Mutation.savePost":
 		if e.complexity.Mutation.SavePost == nil {
@@ -1331,7 +1331,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.SavePost(childComplexity, args["postId"].(string)), true
 
 	case "Mutation.test":
 		if e.complexity.Mutation.Test == nil {
@@ -1355,7 +1355,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(pgtype.UUID)), true
+		return e.complexity.Mutation.UnfollowUser(childComplexity, args["userId"].(string)), true
 
 	case "Mutation.updateTicketStatus":
 		if e.complexity.Mutation.UpdateTicketStatus == nil {
@@ -1367,7 +1367,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(pgtype.UUID), args["status"].(model.TicketStatus)), true
+		return e.complexity.Mutation.UpdateTicketStatus(childComplexity, args["ticketId"].(string), args["status"].(model.TicketStatus)), true
 
 	case "Mutation.uploadFiles":
 		if e.complexity.Mutation.UploadFiles == nil {
@@ -1767,7 +1767,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(pgtype.UUID), args["pageInfo"].(*model.PageInfoInput)), true
+		return e.complexity.Query.GetLikedPostsByPostID(childComplexity, args["postId"].(string), args["pageInfo"].(*model.PageInfoInput)), true
 
 	case "Query.getLikedPostsByUsername":
 		if e.complexity.Query.GetLikedPostsByUsername == nil {
@@ -2688,10 +2688,10 @@ extend type Query {
 }
 
 extend type Mutation {
-  followUser(userId: UUID!): Connection
-  unfollowUser(userId: UUID!): Connection
-  acceptUser(userId: UUID!): Connection
-  rejectUser(userId: UUID!): Connection
+  followUser(userId: String!): Connection
+  unfollowUser(userId: String!): Connection
+  acceptUser(userId: String!): Connection
+  rejectUser(userId: String!): Connection
 }
 `, BuiltIn: false},
 	{Name: "../schema/credit_transaction.graphqls", Input: `enum CreditTransactionStatus {
@@ -2833,7 +2833,7 @@ type LikedPosts {
 }
 
 extend type Query {
-  getLikedPostsByPostId(postId: UUID!, pageInfo: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(postId: String!, pageInfo: PageInfoInput): LikedPosts
   getLikedPostsByUsername(
     username: String!
     pageInfo: PageInfoInput
@@ -2841,7 +2841,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: UUID!): LikedPost
+  likePost(postId: String!): LikedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/main.graphqls", Input: `scalar Time
@@ -2957,7 +2957,7 @@ type Posts {
 }
 
 input AddPostInput {
-  parentId: UUID
+  parentId: String
   content: String
   status: PostStatus
   attachment: [String!]
@@ -2987,8 +2987,8 @@ extend type Query {
 
 extend type Mutation {
   addPost(input: AddPostInput!): Post
-  editPost(postId: UUID!, input: EditPostInput!): Post
-  deletePost(postId: UUID!): Post
+  editPost(postId: String!, input: EditPostInput!): Post
+  deletePost(postId: String!): Post
 }
 `, BuiltIn: false},
 	{Name: "../schema/saved_post.graphqls", Input: `type SavedPost {
@@ -3015,7 +3015,7 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: UUID!): SavedPost
+  savePost(postId: String!): SavedPost
 }
 `, BuiltIn: false},
 	{Name: "../schema/search.graphqls", Input: `type Search {
@@ -3135,11 +3135,11 @@ extend type Query {
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
   addTicketMessage(
-    ticketId: UUID!
+    ticketId: String!
     input: AddTicketMessageInput!
   ): TicketMessage
-  readTicketMessages(ticketId: UUID!): Boolean
-  updateTicketStatus(ticketId: UUID!, status: TicketStatus!): Ticket
+  readTicketMessages(ticketId: String!): Boolean
+  updateTicketStatus(ticketId: String!, status: TicketStatus!): Ticket
 }
 `, BuiltIn: false},
 	{Name: "../schema/user.graphqls", Input: `enum UserRole {
@@ -3263,10 +3263,10 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 func (ec *executionContext) field_Mutation_acceptUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3293,10 +3293,10 @@ func (ec *executionContext) field_Mutation_addPost_args(ctx context.Context, raw
 func (ec *executionContext) field_Mutation_addTicketMessage_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3347,10 +3347,10 @@ func (ec *executionContext) field_Mutation_createTicket_args(ctx context.Context
 func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3362,10 +3362,10 @@ func (ec *executionContext) field_Mutation_deletePost_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_editPost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3416,10 +3416,10 @@ func (ec *executionContext) field_Mutation_editUser_args(ctx context.Context, ra
 func (ec *executionContext) field_Mutation_followUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3431,10 +3431,10 @@ func (ec *executionContext) field_Mutation_followUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_likePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3461,10 +3461,10 @@ func (ec *executionContext) field_Mutation_oAuthGoogle_args(ctx context.Context,
 func (ec *executionContext) field_Mutation_readTicketMessages_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3491,10 +3491,10 @@ func (ec *executionContext) field_Mutation_register_args(ctx context.Context, ra
 func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3506,10 +3506,10 @@ func (ec *executionContext) field_Mutation_rejectUser_args(ctx context.Context, 
 func (ec *executionContext) field_Mutation_savePost_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3536,10 +3536,10 @@ func (ec *executionContext) field_Mutation_test_args(ctx context.Context, rawArg
 func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["userId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("userId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3551,10 +3551,10 @@ func (ec *executionContext) field_Mutation_unfollowUser_args(ctx context.Context
 func (ec *executionContext) field_Mutation_updateTicketStatus_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["ticketId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ticketId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3752,10 +3752,10 @@ func (ec *executionContext) field_Query_getInvitedUsers_args(ctx context.Context
 func (ec *executionContext) field_Query_getLikedPostsByPostId_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 pgtype.UUID
+	var arg0 string
 	if tmp, ok := rawArgs["postId"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("postId"))
-		arg0, err = ec.unmarshalNUUID2githubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, tmp)
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -7811,7 +7811,7 @@ func (ec *executionContext) _Mutation_followUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().FollowUser(rctx, fc.Args["userId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().FollowUser(rctx, fc.Args["userId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7877,7 +7877,7 @@ func (ec *executionContext) _Mutation_unfollowUser(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UnfollowUser(rctx, fc.Args["userId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().UnfollowUser(rctx, fc.Args["userId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -7943,7 +7943,7 @@ func (ec *executionContext) _Mutation_acceptUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AcceptUser(rctx, fc.Args["userId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().AcceptUser(rctx, fc.Args["userId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8009,7 +8009,7 @@ func (ec *executionContext) _Mutation_rejectUser(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().RejectUser(rctx, fc.Args["userId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().RejectUser(rctx, fc.Args["userId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8137,7 +8137,7 @@ func (ec *executionContext) _Mutation_likePost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().LikePost(rctx, fc.Args["postId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().LikePost(rctx, fc.Args["postId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8324,7 +8324,7 @@ func (ec *executionContext) _Mutation_editPost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(pgtype.UUID), fc.Args["input"].(model.EditPostInput))
+		return ec.resolvers.Mutation().EditPost(rctx, fc.Args["postId"].(string), fc.Args["input"].(model.EditPostInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8406,7 +8406,7 @@ func (ec *executionContext) _Mutation_deletePost(ctx context.Context, field grap
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().DeletePost(rctx, fc.Args["postId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8488,7 +8488,7 @@ func (ec *executionContext) _Mutation_savePost(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().SavePost(rctx, fc.Args["postId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8624,7 +8624,7 @@ func (ec *executionContext) _Mutation_addTicketMessage(ctx context.Context, fiel
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(pgtype.UUID), fc.Args["input"].(model.AddTicketMessageInput))
+		return ec.resolvers.Mutation().AddTicketMessage(rctx, fc.Args["ticketId"].(string), fc.Args["input"].(model.AddTicketMessageInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8694,7 +8694,7 @@ func (ec *executionContext) _Mutation_readTicketMessages(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(pgtype.UUID))
+		return ec.resolvers.Mutation().ReadTicketMessages(rctx, fc.Args["ticketId"].(string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8746,7 +8746,7 @@ func (ec *executionContext) _Mutation_updateTicketStatus(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(pgtype.UUID), fc.Args["status"].(model.TicketStatus))
+		return ec.resolvers.Mutation().UpdateTicketStatus(rctx, fc.Args["ticketId"].(string), fc.Args["status"].(model.TicketStatus))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -11587,7 +11587,7 @@ func (ec *executionContext) _Query_getLikedPostsByPostId(ctx context.Context, fi
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(pgtype.UUID), fc.Args["pageInfo"].(*model.PageInfoInput))
+		return ec.resolvers.Query().GetLikedPostsByPostID(rctx, fc.Args["postId"].(string), fc.Args["pageInfo"].(*model.PageInfoInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -18740,7 +18740,7 @@ func (ec *executionContext) unmarshalInputAddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalOUUID2ᚖgithubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx, v)
+			it.ParentID, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -25285,22 +25285,6 @@ func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel
 		return graphql.Null
 	}
 	res := graphql.MarshalTime(*v)
-	return res
-}
-
-func (ec *executionContext) unmarshalOUUID2ᚖgithubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx context.Context, v interface{}) (*pgtype.UUID, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := db.UnmarshalUUID(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
-func (ec *executionContext) marshalOUUID2ᚖgithubᚗcomᚋjackcᚋpgxᚋv5ᚋpgtypeᚐUUID(ctx context.Context, sel ast.SelectionSet, v *pgtype.UUID) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := db.MarshalUUID(*v)
 	return res
 }
 

@@ -8,6 +8,7 @@ import (
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/model"
 	"github.com/plogto/core/util"
+	"github.com/plogto/core/validation"
 )
 
 type SavedPosts struct {
@@ -20,7 +21,7 @@ func (s *SavedPosts) CreateSavedPost(ctx context.Context, userID, postID pgtype.
 		PostID: postID,
 	})
 
-	if savedPost != nil {
+	if validation.IsSavedPostExists(savedPost) {
 		return savedPost, nil
 	}
 

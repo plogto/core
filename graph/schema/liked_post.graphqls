@@ -18,7 +18,7 @@ type LikedPosts {
 }
 
 extend type Query {
-  getLikedPostsByPostId(postId: UUID!, pageInfo: PageInfoInput): LikedPosts
+  getLikedPostsByPostId(postId: String!, pageInfo: PageInfoInput): LikedPosts
   getLikedPostsByUsername(
     username: String!
     pageInfo: PageInfoInput
@@ -26,5 +26,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  likePost(postId: UUID!): LikedPost
+  likePost(postId: String!): LikedPost
 }

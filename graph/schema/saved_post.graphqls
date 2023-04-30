@@ -22,5 +22,5 @@ extend type Query {
 }
 
 extend type Mutation {
-  savePost(postId: UUID!): SavedPost
+  savePost(postId: String!): SavedPost
 }

@@ -32,7 +32,7 @@ type Posts {
 }
 
 input AddPostInput {
-  parentId: UUID
+  parentId: String
   content: String
   status: PostStatus
   attachment: [String!]
@@ -62,6 +62,6 @@ extend type Query {
 
 extend type Mutation {
   addPost(input: AddPostInput!): Post
-  editPost(postId: UUID!, input: EditPostInput!): Post
-  deletePost(postId: UUID!): Post
+  editPost(postId: String!, input: EditPostInput!): Post
+  deletePost(postId: String!): Post
 }

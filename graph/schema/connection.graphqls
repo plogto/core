@@ -31,8 +31,8 @@ extend type Query {
 }
 
 extend type Mutation {
-  followUser(userId: UUID!): Connection
-  unfollowUser(userId: UUID!): Connection
-  acceptUser(userId: UUID!): Connection
-  rejectUser(userId: UUID!): Connection
+  followUser(userId: String!): Connection
+  unfollowUser(userId: String!): Connection
+  acceptUser(userId: String!): Connection
+  rejectUser(userId: String!): Connection
 }

@@ -85,9 +85,9 @@ extend type Query {
 extend type Mutation {
   createTicket(input: CreateTicketInput!): Ticket
   addTicketMessage(
-    ticketId: UUID!
+    ticketId: String!
     input: AddTicketMessageInput!
   ): TicketMessage
-  readTicketMessages(ticketId: UUID!): Boolean
-  updateTicketStatus(ticketId: UUID!, status: TicketStatus!): Ticket
+  readTicketMessages(ticketId: String!): Boolean
+  updateTicketStatus(ticketId: String!, status: TicketStatus!): Ticket
 }

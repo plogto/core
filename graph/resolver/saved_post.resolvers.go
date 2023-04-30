@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -15,8 +15,8 @@ import (
 )
 
 // SavePost is the resolver for the savePost field.
-func (r *mutationResolver) SavePost(ctx context.Context, postID pgtype.UUID) (*db.SavedPost, error) {
-	return r.Service.SavePost(ctx, postID)
+func (r *mutationResolver) SavePost(ctx context.Context, postID string) (*db.SavedPost, error) {
+	return r.Service.SavePost(ctx, convertor.StringToUUID(postID))
 }
 
 // GetSavedPosts is the resolver for the getSavedPosts field.

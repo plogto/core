@@ -7,7 +7,7 @@ package graph
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/plogto/core/convertor"
 	"github.com/plogto/core/db"
 	"github.com/plogto/core/graph/generated"
 	"github.com/plogto/core/graph/model"
@@ -20,13 +20,13 @@ func (r *mutationResolver) AddPost(ctx context.Context, input model.AddPostInput
 }
 
 // EditPost is the resolver for the editPost field.
-func (r *mutationResolver) EditPost(ctx context.Context, postID pgtype.UUID, input model.EditPostInput) (*model.Post, error) {
-	return r.Service.EditPost(ctx, postID, input)
+func (r *mutationResolver) EditPost(ctx context.Context, postID string, input model.EditPostInput) (*model.Post, error) {
+	return r.Service.EditPost(ctx, convertor.StringToUUID(postID), input)
 }
 
 // DeletePost is the resolver for the deletePost field.
-func (r *mutationResolver) DeletePost(ctx context.Context, postID pgtype.UUID) (*model.Post, error) {
-	return r.Service.DeletePost(ctx, postID)
+func (r *mutationResolver) DeletePost(ctx context.Context, postID string) (*model.Post, error) {
+	return r.Service.DeletePost(ctx, convertor.StringToUUID(postID))
 }
 
 // Parent is the resolver for the parent field.

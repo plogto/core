@@ -29,7 +29,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 	// check parent post
 	var parentPost *model.Post
 	if input.ParentID != nil {
-		parentPost, _ = graph.GetPostLoader(ctx).Load(convertor.UUIDToString(*input.ParentID))
+		parentPost, _ = graph.GetPostLoader(ctx).Load(*input.ParentID)
 
 		if parentPost == nil {
 			return nil, errors.New("access denied")
@@ -58,7 +58,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	var parentID pgtype.UUID
 	if input.ParentID != nil {
-		parentID = *input.ParentID
+		parentID = convertor.StringToUUID(*input.ParentID)
 	}
 
 	var status = db.PostStatusPublic
@@ -101,7 +101,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 				SenderID:   user.ID,
 				ReceiverID: post.UserID,
 				Url:        "/p/" + post.Url + "#" + convertor.UUIDToString(post.ID),
-				PostID:     *input.ParentID,
+				PostID:     convertor.StringToUUID(*input.ParentID),
 				ReplyID:    post.ID,
 			})
 		}
