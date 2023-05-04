@@ -1,8 +1,8 @@
 -- name: CreatePost :one
 INSERT INTO
-	posts (parent_id, user_id, CONTENT, status, url)
+	posts (parent_id, child_id, user_id, CONTENT, status, url)
 VALUES
-	($1, $2, $3, $4, $5) RETURNING *;
+	($1, $2, $3, $4, $5, $6) RETURNING *;
 
 -- name: GetPostsByIDs :many
 SELECT
@@ -11,6 +11,16 @@ FROM
 	posts
 WHERE
 	id = ANY($1 :: uuid [ ])
+	AND deleted_at IS NULL;
+
+-- name: GetChildPostsByIDsAndUserID :many
+SELECT
+	*
+FROM
+	posts
+WHERE
+	user_id = sqlc.arg(user_id)
+	AND child_id = ANY(sqlc.arg(child_id) :: uuid [ ])
 	AND deleted_at IS NULL;
 
 -- name: GetPostByID :one

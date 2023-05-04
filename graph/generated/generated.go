@@ -262,6 +262,7 @@ type ComplexityRoot struct {
 		CreatedAt  func(childComplexity int) int
 		ID         func(childComplexity int) int
 		IsLiked    func(childComplexity int) int
+		IsReposted func(childComplexity int) int
 		IsSaved    func(childComplexity int) int
 		Likes      func(childComplexity int) int
 		Parent     func(childComplexity int) int
@@ -531,7 +532,7 @@ type NotificationsEdgeResolver interface {
 }
 type PostResolver interface {
 	Parent(ctx context.Context, obj *model.Post) (*model.Post, error)
-
+	Child(ctx context.Context, obj *model.Post) (*model.Post, error)
 	User(ctx context.Context, obj *model.Post) (*db.User, error)
 	Content(ctx context.Context, obj *model.Post) (*string, error)
 	Attachment(ctx context.Context, obj *model.Post) ([]*db.File, error)
@@ -540,6 +541,7 @@ type PostResolver interface {
 	Replies(ctx context.Context, obj *model.Post) (*model.Posts, error)
 	IsLiked(ctx context.Context, obj *model.Post) (*db.LikedPost, error)
 	IsSaved(ctx context.Context, obj *model.Post) (*db.SavedPost, error)
+	IsReposted(ctx context.Context, obj *model.Post) (*model.Post, error)
 }
 type PostsEdgeResolver interface {
 	Cursor(ctx context.Context, obj *model.PostsEdge) (string, error)
@@ -1569,6 +1571,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Post.IsLiked(childComplexity), true
+
+	case "Post.isReposted":
+		if e.complexity.Post.IsReposted == nil {
+			break
+		}
+
+		return e.complexity.Post.IsReposted(childComplexity), true
 
 	case "Post.isSaved":
 		if e.complexity.Post.IsSaved == nil {
@@ -2941,6 +2950,7 @@ type Post {
   replies: Posts
   isLiked: LikedPost
   isSaved: SavedPost
+  isReposted: Post
   createdAt: Time
   updatedAt: Time
 }
@@ -2958,6 +2968,7 @@ type Posts {
 
 input AddPostInput {
   parentId: String
+  childId: String
   content: String
   status: PostStatus
   attachment: [String!]
@@ -7291,6 +7302,8 @@ func (ec *executionContext) fieldContext_LikedPost_post(ctx context.Context, fie
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -8288,6 +8301,8 @@ func (ec *executionContext) fieldContext_Mutation_addPost(ctx context.Context, f
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -8370,6 +8385,8 @@ func (ec *executionContext) fieldContext_Mutation_editPost(ctx context.Context, 
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -8452,6 +8469,8 @@ func (ec *executionContext) fieldContext_Mutation_deletePost(ctx context.Context
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -9394,6 +9413,8 @@ func (ec *executionContext) fieldContext_Notification_post(ctx context.Context, 
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -9465,6 +9486,8 @@ func (ec *executionContext) fieldContext_Notification_reply(ctx context.Context,
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -10306,6 +10329,8 @@ func (ec *executionContext) fieldContext_Post_parent(ctx context.Context, field 
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -10331,7 +10356,7 @@ func (ec *executionContext) _Post_child(ctx context.Context, field graphql.Colle
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Child, nil
+		return ec.resolvers.Post().Child(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -10349,8 +10374,8 @@ func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field g
 	fc = &graphql.FieldContext{
 		Object:     "Post",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -10377,6 +10402,8 @@ func (ec *executionContext) fieldContext_Post_child(ctx context.Context, field g
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -10818,6 +10845,79 @@ func (ec *executionContext) fieldContext_Post_isSaved(ctx context.Context, field
 	return fc, nil
 }
 
+func (ec *executionContext) _Post_isReposted(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Post_isReposted(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Post().IsReposted(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Post)
+	fc.Result = res
+	return ec.marshalOPost2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPost(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Post_isReposted(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Post",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Post_id(ctx, field)
+			case "status":
+				return ec.fieldContext_Post_status(ctx, field)
+			case "parent":
+				return ec.fieldContext_Post_parent(ctx, field)
+			case "child":
+				return ec.fieldContext_Post_child(ctx, field)
+			case "user":
+				return ec.fieldContext_Post_user(ctx, field)
+			case "content":
+				return ec.fieldContext_Post_content(ctx, field)
+			case "attachment":
+				return ec.fieldContext_Post_attachment(ctx, field)
+			case "url":
+				return ec.fieldContext_Post_url(ctx, field)
+			case "likes":
+				return ec.fieldContext_Post_likes(ctx, field)
+			case "replies":
+				return ec.fieldContext_Post_replies(ctx, field)
+			case "isLiked":
+				return ec.fieldContext_Post_isLiked(ctx, field)
+			case "isSaved":
+				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Post_createdAt(ctx, field)
+			case "updatedAt":
+				return ec.fieldContext_Post_updatedAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Post", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Post_createdAt(ctx context.Context, field graphql.CollectedField, obj *model.Post) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Post_createdAt(ctx, field)
 	if err != nil {
@@ -11148,6 +11248,8 @@ func (ec *executionContext) fieldContext_PostsEdge_node(ctx context.Context, fie
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -12055,6 +12157,8 @@ func (ec *executionContext) fieldContext_Query_getPostByUrl(ctx context.Context,
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -13362,6 +13466,8 @@ func (ec *executionContext) fieldContext_SavedPost_post(ctx context.Context, fie
 				return ec.fieldContext_Post_isLiked(ctx, field)
 			case "isSaved":
 				return ec.fieldContext_Post_isSaved(ctx, field)
+			case "isReposted":
+				return ec.fieldContext_Post_isReposted(ctx, field)
 			case "createdAt":
 				return ec.fieldContext_Post_createdAt(ctx, field)
 			case "updatedAt":
@@ -18729,7 +18835,7 @@ func (ec *executionContext) unmarshalInputAddPostInput(ctx context.Context, obj 
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"parentId", "content", "status", "attachment"}
+	fieldsInOrder := [...]string{"parentId", "childId", "content", "status", "attachment"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -18740,34 +18846,47 @@ func (ec *executionContext) unmarshalInputAddPostInput(ctx context.Context, obj 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("parentId"))
-			it.ParentID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.ParentID = data
+		case "childId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("childId"))
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.ChildID = data
 		case "content":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Content = data
 		case "status":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
+			data, err := ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Status = data
 		case "attachment":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
-			it.Attachment, err = ec.unmarshalOString2ᚕstringᚄ(ctx, v)
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Attachment = data
 		}
 	}
 
@@ -18792,18 +18911,20 @@ func (ec *executionContext) unmarshalInputAddTicketMessageInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "attachment":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
-			it.Attachment, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Attachment = data
 		}
 	}
 
@@ -18828,18 +18949,20 @@ func (ec *executionContext) unmarshalInputChangePasswordInput(ctx context.Contex
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("oldPassword"))
-			it.OldPassword, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.OldPassword = data
 		case "newPassword":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("newPassword"))
-			it.NewPassword, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.NewPassword = data
 		}
 	}
 
@@ -18864,26 +18987,29 @@ func (ec *executionContext) unmarshalInputCreateTicketInput(ctx context.Context,
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("subject"))
-			it.Subject, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Subject = data
 		case "message":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("message"))
-			it.Message, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Message = data
 		case "attachment":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("attachment"))
-			it.Attachment, err = ec.unmarshalOString2ᚕᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚕᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Attachment = data
 		}
 	}
 
@@ -18908,18 +19034,20 @@ func (ec *executionContext) unmarshalInputEditPostInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Content = data
 		case "status":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("status"))
-			it.Status, err = ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
+			data, err := ec.unmarshalOPostStatus2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPostStatus(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Status = data
 		}
 	}
 
@@ -18944,74 +19072,83 @@ func (ec *executionContext) unmarshalInputEditUserInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-			it.Username, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Username = data
 		case "backgroundColor":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("backgroundColor"))
-			it.BackgroundColor, err = ec.unmarshalOBackgroundColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx, v)
+			data, err := ec.unmarshalOBackgroundColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐBackgroundColor(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.BackgroundColor = data
 		case "primaryColor":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("primaryColor"))
-			it.PrimaryColor, err = ec.unmarshalOPrimaryColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPrimaryColor(ctx, v)
+			data, err := ec.unmarshalOPrimaryColor2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐPrimaryColor(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.PrimaryColor = data
 		case "avatar":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("avatar"))
-			it.Avatar, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Avatar = data
 		case "background":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("background"))
-			it.Background, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Background = data
 		case "fullName":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			it.FullName, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FullName = data
 		case "email":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			it.Email, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Email = data
 		case "bio":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("bio"))
-			it.Bio, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Bio = data
 		case "isPrivate":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isPrivate"))
-			it.IsPrivate, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IsPrivate = data
 		}
 	}
 
@@ -19036,50 +19173,56 @@ func (ec *executionContext) unmarshalInputEditUserSettingsInput(ctx context.Cont
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repliesVisible"))
-			it.RepliesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepliesVisible = data
 		case "mediaVisible":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaVisible"))
-			it.MediaVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MediaVisible = data
 		case "likesVisible":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("likesVisible"))
-			it.LikesVisible, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LikesVisible = data
 		case "repliesVisibleForCurrentUser":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("repliesVisibleForCurrentUser"))
-			it.RepliesVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.RepliesVisibleForCurrentUser = data
 		case "mediaVisibleForCurrentUser":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("mediaVisibleForCurrentUser"))
-			it.MediaVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.MediaVisibleForCurrentUser = data
 		case "likesVisibleForCurrentUser":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("likesVisibleForCurrentUser"))
-			it.LikesVisibleForCurrentUser, err = ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
+			data, err := ec.unmarshalOUserSettingValue2ᚖgithubᚗcomᚋplogtoᚋcoreᚋgraphᚋmodelᚐUserSettingValue(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.LikesVisibleForCurrentUser = data
 		}
 	}
 
@@ -19104,10 +19247,11 @@ func (ec *executionContext) unmarshalInputGetExplorePostsInput(ctx context.Conte
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("isAttachment"))
-			it.IsAttachment, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.IsAttachment = data
 		}
 	}
 
@@ -19132,18 +19276,20 @@ func (ec *executionContext) unmarshalInputLoginInput(ctx context.Context, obj in
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("username"))
-			it.Username, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Username = data
 		case "password":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Password = data
 		}
 	}
 
@@ -19168,18 +19314,20 @@ func (ec *executionContext) unmarshalInputOAuthGoogleInput(ctx context.Context, 
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("credential"))
-			it.Credential, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Credential = data
 		case "invitationCode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
-			it.InvitationCode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InvitationCode = data
 		}
 	}
 
@@ -19204,18 +19352,20 @@ func (ec *executionContext) unmarshalInputPageInfoInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
-			it.First, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			data, err := ec.unmarshalOInt2ᚖint(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.First = data
 		case "after":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
-			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.After = data
 		}
 	}
 
@@ -19240,34 +19390,38 @@ func (ec *executionContext) unmarshalInputRegisterInput(ctx context.Context, obj
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("fullName"))
-			it.FullName, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.FullName = data
 		case "email":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("email"))
-			it.Email, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Email = data
 		case "password":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("password"))
-			it.Password, err = ec.unmarshalNString2string(ctx, v)
+			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Password = data
 		case "invitationCode":
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("invitationCode"))
-			it.InvitationCode, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.InvitationCode = data
 		}
 	}
 
@@ -19292,10 +19446,11 @@ func (ec *executionContext) unmarshalInputTestInput(ctx context.Context, obj int
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("content"))
-			it.Content, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			data, err := ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+			it.Content = data
 		}
 	}
 
@@ -20972,9 +21127,22 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 
 			})
 		case "child":
+			field := field
 
-			out.Values[i] = ec._Post_child(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_child(ctx, field, obj)
+				return res
+			}
 
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "user":
 			field := field
 
@@ -21097,6 +21265,23 @@ func (ec *executionContext) _Post(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Post_isSaved(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "isReposted":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Post_isReposted(ctx, field, obj)
 				return res
 			}
 

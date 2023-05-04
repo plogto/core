@@ -149,6 +149,8 @@ models:
         resolver: true
       parent:
         resolver: true
+      child:
+        resolver: true
       attachment:
         resolver: true
       likes:

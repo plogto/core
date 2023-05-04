@@ -41,6 +41,20 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		}
 	}
 
+	if input.ChildID != nil {
+		var childPost *model.Post
+		childPost, _ = graph.GetPostLoader(ctx).Load(*input.ChildID)
+
+		if childPost == nil {
+			return nil, errors.New("access denied")
+		}
+
+		followingUser, _ := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(childPost.UserID))
+		if !s.CheckUserAccess(ctx, user, followingUser) {
+			return nil, errors.New("access denied")
+		}
+	}
+
 	// check is empty
 	if (input.Attachment == nil || len(input.Attachment) < 1) &&
 		(input.Content == nil || len(*input.Content) < 1) {
@@ -61,6 +75,11 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 		parentID = convertor.StringToUUID(*input.ParentID)
 	}
 
+	var childID pgtype.UUID
+	if input.ChildID != nil {
+		childID = convertor.StringToUUID(*input.ChildID)
+	}
+
 	var status = db.PostStatusPublic
 	if input.Status != nil {
 		status = db.PostStatus(*input.Status)
@@ -68,6 +87,7 @@ func (s *Service) AddPost(ctx context.Context, input model.AddPostInput) (*model
 
 	post, _ := s.Posts.CreatePost(ctx, db.CreatePostParams{
 		ParentID: parentID,
+		ChildID:  childID,
 		UserID:   user.ID,
 		Content:  pgtype.Text{content, true},
 		Status:   status,
@@ -324,6 +344,26 @@ func (s *Service) GetPostsCount(ctx context.Context, userID pgtype.UUID) (int64,
 	return s.Posts.CountPostsByUserID(ctx, userID)
 }
 
+func (s *Service) GetChildPostByPostID(ctx context.Context, id pgtype.UUID) (*model.Post, error) {
+	user, _ := middleware.GetCurrentUserFromCTX(ctx)
+
+	if !id.Valid {
+		return nil, nil
+	}
+
+	post, err := graph.GetChildPostLoader(ctx).Load(convertor.UUIDToString(id))
+
+	if !validation.IsPostExists(post) {
+		return nil, nil
+	}
+
+	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
+		return nil, err
+	}
+
+	return post, err
+}
+
 func (s *Service) GetPostByID(ctx context.Context, id pgtype.UUID) (*model.Post, error) {
 	user, _ := middleware.GetCurrentUserFromCTX(ctx)
 
@@ -332,6 +372,10 @@ func (s *Service) GetPostByID(ctx context.Context, id pgtype.UUID) (*model.Post,
 	}
 
 	post, err := graph.GetPostLoader(ctx).Load(convertor.UUIDToString(id))
+
+	if !validation.IsPostExists(post) {
+		return nil, nil
+	}
 
 	if followingUser, err := graph.GetUserLoader(ctx).Load(convertor.UUIDToString(post.UserID)); !s.CheckUserAccess(ctx, user, followingUser) {
 		return nil, err

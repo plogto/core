@@ -16,6 +16,7 @@ type Post {
   replies: Posts
   isLiked: LikedPost
   isSaved: SavedPost
+  isReposted: Post
   createdAt: Time
   updatedAt: Time
 }
@@ -33,6 +34,7 @@ type Posts {
 
 input AddPostInput {
   parentId: String
+  childId: String
   content: String
   status: PostStatus
   attachment: [String!]

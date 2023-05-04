@@ -14,6 +14,7 @@ import (
 
 type AddPostInput struct {
 	ParentID   *string     `json:"parentId,omitempty"`
+	ChildID    *string     `json:"childId,omitempty"`
 	Content    *string     `json:"content,omitempty"`
 	Status     *PostStatus `json:"status,omitempty"`
 	Attachment []string    `json:"attachment,omitempty"`

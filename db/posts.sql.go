@@ -397,13 +397,14 @@ func (q *Queries) CountTimelinePostsByPageInfo(ctx context.Context, arg CountTim
 
 const createPost = `-- name: CreatePost :one
 INSERT INTO
-	posts (parent_id, user_id, CONTENT, status, url)
+	posts (parent_id, child_id, user_id, CONTENT, status, url)
 VALUES
-	($1, $2, $3, $4, $5) RETURNING id, user_id, parent_id, child_id, status, content, url, created_at, updated_at, deleted_at
+	($1, $2, $3, $4, $5, $6) RETURNING id, user_id, parent_id, child_id, status, content, url, created_at, updated_at, deleted_at
 `
 
 type CreatePostParams struct {
 	ParentID pgtype.UUID
+	ChildID  pgtype.UUID
 	UserID   pgtype.UUID
 	Content  pgtype.Text
 	Status   PostStatus
@@ -413,6 +414,7 @@ type CreatePostParams struct {
 func (q *Queries) CreatePost(ctx context.Context, arg CreatePostParams) (*Post, error) {
 	row := q.db.QueryRow(ctx, createPost,
 		arg.ParentID,
+		arg.ChildID,
 		arg.UserID,
 		arg.Content,
 		arg.Status,
@@ -465,6 +467,53 @@ func (q *Queries) DeletePostByID(ctx context.Context, arg DeletePostByIDParams) 
 		&i.DeletedAt,
 	)
 	return &i, err
+}
+
+const getChildPostsByIDsAndUserID = `-- name: GetChildPostsByIDsAndUserID :many
+SELECT
+	id, user_id, parent_id, child_id, status, content, url, created_at, updated_at, deleted_at
+FROM
+	posts
+WHERE
+	user_id = $1
+	AND child_id = ANY($2 :: uuid [ ])
+	AND deleted_at IS NULL
+`
+
+type GetChildPostsByIDsAndUserIDParams struct {
+	UserID  pgtype.UUID
+	ChildID []pgtype.UUID
+}
+
+func (q *Queries) GetChildPostsByIDsAndUserID(ctx context.Context, arg GetChildPostsByIDsAndUserIDParams) ([]*Post, error) {
+	rows, err := q.db.Query(ctx, getChildPostsByIDsAndUserID, arg.UserID, arg.ChildID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []*Post{}
+	for rows.Next() {
+		var i Post
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.ParentID,
+			&i.ChildID,
+			&i.Status,
+			&i.Content,
+			&i.Url,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getExplorePostsByPageInfo = `-- name: GetExplorePostsByPageInfo :many
